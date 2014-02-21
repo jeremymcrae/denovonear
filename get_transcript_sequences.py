@@ -20,7 +20,7 @@ class GetTranscriptSequence(object):
         self.server = "http://beta.rest.ensembl.org"
         self.headers={"Content-Type": "text/plain"}
     
-    def request_sequence(self, ext, sequence_id):
+    def request_sequence(self, ext, sequence_id, headers):
         """ obtain sequence via the ensembl REST API
         """
         
@@ -29,7 +29,7 @@ class GetTranscriptSequence(object):
             raise ValueError("too many attempts, figure out why its failing")
         
         self.rate_limit_ensembl_requests()
-        r = requests.get(self.server + ext, headers=self.headers)
+        r = requests.get(self.server + ext, headers=headers)
         
         logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url))
         
@@ -48,24 +48,46 @@ class GetTranscriptSequence(object):
         
         return r
     
-    def get_genomic_seq_for_transcript(self, transcript_id, expand_dist):
+    def get_genomic_seq_for_transcript(self, transcript_id, expand):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        self.request_attempts = 0
-        ext = "/sequence/id/{0}?type=genomic;expand_3prime={1};expand_5prime={1}".format(transcript_id, expand_dist)
-        # ext = "/sequence/id/" + transcript_id + "?type=genomic;expand_3prime=" + str(expand_dist) + ";expand_5prime=" + str(expand_dist)
-        r = self.request_sequence(ext, transcript_id)
+        headers = {"Content-Type": "application/json"}
         
-        return r.text
+        self.request_attempts = 0
+        ext = "/sequence/id/{0}?type=genomic;expand_3prime={1};expand_5prime={1}".format(transcript_id, expand)
+        r = self.request_sequence(ext, transcript_id, headers)
+        
+        gene = r.json()
+        
+        seq = gene["seq"]
+        seq_id = gene["id"]
+        
+        if seq_id != transcript_id:
+            raise ValueError("ensembl gave the wrong transcript")
+        
+        desc = gene["desc"].split(":")
+        chrom = desc[2]
+        start = int(desc[3]) + expand
+        end = int(desc[4]) - expand
+        strand = desc[5]
+        
+        if int(strand) == -1:
+            strand = "-"
+        else:
+            strand = "+"
+        
+        return (chrom, start, end, strand, seq)
     
     def get_cds_seq_for_transcript(self, transcript_id):
         """ obtain the sequence for a transcript from ensembl
         """
         
+        headers = {"Content-Type": "text/plain"}
+        
         self.request_attempts = 0
         ext = "/sequence/id/" + transcript_id + "?type=cds"
-        r =  self.request_sequence(ext, transcript_id)
+        r =  self.request_sequence(ext, transcript_id, headers)
         
         return r.text
     
@@ -73,56 +95,23 @@ class GetTranscriptSequence(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
+        headers = {"Content-Type": "text/plain"}
+        
         self.request_attempts = 0
         ext = "/sequence/id/" + transcript_id + "?type=protein"
-        r =  self.request_sequence(ext, transcript_id)
+        r =  self.request_sequence(ext, transcript_id, headers)
         
         return r.text
-    
-    def get_gene_start_and_end_for_transcript(self, transcript_id, gene_id):
-        """ obtain the star and end points for a transcript from ensembl
-        """
-        
-        self.headers={"Content-Type": "application/json"}
-        
-        self.request_attempts = 0
-        ext = "/feature/id/" + transcript_id + "?feature=gene"
-        r = self.request_sequence(ext, transcript_id)
-        
-        # an initial check, remove this once it works
-        matching_genes = 0
-        for gene in r.json():
-            if gene["external_name"] == gene_id:
-                matching_genes += 1
-        
-        if matching_genes > 1:
-            raise ValueError("found too many gene matches")
-        
-        for gene in r.json():
-            if gene["external_name"] == gene_id:
-                start = gene["start"]
-                end = gene["end"]
-                strand = gene["strand"]
-                chrom = gene["seq_region_name"]
-                
-                if strand == "-1":
-                    strand = "-"
-                else:
-                    strand = "+"
-                
-                return (start, end, strand, chrom)
-        
-        raise ValueError("failed to find " + gene_id + " in ensembl request")
     
     def get_exon_ranges_for_transcript(self, transcript_id):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        self.headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json"}
         
         self.request_attempts = 0
         ext = "/feature/id/" + transcript_id + "?feature=exon"
-        r = self.request_sequence(ext, transcript_id)
+        r = self.request_sequence(ext, transcript_id, headers)
         
         exon_ranges = []
         for exon in r.json():
@@ -140,11 +129,11 @@ class GetTranscriptSequence(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        self.headers={"Content-Type": "application/json"}
+        headers={"Content-Type": "application/json"}
         
         self.request_attempts = 0
         ext = "/feature/id/" + transcript_id + "?feature=cds"
-        r = self.request_sequence(ext, transcript_id)
+        r = self.request_sequence(ext, transcript_id, headers)
         
         cds_ranges = []
         for cds_range in r.json():

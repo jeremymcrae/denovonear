@@ -22,8 +22,6 @@ class WeightedChoice(object):
             cum_prob += self.choices[pos][1]
             self.cum_probs.append(cum_prob)
         
-        # self.total = sum(w for c, w in self.choices)
-        
     def choice(self):
         """ chooses a random position using a set of probability weights
         """

@@ -11,7 +11,6 @@ class Interval(SequenceMethods):
     Also can determine distance between two positions in the CDS region.
     """
     
-    # def __init__(self, bed_line):
     def __init__(self, transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges):
         """ initiate the class with a line from a BED file
         
@@ -37,10 +36,16 @@ class Interval(SequenceMethods):
         exon_ranges = sorted(exon_ranges)
         
         corrected_exon_ranges = []
-        for start, end in exon_ranges:
-            corrected_exon_ranges.append((start, end + 1))
+        if self.strand == "+":
+            for start, end in exon_ranges:
+                corrected_exon_ranges.append((start, end + 1))
+        else:
+            for start, end in exon_ranges:
+                corrected_exon_ranges.append((start - 1, end))
         
-        return corrected_exon_ranges
+        exon_ranges = corrected_exon_ranges
+        
+        return exon_ranges
     
     def __add_cds__(self, cds_ranges):
         """ add cds positions from the exon positions and the CDS start and end.
@@ -48,8 +53,12 @@ class Interval(SequenceMethods):
         
         cds = sorted(cds_ranges)
         fixed_cds = []
-        for start, end in cds:
-            fixed_cds.append((start, end + 1))
+        if self.strand == "+":
+            for start, end in cds:
+                fixed_cds.append((start, end + 1))
+        else:
+            for start, end in cds:
+                fixed_cds.append((start - 1, end))
         
         cds = fixed_cds
         
@@ -75,8 +84,6 @@ class Interval(SequenceMethods):
         
         start_dist = abs(position - start)
         end_dist = abs(position - end)
-        
-        # print "CDS out of bounds:", self.get_name(), "by", min(start_dist, end_dist)
         
         # if we are closer to the start, then we go back an exon
         if start_dist < end_dist:

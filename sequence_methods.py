@@ -57,8 +57,8 @@ class SequenceMethods(object):
         
         # do a sanity check to check that we've got the right cds sequence
         if cds_seq != self.cds_sequence:
-            raise ValueError("haven't obtained the right CDS for " + self.get_name() + "\n" + \
-                cds_seq)
+            raise ValueError("haven't obtained the right CDS for " + \
+                self.get_name() + "\n" + cds_seq)
         
         self.cds_sequence = cds_seq
         
