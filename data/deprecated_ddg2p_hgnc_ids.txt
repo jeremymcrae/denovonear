@@ -1,0 +1,5 @@
+original	converted
+GTDC2	POMGNT2
+C6orf70	ERMARD
+MLL	KMT2A
+MLL2	KMT2D
