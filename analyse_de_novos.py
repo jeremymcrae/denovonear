@@ -3,6 +3,9 @@ distances apart within the gene, and compare that to simulated de novo events
 within the same gene.
 """
 
+import bisect
+import itertools
+
 
 class AnalyseDeNovos(object):
     """ class to analyse clustering of de novo events via site specific 

@@ -30,8 +30,8 @@ from __future__ import print_function
 from __future__ import division
 import sys
 import os
-import bisect
-import itertools
+# import bisect
+# import itertools
 import time
 
 from interval import Interval
