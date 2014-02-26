@@ -3,8 +3,13 @@ distances apart within the gene, and compare that to simulated de novo events
 within the same gene.
 """
 
+from __future__ import division
+from __future__ import print_function
+
 import bisect
 import itertools
+import math
+import operator
 
 
 class AnalyseDeNovos(object):
@@ -155,9 +160,83 @@ class AnalyseDeNovos(object):
         
         pos_pairs = itertools.combinations(positions, 2)
         
+        return self.get_geometric_mean(pos_pairs)
+        # return self.get_arithmetic_mean(pos_pairs)
+        # return self.get_mean_from_closest_neighbors(positions)
+    
+    def get_geometric_mean(self, pos_pairs):
+        """ get the geometric mean distance between pair positions
+        """
+        
         distances = []
         for pos_1, pos_2 in pos_pairs:
             distance = abs(pos_1 - pos_2)
             distances.append(distance)
         
+        distances = [1 if x==0 else x for x in distances]
+        total = self.product(distances)
+        mean = total ** (1/len(distances))
+        
+        return mean
+        
+    def get_arithmetic_mean(self, pos_pairs):
+        """ get the arithmetic mean distance between pair positions
+        """
+        
+        distances = []
+        for pos_1, pos_2 in pos_pairs:
+            distance = abs(pos_1 - pos_2)
+            distances.append(distance)
+            
         return sum(distances)/len(distances)
+    
+    def get_mean_from_closest_neighbors(self, positions):
+        """ find the mean distance to the closest neighbor for each variant
+        """
+        
+        run_pairs = set([])
+        
+        distances = []
+        for pos_1 in range(len(positions)):
+            bp_1 = positions[pos_1]
+            
+            min_distance = 999999999
+            pair = ("NA", "NA")
+            for pos_2 in range(len(positions)):
+                # ignore if we are using the same list position
+                if pos_1 == pos_2:
+                    continue
+                
+                bp_2 = positions[pos_2]
+                distance = abs(bp_1 - bp_2)
+                if distance < min_distance:
+                    min_distance = distance
+                    pair = tuple(sorted([pos_1, pos_2]))
+            
+            # only include the distance if the pair has not been included  
+            # previously (this avoids duplicates of variants that match to each 
+            # other)
+            if pair not in run_pairs:
+                distances.append(distance)
+                run_pairs.add(pair)
+        
+        # get the geometric mean, but be careful around distances of 0, since
+        # without correction, the mean distance would be zero
+        if 0 in distances:
+            # allow for 0s in a geometric mean by shifting everything up one, 
+            # then dropping the mean by one at the end
+            distances = [x + 1 for x in distances]
+            total = self.product(distances)
+            mean = total ** (1/len(distances))
+            mean -= 1
+        else:
+            total = self.product(distances)
+            mean = total ** (1/len(distances))
+        
+        return mean
+    
+    def product(self, iterable):
+        return reduce(operator.mul, iterable, 1)
+
+
+

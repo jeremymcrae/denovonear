@@ -30,13 +30,10 @@ from __future__ import print_function
 from __future__ import division
 import sys
 import os
-# import bisect
-# import itertools
 import time
 
 from interval import Interval
 from get_transcript_sequences import GetTranscriptSequence
-# from weighted_choice import WeightedChoice
 from load_mutation_rates import load_trincleotide_mutation_rates
 from site_specific_rates import SiteRates
 from load_known_de_novos import load_known_de_novos
@@ -47,11 +44,11 @@ USER_FOLDER = "/nfs/users/nfs_j/jm33/"
 APP_FOLDER = os.path.join(USER_FOLDER, "apps", "mutation_rates")
 DATA_FOLDER = os.path.join(APP_FOLDER, "data")
 
-# ENSEMBL_TO_HGNC_FILE = os.path.join(DATA_FOLDER, "ensembl_transcript_id_to_hgnc_id.txt")
 DEPRECATED_GENE_ID_FILE = os.path.join(DATA_FOLDER, "deprecated_ddg2p_hgnc_ids.txt")
 MUTATION_RATES_FILE = os.path.join(DATA_FOLDER, "forSanger_1KG_mutation_rate_table.txt")
-KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_28Jan2014.xlsx")
-OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.tsv")
+# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_28Jan2014.xlsx")
+KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_20Feb2014_NonRed_Clean_NoTwins_NoClusters.txt")
+OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.geometric_mean.tsv")
 
 
 def get_deprecated_gene_ids(filename):
@@ -110,7 +107,6 @@ def load_gene(ensembl, gene_id):
         Interval object for gene, including genomic ranges and sequences
     """
     
-    # potential_transcript_ids = hgnc_mapper[gene_id]
     ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
     transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes)
     transcript_id = identify_transcript(ensembl, transcript_ids)

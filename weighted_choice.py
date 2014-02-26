@@ -11,7 +11,7 @@ class WeightedChoice(object):
     """
     
     def __init__(self, choices):
-        """ set up a list of cumulatice probabilities
+        """ set up a list of cumulative probabilities
         """
         self.choices = choices
         
