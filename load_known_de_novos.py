@@ -6,12 +6,6 @@ from __future__ import division
 
 from xlrd import open_workbook
 
-# functional_consequences = ["transcript_ablation", "splice_donor_variant", \
-#     "splice_acceptor_variant", "frameshift_variant", "initiator_codon_variant",\
-#     "inframe_insertion", "inframe_deletion", "missense_variant", \
-#     "transcript_amplification", "stop_gained", "stop_lost", \
-#     "coding_sequence_variant"]
-
 # functional consequences, minus any indel consequences
 functional_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
     "initiator_codon_variant", "missense_variant", "transcript_amplification", \
@@ -26,7 +20,7 @@ nonsense_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
 def load_known_de_novos(filename):
     """ load known mutations into dict indexed by HGNC ID.
     """
-    print(filename.endswith("txt"))
+    
     if filename.endswith("xlsx"):
         # open an xlsx file containing the current list of de novo mutations in
         # probands studied to date
@@ -73,11 +67,11 @@ def load_known_de_novos(filename):
         if gene not in genes_dict:
             genes_dict[gene] = {"functional": [], "missense": [], "nonsense": []}
         
-        genes_dict[gene]["functional"].append(long(position))
+        genes_dict[gene]["functional"].append(int(position))
         if consequence in missense_consequences:
-            genes_dict[gene]["missense"].append(long(position))
+            genes_dict[gene]["missense"].append(int(position))
         elif consequence in nonsense_consequences:
-            genes_dict[gene]["nonsense"].append(long(position))
+            genes_dict[gene]["nonsense"].append(int(position))
     
     return genes_dict
         

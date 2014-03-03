@@ -1,9 +1,10 @@
 """ class to hold interval objects (such as genes, transcript regions etc)
 """
 
-from sequence_methods import SequenceMethods
+from interval_sequence_methods import SequenceMethods
+from interval_conservation_methods import ConservationMethods
 
-class Interval(SequenceMethods):
+class Interval(SequenceMethods, ConservationMethods):
     """ class to hold intervals for gene regions, including CDS positions
     
     Uses BED gene and exon coordinates to define positions, and check whether
@@ -19,8 +20,8 @@ class Interval(SequenceMethods):
         """
         
         self.chrom = chrom
-        self.start = long(start)
-        self.end = long(end)
+        self.start = int(start)
+        self.end = int(end)
         self.name = transcript_id
         self.strand = strand
         self.cds_start = ""
@@ -35,15 +36,11 @@ class Interval(SequenceMethods):
         
         exon_ranges = sorted(exon_ranges)
         
-        corrected_exon_ranges = []
-        if self.strand == "+":
+        if self.strand == "-":
+            fixed_exon_ranges = []
             for start, end in exon_ranges:
-                corrected_exon_ranges.append((start, end + 1))
-        else:
-            for start, end in exon_ranges:
-                corrected_exon_ranges.append((start - 1, end))
-        
-        exon_ranges = corrected_exon_ranges
+                fixed_exon_ranges.append((start - 1, end - 1))
+            exon_ranges = fixed_exon_ranges
         
         return exon_ranges
     
@@ -52,33 +49,49 @@ class Interval(SequenceMethods):
         """
         
         cds = sorted(cds_ranges)
-        fixed_cds = []
-        if self.strand == "+":
-            for start, end in cds:
-                fixed_cds.append((start, end + 1))
-        else:
-            for start, end in cds:
-                fixed_cds.append((start - 1, end))
         
-        cds = fixed_cds
+        if self.strand == "-":
+            fixed_cds = []
+            for start, end in cds:
+                fixed_cds.append((start - 1, end - 1))
+            cds = fixed_cds
         
-        self.cds_start = long(cds[0][0])
-        self.cds_end = long(cds[-1][-1])
+        self.cds_start = int(cds[0][0])
+        self.cds_end = int(cds[-1][-1])
         
         # sometimes the cds start and end lie outside the exons. We find the 
         # offset to the closest exon boundary, and use that to place the 
-        # position within the up or downstream exon
+        # position within the up or downstream exon, and correct the initial
+        # cds boundaries
         if not self.in_exons(self.cds_start):
-            self.cds_start = self.fix_out_of_exon_cds_boundary(self.cds_start)
+            (start, end) = self.fix_out_of_exon_cds_boundary(self.cds_start)
+            cds[0] = (cds[0][0] + abs(end - start), cds[0][1])
+            self.cds_start = start
+            cds.insert(0, (start, end))
         if not self.in_exons(self.cds_end):
-            self.cds_end = self.fix_out_of_exon_cds_boundary(self.cds_end)
+            (start, end) = self.fix_out_of_exon_cds_boundary(self.cds_end)
+            cds[-1] = (cds[-1][0], cds[-1][1] - abs(end - start))
+            self.cds_end = end
+            cds.append((start, end))
         
         return cds
         
     def fix_out_of_exon_cds_boundary(self, position):
-        """ sometimes the cds start and end lie outside the exons. We adjust the
-        position to the prior or following exon
+        """ fix cds start and ends which occur outside exons.
+        
+        The main cause is when the stop codon overlaps an exon boundary. In
+        some of these cases, the CDS end is placed within the adjacent intron
+        sequence (if that allows stop site sequence). To fix this, we adjust the
+        position to the offset distance within the adjacent exon.
+        
+        Args:
+            position: chromosome position
+        
+        Returns:
+            adjusted chromosome position
         """
+        
+        assert not self.in_exons(position)
         
         (start, end) = self.find_closest_exon(position)
         
@@ -88,13 +101,15 @@ class Interval(SequenceMethods):
         # if we are closer to the start, then we go back an exon
         if start_dist < end_dist:
             before = self.get_exon_containing_position(start, self.exons) - 1
-            position = self.exons[before][1] - start_dist 
+            end = self.exons[before][1]
+            start = end - start_dist 
         # if we are closer to the end, then we go forward an exon
         elif start_dist > end_dist:
             after = self.get_exon_containing_position(end, self.exons) + 1
-            position = self.exons[after][0] + end_dist 
+            start = self.exons[after][0]
+            end = start + end_dist 
         
-        return position
+        return (start, end)
         
     def convert_chrom_to_int(self, chrom):
         """ converts a chromosome string to an int (if possible) for sorting.
@@ -187,13 +202,13 @@ class Interval(SequenceMethods):
             True/False for whether the position is within the gene
         """
         
-        return self.start <= long(position) <= self.end
+        return self.start <= int(position) <= self.end
     
     def in_exons(self, position):
         """ determines if a nucleotide position lies within the exons
         """
         
-        position = long(position)
+        position = int(position)
         
         for start, end in self.exons:
             if start <= position <= end:
@@ -229,13 +244,13 @@ class Interval(SequenceMethods):
         """ determines if a nucleotide position lies within the coding region
         
         Args:
-            position:
+            position: chromosomal nucleotide position
         
         Returns:
             True/False for whether the position is within the coding region
         """
         
-        position = long(position)
+        position = int(position)
         
         for start, end in self.cds:
             if start <= position <= end:
@@ -251,12 +266,9 @@ class Interval(SequenceMethods):
         
         Returns:
             number of exon containing the position
-        
-        Raises:
-            AssertionError if position not in coding region
         """
         
-        position = long(position)
+        position = int(position)
         
         exon_num = 0
         for start, end in exon_ranges:
@@ -264,7 +276,7 @@ class Interval(SequenceMethods):
                 return exon_num
             exon_num += 1
         
-        return None
+        raise ValueError("shouldn't get here")
     
     def get_coding_distance(self, pos_1, pos_2):
         """ find the distance in coding bp between two chr positions
@@ -275,8 +287,10 @@ class Interval(SequenceMethods):
         
         Returns:
             distance in coding sequence base pairs between two positions
-        """
         
+        Raises:
+            AssertionError if position not in coding region
+        """
         
         # make sure that the positions are within the coding region, otherwise
         # there's no point trying to calculate the coding distance
@@ -292,12 +306,12 @@ class Interval(SequenceMethods):
         if exon_1 == exon_2:
             distance = max_pos - min_pos
         else:
-            exon_1_distance = self.cds[exon_1][1] - min_pos
-            exon_2_distance = max_pos - self.cds[exon_2][0]
+            exon_1_distance = (self.cds[exon_1][1] - min_pos)
+            exon_2_distance = (max_pos - self.cds[exon_2][0]) + 1
             
             distance = exon_1_distance + exon_2_distance
             for exon in range(exon_1 + 1, exon_2):
-                distance += self.cds[exon][1] - self.cds[exon][0]
+                distance += (self.cds[exon][1] - self.cds[exon][0]) + 1
         
         return distance
     

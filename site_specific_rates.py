@@ -1,6 +1,8 @@
 """ get weight gene mutation rates
 """
 
+from __future__ import print_function
+
 from weighted_choice import WeightedChoice
 
 
@@ -89,13 +91,17 @@ class SiteRates(object):
         missense_probs = []
         nonsense_probs = []
         functional_probs = []
-        for bp in range(self.gene.get_cds_start(), self.gene.get_cds_end()):
+        
+        range_start = self.gene.get_cds_start()
+        if self.gene.strand == "+":
+            range_start -= 1
+        range_end = self.gene.get_cds_end() + 1
+        
+        for bp in range(range_start, range_end):
             if not self.gene.in_coding_region(bp):
                 continue
             
-            cds_pos = self.gene.convert_genomic_position_to_relative_to_ATG_in_cds(bp)
-            if self.gene.strand == "+":
-                cds_pos += 1
+            cds_pos = self.gene.get_position_in_cds(bp)
             
             codon_number = self.gene.get_codon_number_for_cds_position(cds_pos)
             self.codon_pos = self.gene.get_position_within_codon(cds_pos)

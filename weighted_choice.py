@@ -30,15 +30,4 @@ class WeightedChoice(object):
         r = random.uniform(0, self.cum_probs[-1])
         pos = bisect.bisect_left(self.cum_probs, r)
         
-        if pos == len(self.cum_probs) - 1:
-            return self.choices[pos][0]
-        
-        # since we have chosen the position immediately prior to the random
-        # probability, figure out whether the value before or after is closer
-        left_diff = abs(r - self.cum_probs[pos])
-        right_diff = abs(r - self.cum_probs[pos + 1])
-        
-        if left_diff > right_diff:
-            return self.choices[pos][0]
-        else:
-            return self.choices[pos + 1][0]
+        return self.choices[pos][0]

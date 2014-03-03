@@ -39,8 +39,8 @@ class GetTranscriptSequence(object):
         major = release[0]
         minor = release[1]
         
-        if major != "1" or minor != "5":
-            raise ValueError()
+        if major != "1" or minor != "6":
+            raise ValueError("check ensembl api version")
     
     def ensembl_request(self, ext, sequence_id, headers):
         """ obtain sequence via the ensembl REST API

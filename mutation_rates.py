@@ -35,17 +35,21 @@ import time
 from interval import Interval
 from get_transcript_sequences import GetTranscriptSequence
 from load_mutation_rates import load_trincleotide_mutation_rates
-from site_specific_rates import SiteRates
 from load_known_de_novos import load_known_de_novos
-from analyse_de_novos import AnalyseDeNovos
+from load_conservation_scores import load_conservation_scores
+from site_specific_rates import SiteRates
+from analyse_de_novo_clustering import AnalyseDeNovoClustering
+from analyse_de_novo_conservation import AnalyseDeNovoConservation
 
 # define some paths and config files
 USER_FOLDER = "/nfs/users/nfs_j/jm33/"
+LUSTRE_FOLDER = "/lustre/scratch109/sanger/jm33/"
 APP_FOLDER = os.path.join(USER_FOLDER, "apps", "mutation_rates")
 DATA_FOLDER = os.path.join(APP_FOLDER, "data")
 
 DEPRECATED_GENE_ID_FILE = os.path.join(DATA_FOLDER, "deprecated_ddg2p_hgnc_ids.txt")
 MUTATION_RATES_FILE = os.path.join(DATA_FOLDER, "forSanger_1KG_mutation_rate_table.txt")
+CONSERVATION_FOLDER = os.path.join(LUSTRE_FOLDER, "phyloP46way", "vertebrate")
 # KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_28Jan2014.xlsx")
 KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_20Feb2014_NonRed_Clean_NoTwins_NoClusters.txt")
 OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.geometric_mean.tsv")
@@ -128,6 +132,10 @@ def load_gene(ensembl, gene_id):
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
     
+    # add in phyloP conservation scores
+    conservation_scores = load_conservation_scores(CONSERVATION_FOLDER, chrom, start, end)
+    transcript.add_conservation_scores(conservation_scores)
+    
     return transcript
 
 
@@ -146,6 +154,7 @@ def main():
     
     iterations = 1000000
     for gene_id in known_de_novos:
+        print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]
         missense_events = known_de_novos[gene_id]["missense"]
@@ -162,7 +171,7 @@ def main():
         transcript = load_gene(ensembl, gene_id)
         site_weights = SiteRates(transcript, mut_dict)
         
-        probs = AnalyseDeNovos(transcript, site_weights, iterations)
+        probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
         
         (func_dist, func_prob) = probs.analyse_functional(func_events)
         (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
@@ -172,6 +181,13 @@ def main():
             format(gene_id, len(func_events), func_dist, func_prob, \
             len(missense_events), miss_dist, miss_prob, \
             len(nonsense_events), nons_dist, nons_prob))
+        
+        probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
+        
+        (func_dist, func_prob) = probs.analyse_functional(func_events)
+        (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
+        (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
+        
         
         # sys.exit()
     
