@@ -147,10 +147,13 @@ def main():
     known_de_novos = load_known_de_novos(KNOWN_MUTATIONS_FILE)
     
     output = open(OUTPUT_FILE, "w")
-    output.write("\t".join(["gene_id", "functional_events_n", "func_dist", \
-        "functional_probability", "missense_events_n", "missense_dist", \
-        "missense_probability", "nonsense_events_n", "nonsense_distance", \
-        "nonsense_probability"]) + "\n")
+    output.write("\t".join(["gene_id", \
+        "functional_events_n", "func_distance", "func_dist_probability", \
+        "func_conservation", "func_conservation_probability", \
+        "missense_events_n", "missense_dist", "missense_probability", 
+        "missense_conservation", "missense_conservation_probabilty", \
+        "nonsense_events_n", "nonsense_distance", "nonsense_dist_probability", \
+        "nonsense_conservation", "nonsense_conservation_probability"]) + "\n")
     
     iterations = 1000000
     for gene_id in known_de_novos:
@@ -177,17 +180,17 @@ def main():
         (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
         (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
         
-        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\n".\
-            format(gene_id, len(func_events), func_dist, func_prob, \
-            len(missense_events), miss_dist, miss_prob, \
-            len(nonsense_events), nons_dist, nons_prob))
-        
         probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
         
-        (func_dist, func_prob) = probs.analyse_functional(func_events)
-        (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
-        (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
+        (cons_func, cons_func_p) = probs.analyse_functional(func_events)
+        (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
+        (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
         
+        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}\t{15}\n".\
+            format(gene_id, \
+            len(func_events), func_dist, func_prob, cons_func, cons_func_p, \
+            len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
+            len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
         
         # sys.exit()
     

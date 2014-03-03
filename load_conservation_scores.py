@@ -17,17 +17,16 @@ def load_conservation_scores(conservation_folder, chrom, start, end):
     
     scores = {}
     with gzip.open(path, "rt") as f:
-        header = f.readline()
-        header = header.strip().split()
-        if header[0] != "fixedStep":
-            raise ValueError("check wig format of file")
-        
-        wig_start = int(header[2].split("=")[1])
-        wig_step = int(header[3].split("=")[1])
-        
-        pos = wig_start
+        pos = 0
         for line in f:
             pos += 1
+            
+            # occasionally the file jumps the position to a new site, not just
+            # at the start of the file
+            if line.startswith("fixed"):
+                line = line.strip().split()
+                pos = int(line[2].split("=")[1])
+                continue
             
             if start < pos < end:  
                 scores[pos] = float(line.strip())

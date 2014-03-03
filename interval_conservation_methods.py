@@ -11,6 +11,13 @@ class ConservationMethods(object):
     
     def add_conservation_scores(self, conservation_scores):
         """ figure out the coding position relative to the CDS start site
+        
+        Converts the conservation score positions to CDS positions, so we can
+        pull out scores by CDS position.
+        
+        Args:
+            conservation_scores: dict of conservation scores, indexed by
+                chromosome position
         """
         
         cds_chrom_start = self.get_cds_start()

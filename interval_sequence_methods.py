@@ -32,8 +32,6 @@ class SequenceMethods(object):
                 start_cds = self.get_coding_distance(self.get_cds_end(), end)
                 end_cds = self.get_coding_distance(self.get_cds_end(), start)
             
-            # print(cds_position, start_cds, end_cds, start, end)
-            
             if start_cds <= cds_position <= end_cds:
                 break
         

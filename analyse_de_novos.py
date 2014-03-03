@@ -45,6 +45,68 @@ class AnalyseDeNovos(object):
         weights = self.site_weights.get_functional_rates_for_gene()
         return self.analyse_de_novos(de_novo_events, weights)
     
+    def analyse_de_novos(self, de_novos, weights):
+        """ find the probability of getting de novos with a mean conservation
+        
+        The probability is the number of simulations where the mean conservation
+        between simulated de novos is less than the observed conservation.
+        
+        Args:
+            de_novos: list of de novos within a gene
+            weights: WeightedChoice object to randomly choose positions within
+                a gene using site specific mutation rates.
+        
+        Returns:
+            mean conservation for the observed de novos and probability of 
+            obtaining a mean conservation less than the observed conservation
+        """
+        
+        observed_value, sim_prob = "NA", "NA"
+        sample_n = len(de_novos)
+        if sample_n < 2:
+            return (observed_value, sim_prob)
+        
+        dist = self.simulate_distribution(weights, sample_n, self.max_iter)
+        
+        cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
+        observed_value = self.get_score(cds_positions)
+        
+        pos = bisect.bisect_right(dist, observed_value)
+        sim_prob = (1 + pos)/(1 + len(dist))
+        
+        if type(observed_value) != "str":
+            observed_value = "{0:0.1f}".format(observed_value)
+        
+        return (observed_value, sim_prob)
+    
+    def simulate_distribution(self, weights, sample_n=2, max_iter=100):
+        """ creates a distribution of mutation scores in a single gene
+        
+        Args:
+            weights: WeightedChoice object
+            sample_n: number of de novo mutations to sample
+            max_iter: number of iterations/simulations to run
+        """
+        
+        distribution = []
+        iteration = 0
+        while iteration < max_iter:
+            iteration += 1
+            
+            positions = []
+            while len(positions) < sample_n:
+                site = weights.choice()
+                positions.append(site)
+            
+            # the following line is class specific - can do distance clustering,
+            # conservation scores
+            value = self.get_score(positions)
+            distribution.append(value)
+        
+        distribution = sorted(distribution)
+        
+        return distribution
+    
     def convert_de_novos_to_cds_positions(self, de_novos):
         """ convert cds positions for de novo events into cds positions
         
