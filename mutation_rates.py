@@ -111,6 +111,7 @@ def load_gene(ensembl, gene_id):
         Interval object for gene, including genomic ranges and sequences
     """
     
+    print("loading transcript ID")
     ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
     transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes)
     transcript_id = identify_transcript(ensembl, transcript_ids)
@@ -119,6 +120,7 @@ def load_gene(ensembl, gene_id):
     if transcript_id == None:
         raise ValueError(gene_id + " lacks coding transcripts")
     
+    print("loading features and sequence")
     # get the sequence for the identified transcript
     (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id, expand=10)
     cds_sequence = ensembl.get_cds_seq_for_transcript(transcript_id)
@@ -132,9 +134,13 @@ def load_gene(ensembl, gene_id):
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
     
+    print("loading conservation scores")
     # add in phyloP conservation scores
     conservation_scores = load_conservation_scores(CONSERVATION_FOLDER, chrom, start, end)
-    transcript.add_conservation_scores(conservation_scores)
+    try:
+        transcript.add_conservation_scores(conservation_scores)
+    except ValueError:
+        pass
     
     return transcript
 
@@ -174,25 +180,27 @@ def main():
         transcript = load_gene(ensembl, gene_id)
         site_weights = SiteRates(transcript, mut_dict)
         
+        print("simulating clustering and conservation")
         probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
         
         (func_dist, func_prob) = probs.analyse_functional(func_events)
         (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
         (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
         
-        probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
-        
-        (cons_func, cons_func_p) = probs.analyse_functional(func_events)
-        (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
-        (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
+        [cons_func, cons_func_p, cons_miss, cons_miss_p, cons_nons, \
+            cons_nons_p] = ["NA"] * 6
+        if hasattr(transcript, "conservation_scores"):
+            probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
+            
+            (cons_func, cons_func_p) = probs.analyse_functional(func_events)
+            (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
+            (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
         
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\t{11}\t{12}\t{13}\t{14}\t{15}\n".\
             format(gene_id, \
             len(func_events), func_dist, func_prob, cons_func, cons_func_p, \
             len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
             len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
-        
-        # sys.exit()
     
 if __name__ == '__main__':
     main()

@@ -119,8 +119,11 @@ class AnalyseDeNovos(object):
         
         # need to convert the de novo event positions into CDS positions
         cds_start = self.transcript.get_cds_start()
+        if self.transcript.strand == "-":
+            cds_start = self.transcript.get_cds_end()
         cds_positions = []
         for pos in de_novos:
+            pos += 1 # offset to zero based chrom
             try:
                 dist = self.transcript.get_coding_distance(cds_start, pos)
             except AssertionError:
