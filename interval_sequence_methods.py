@@ -76,7 +76,9 @@ class SequenceMethods(object):
                 end_bp = abs(self.get_end() - start)
                 cds_seq = gdna[start_bp - 1:end_bp] + cds_seq
         
-        # do a sanity check to check that we've got the right cds sequence
+        # do a sanity check to check that we've got the right cds sequence, this
+        # fails for at least one gene (CCDC18), which begins with a N, and 
+        # throws the coordinates off
         if cds_seq != self.cds_sequence:
             raise ValueError("haven't obtained the right CDS for " + \
                 self.get_name() + "\n" + cds_seq)

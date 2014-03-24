@@ -315,5 +315,36 @@ class Interval(SequenceMethods, ConservationMethods):
         
         return distance
     
+    def convert_chr_pos_to_cds_positions(self, pos):
+        """ returns a chromosome position as distance from CDS ATG start
+        """
         
+        # need to convert the de novo event positions into CDS positions
+        cds_start = self.get_cds_start()
+        if self.strand == "-":
+            cds_start = self.get_cds_end()
         
+        pos += 1 # offset to zero based chrom
+        try:
+            dist = self.get_coding_distance(cds_start, pos)
+        except AssertionError:
+            # catch the splice site functional mutations
+            (start, end) = self.find_closest_exon(pos)
+            
+            start_dist = abs(start - pos)
+            end_dist = abs(end - pos)
+            
+            # if the var is outside the exon, but might affect a splice site, 
+            # swap it to using the splice site location
+            if start_dist < 10:
+                dist = self.get_coding_distance(cds_start, start)
+            elif end_dist < 10:
+                dist = self.get_coding_distance(cds_start, end)
+            else:
+                raise ValueError("distance to exon (" + str(min(start_dist,\
+                    end_dist)) + ") > 2 bp for " + str(pos) + " in " + \
+                    "transcript " + self.get_name())
+        
+        return dist
+
+

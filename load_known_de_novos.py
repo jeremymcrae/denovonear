@@ -44,24 +44,35 @@ def load_known_de_novos(filename):
         # convert the tab separated file to a list of lists
         table = []
         for line in read[1:]:
-            table.append(line.strip().split("\t"))
+            table.append(line.rstrip().split("\t"))
     
     # get the positions of the columns that we are interested in
     gene_name_col = header.index("gene_name")
     position_col = header.index("pos")
     consequence_col = header.index("consequence")
+    snp_or_indel_col = header.index("snp_or_indel")
     unused_consequences = set([])
     
     genes_dict = {}
     for values in table:
-        
+        # print(values)
         gene = values[gene_name_col]
         position = values[position_col]
         consequence = values[consequence_col]
+        snp_or_indel = values[snp_or_indel_col]
         
         # don't include de novos that aren't functionally important
         if consequence not in functional_consequences:
             unused_consequences.add(consequence)
+            continue
+        
+        # ignore indels (some splice_acceptor_variants (in the
+        # functional_consequences) are indels
+        if "INDEL" in snp_or_indel:
+            continue
+        
+        # trim out variants that are missing data
+        if gene == "" or gene == "." or position == "NA":
             continue
         
         if gene not in genes_dict:

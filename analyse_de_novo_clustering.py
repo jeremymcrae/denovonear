@@ -93,6 +93,4 @@ class AnalyseDeNovoClustering(AnalyseDeNovos):
         
         return self.geomean(distances)
     
-    def product(self, iterable):
-        return reduce(operator.mul, iterable, 1)
 

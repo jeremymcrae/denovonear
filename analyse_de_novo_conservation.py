@@ -35,6 +35,8 @@ class AnalyseDeNovoConservation(AnalyseDeNovos):
             score = self.transcript.get_conservation_score(position)
             scores.append(score)
         
-        return sum(scores)/len(scores)
+        # get the mean score,  but make the score negative, since the simulation
+        # looks for a minimal value
+        return -(sum(scores)/len(scores))
     
 

@@ -29,23 +29,23 @@ class AnalyseDeNovos(object):
         """
         
         weights = self.site_weights.get_missense_rates_for_gene()
-        return self.analyse_de_novos(de_novo_events, weights)
+        return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
     
     def analyse_nonsense(self, de_novo_events):
         """ analyse clustering of nonsense de novos
         """
         
         weights = self.site_weights.get_nonsense_rates_for_gene()
-        return self.analyse_de_novos(de_novo_events, weights)
+        return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
     
     def analyse_functional(self, de_novo_events):
         """ analyse clustering of functional (missense and nonsense) de novos
         """
         
         weights = self.site_weights.get_functional_rates_for_gene()
-        return self.analyse_de_novos(de_novo_events, weights)
+        return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
     
-    def analyse_de_novos(self, de_novos, weights):
+    def analyse_de_novos(self, de_novos, weights, iterations):
         """ find the probability of getting de novos with a mean conservation
         
         The probability is the number of simulations where the mean conservation
@@ -55,41 +55,53 @@ class AnalyseDeNovos(object):
             de_novos: list of de novos within a gene
             weights: WeightedChoice object to randomly choose positions within
                 a gene using site specific mutation rates.
+            iterations: the (minimum) number of perumtations to run.
         
         Returns:
             mean conservation for the observed de novos and probability of 
             obtaining a mean conservation less than the observed conservation
         """
         
-        observed_value, sim_prob = "NA", "NA"
-        sample_n = len(de_novos)
-        if sample_n < 2:
-            return (observed_value, sim_prob)
+        if len(de_novos) < 2:
+            return ("NA", "NA")
         
-        dist = self.simulate_distribution(weights, sample_n, self.max_iter)
+        minimum_prob = 1/(1 + iterations)
+        sim_prob = minimum_prob
+        dist = []
         
         cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
         observed_value = self.get_score(cds_positions)
         
-        pos = bisect.bisect_right(dist, observed_value)
-        sim_prob = (1 + pos)/(1 + len(dist))
+        # if the p-value that we obtain is right at the minimum edge of the 
+        # simulated distribution, increase the number of iterations until the
+        # p-value is no longer at the very edge (or we reach 100 million 
+        # iterations).
+        while iterations < 100000000 and sim_prob == minimum_prob:
+            minimum_prob = 1/(1 + iterations)
+            
+            dist = self.simulate_distribution(weights, dist, len(de_novos), iterations)
+            pos = bisect.bisect_right(dist, observed_value)
+            sim_prob = (1 + pos)/(1 + len(dist))
+            
+            iterations += 1000000 # for if we need to run more iterations
         
         if type(observed_value) != "str":
             observed_value = "{0:0.1f}".format(observed_value)
         
         return (observed_value, sim_prob)
     
-    def simulate_distribution(self, weights, sample_n=2, max_iter=100):
+    
+    def simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
         """ creates a distribution of mutation scores in a single gene
         
         Args:
             weights: WeightedChoice object
+            dist: current list of simulated scores
             sample_n: number of de novo mutations to sample
             max_iter: number of iterations/simulations to run
         """
         
-        distribution = []
-        iteration = 0
+        iteration = len(dist)
         while iteration < max_iter:
             iteration += 1
             
@@ -101,11 +113,11 @@ class AnalyseDeNovos(object):
             # the following line is class specific - can do distance clustering,
             # conservation scores
             value = self.get_score(positions)
-            distribution.append(value)
+            dist.append(value)
         
-        distribution = sorted(distribution)
+        dist.sort()
         
-        return distribution
+        return dist
     
     def convert_de_novos_to_cds_positions(self, de_novos):
         """ convert cds positions for de novo events into cds positions
@@ -117,36 +129,18 @@ class AnalyseDeNovos(object):
             list of positions converted to CDS positions within the transcript
         """
         
-        # need to convert the de novo event positions into CDS positions
-        cds_start = self.transcript.get_cds_start()
-        if self.transcript.strand == "-":
-            cds_start = self.transcript.get_cds_end()
         cds_positions = []
         for pos in de_novos:
-            pos += 1 # offset to zero based chrom
-            try:
-                dist = self.transcript.get_coding_distance(cds_start, pos)
-            except AssertionError:
-                # catch the splice site functional mutations
-                (start, end) = self.transcript.find_closest_exon(pos)
-                
-                start_dist = abs(start - pos)
-                end_dist = abs(end - pos)
-                
-                # if the var is outside the exon, but affects a splice site, 
-                # swap it to using the splice site location
-                if start_dist < 3:
-                    dist = self.transcript.get_coding_distance(cds_start, start)
-                elif end_dist < 3:
-                    dist = self.transcript.get_coding_distance(cds_start, end)
-                else:
-                    raise ValueError("distance to exon (" + str(max(start_dist,\
-                        end_dist)) + ") > 2 bp for " + str(pos) + " in " + \
-                        "transcript " + self.transcript.get_name())
-                
+            dist = self.transcript.convert_chr_pos_to_cds_positions(pos)
             cds_positions.append(dist)
         
         return cds_positions
+        
+    def product(self, iterable):
+        """ get the product (multiplication sum) of a list of numbers
+        """
+        
+        return reduce(operator.mul, iterable, 1)
     
     def geomean(self, values):
         """ get the geometric mean of a list of values

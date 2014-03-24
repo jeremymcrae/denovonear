@@ -69,7 +69,7 @@ class GetTranscriptSequence(object):
             self.ensembl_request(ext, sequence_id, headers)
         elif r.status_code != 200:
             raise ValueError("Invalid Ensembl response: " + str(r.status_code)\
-                + " for " + sequence_id + ". Submitted URL was: " + r.url)
+                + " for " + str(sequence_id) + ". Submitted URL was: " + r.url)
         
         return r
     
@@ -92,7 +92,7 @@ class GetTranscriptSequence(object):
         
         return genes
         
-    def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids):
+    def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids, hgnc_id):
     
         chroms = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", \
              "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", \
@@ -110,7 +110,8 @@ class GetTranscriptSequence(object):
                 # ignore transcripts not on the standard chromosomes 
                 # (non-default chroms fail to map the known de novo variants 
                 # to the gene location
-                if item["Parent"] != gene_id or item["seq_region_name"] not in chroms:
+                if item["Parent"] != gene_id or item["seq_region_name"] not in \
+                        chroms or hgnc_id not in item["external_name"]:
                     continue
                 transcript_ids.append(item["ID"])
         

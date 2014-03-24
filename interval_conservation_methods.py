@@ -29,8 +29,8 @@ class ConservationMethods(object):
         
         # sometimes the conservation data doesn't contain values for the CDS, 
         # since the gene lies at the end of the chrom, or in a difficult region
-        if cds_chrom_start > cons_end or cons_end < cds_chrom_start:
-            raise ValueError()
+        if cds_chrom_end > cons_end or cons_end < cds_chrom_end:
+            raise ValueError("no conservation data for CDS")
         
         self.conservation_scores = {}
         cds_pos = 0

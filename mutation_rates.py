@@ -30,7 +30,7 @@ from __future__ import print_function
 from __future__ import division
 import sys
 import os
-import time
+import argparse
 
 from interval import Interval
 from get_transcript_sequences import GetTranscriptSequence
@@ -51,9 +51,25 @@ DEPRECATED_GENE_ID_FILE = os.path.join(DATA_FOLDER, "deprecated_ddg2p_hgnc_ids.t
 MUTATION_RATES_FILE = os.path.join(DATA_FOLDER, "forSanger_1KG_mutation_rate_table.txt")
 CONSERVATION_FOLDER = os.path.join(LUSTRE_FOLDER, "phyloP46way", "vertebrate")
 # KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_28Jan2014.xlsx")
-KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_20Feb2014_NonRed_Clean_NoTwins_NoClusters.txt")
-OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.geometric_mean.tsv")
+# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_20Feb2014_NonRed_Clean_NoTwins_NoClusters.txt")
+# OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.geometric_mean.tsv")
+# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "Meta_DNMs_4Jeremy_100314.txt")
+# OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.increased_set.geometric_mean.tsv")
+# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "Meta_DNMs_4Jeremy_100314_all_newest.txt")
+# OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.increased_set_all.geometric_mean.tsv")
 
+
+def get_options():
+    """ get the command line switches
+    """
+    
+    parser = argparse.ArgumentParser(description='examine mutation clustering in genes')
+    parser.add_argument("--in", dest="input", help="input filename for file listing known mutations in genes")
+    parser.add_argument("--out", dest="output", help="output filename")
+
+    args = parser.parse_args()
+    
+    return args.input, args.output
 
 def get_deprecated_gene_ids(filename):
     """ gets a dict of the gene IDs used during in DDD datasets that have been 
@@ -82,9 +98,7 @@ def identify_transcript(ensembl, transcript_ids):
         the transcript ID of the longest protein coding transcript in the list
     """
     
-    max_length = 0
-    max_transcript_id = None
-    
+    transcripts = {}
     for transcript_id in transcript_ids:
         # get the transcript's protein sequence via the ensembl REST API
         seq = ensembl.get_protein_seq_for_transcript(transcript_id)
@@ -93,32 +107,13 @@ def identify_transcript(ensembl, transcript_ids):
         if seq == "Sequence unavailable":
             continue
         
-        # only swap to using the transcript if it is the longest
-        if len(seq) > max_length:
-            max_length = len(seq)
-            max_transcript_id = transcript_id
+        transcripts[len(seq)] = transcript_id
     
-    return max_transcript_id
+    return transcripts
 
-def load_gene(ensembl, gene_id):
-    """ sort out all the necessary sequences and positions for a gene
-    
-    Args:
-        ensembl: GetTranscriptSequence object to request data from ensembl
-        gene_id: HGNC symbol for gene
-        
-    Returns:
-        Interval object for gene, including genomic ranges and sequences
+def construct_gene_object(ensembl, transcript_id):
+    """ creates and Interval object for a gene from ensembl databases
     """
-    
-    print("loading transcript ID")
-    ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
-    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes)
-    transcript_id = identify_transcript(ensembl, transcript_ids)
-    
-    # TODO: allow for genes without any coding sequence.
-    if transcript_id == None:
-        raise ValueError(gene_id + " lacks coding transcripts")
     
     print("loading features and sequence")
     # get the sequence for the identified transcript
@@ -134,6 +129,76 @@ def load_gene(ensembl, gene_id):
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
     
+    return transcript
+
+def check_denovos_in_gene(transcript, de_novos):
+    """ make sure that all the  de novos occur in the loaded gene
+    """
+    
+    for pos in de_novos:
+        # convert the de novo positions to cds positions, which raises an error
+        # if the position is not in the CDS exons
+        try:   
+            transcript.convert_chr_pos_to_cds_positions(pos)
+        except ValueError:
+            return False
+    
+    return True
+
+def load_gene(ensembl, gene_id, de_novos):
+    """ sort out all the necessary sequences and positions for a gene
+    
+    Args:
+        ensembl: GetTranscriptSequence object to request data from ensembl
+        gene_id: HGNC symbol for gene
+        de_novos: list of de novo positions, so we can check they all fit in 
+            the gene transcript
+        
+    Returns:
+        Interval object for gene, including genomic ranges and sequences
+    """
+    
+    print("loading transcript ID")
+    ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
+    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, gene_id)
+    transcripts = identify_transcript(ensembl, transcript_ids)
+    
+    # start with the longest transcript
+    lengths = sorted(transcripts)[::-1]
+    transcript_id = transcripts[lengths[0]]
+    
+    # TODO: allow for genes without any coding sequence.
+    if transcript_id == {}:
+        raise ValueError(gene_id + " lacks coding transcripts")
+    
+    try:
+        transcript = construct_gene_object(ensembl, transcript_id)
+    except ValueError:
+        # some genes raise errors when loading the gene sequence e.g. CCDC18
+        transcript_id = transcripts[lengths[1]]
+        transcript = construct_gene_object(ensembl, transcript_id)
+    
+    # create a Interval object using the longest transcript, but if that 
+    # transcript doesn't contain all the de novo positions, run through the 
+    # alternate transcripts in order of length (allows for CSMD2 variant 
+    # chr1:34071484 and PHACTR1 chr6:12933929).
+    pos = 0
+    while not check_denovos_in_gene(transcript, de_novos) and pos < (len(transcripts) - 1):
+        pos += 1
+        transcript_id = transcripts[sorted(transcripts)[::-1][pos]]
+        transcript = construct_gene_object(ensembl, transcript_id)
+    
+    # raise an IndexError if we can't get a transcript that contains all de 
+    # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
+    # mutually exclusive transcripts
+    if not check_denovos_in_gene(transcript, de_novos):
+        raise IndexError(gene_id + " de novos aren't in CDS sequence")
+    
+    # make sure we have the gene location for loading the conservation scores
+    chrom = transcript.get_chrom()
+    start = transcript.get_start()
+    end = transcript.get_end()
+    
     print("loading conservation scores")
     # add in phyloP conservation scores
     conservation_scores = load_conservation_scores(CONSERVATION_FOLDER, chrom, start, end)
@@ -144,15 +209,18 @@ def load_gene(ensembl, gene_id):
     
     return transcript
 
-
 def main():
+    
+    
+    input_file, output_file = get_options()
+    
     # load all the data
     ensembl = GetTranscriptSequence()
     mut_dict = load_trincleotide_mutation_rates(MUTATION_RATES_FILE)
     old_gene_ids = get_deprecated_gene_ids(DEPRECATED_GENE_ID_FILE)
-    known_de_novos = load_known_de_novos(KNOWN_MUTATIONS_FILE)
+    known_de_novos = load_known_de_novos(input_file)
     
-    output = open(OUTPUT_FILE, "w")
+    output = open(output_file, "w")
     output.write("\t".join(["gene_id", \
         "functional_events_n", "func_distance", "func_dist_probability", \
         "func_conservation", "func_conservation_probability", \
@@ -161,8 +229,10 @@ def main():
         "nonsense_events_n", "nonsense_distance", "nonsense_dist_probability", \
         "nonsense_conservation", "nonsense_conservation_probability"]) + "\n")
     
-    iterations = 1000000
+    initial_iterations = 1000000
     for gene_id in known_de_novos:
+        iterations = initial_iterations
+        # gene_id = "CCDC18"
         print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]
@@ -177,7 +247,11 @@ def main():
         if gene_id in old_gene_ids:
             gene_id = old_gene_ids[gene_id]
         
-        transcript = load_gene(ensembl, gene_id)
+        try:
+            transcript = load_gene(ensembl, gene_id, func_events)
+        except IndexError:
+            continue
+        
         site_weights = SiteRates(transcript, mut_dict)
         
         print("simulating clustering and conservation")
@@ -201,6 +275,8 @@ def main():
             len(func_events), func_dist, func_prob, cons_func, cons_func_p, \
             len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
             len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
+        
+        # sys.exit()
     
 if __name__ == '__main__':
     main()

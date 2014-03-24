@@ -16,17 +16,20 @@ class SiteRates(object):
         self.gene = gene
         self.mut_dict = mut_dict
         
-        (self.missense_sampler, self.nonsense_sampler, \
-            self.functional_sampler) = self.build_weighted_site_rates_for_gene()
+        # (self.missense_sampler, self.nonsense_sampler, \
+        #     self.functional_sampler) = self.build_weighted_site_rates_for_gene()
     
     def get_missense_rates_for_gene(self):
-        return self.missense_sampler
+        # return self.missense_sampler
+        return self.build_weighted_site_rates_for_gene(self.missense_check)
     
     def get_nonsense_rates_for_gene(self):
-        return self.nonsense_sampler
+        # return self.nonsense_sampler
+        return self.build_weighted_site_rates_for_gene(self.nonsense_check)
     
     def get_functional_rates_for_gene(self):
-        return self.functional_sampler
+        # return self.functional_sampler
+        return self.build_weighted_site_rates_for_gene(self.functional_check)
     
     def get_mutated_aa(self, base, codon, codon_pos):
         """ find the amino acid resulting from a base change to a codon
@@ -39,7 +42,7 @@ class SiteRates(object):
         
         return self.gene.translate_codon(mutated_codon)
     
-    def check_for_functional_mutation(self, initial_aa, mutated_aa):
+    def functional_check(self, initial_aa, mutated_aa):
         """ checks if two amino acids are have a functional mutation (either
         nonsense or missense)
         """
@@ -52,14 +55,14 @@ class SiteRates(object):
         
         return False
     
-    def check_for_nonsense_mutation(self, initial_aa, mutated_aa):
+    def nonsense_check(self, initial_aa, mutated_aa):
         """ checks if two amino acids are a nonsense (ie stop) mutation
         """
         
         return initial_aa != "*" and mutated_aa == "*" or \
             self.exon_start_dist < 3 or self.exon_end_dist < 3
     
-    def check_for_missense_mutation(self, initial_aa, mutated_aa):
+    def missense_check(self, initial_aa, mutated_aa):
         """ checks if two amino acids are a missense mutation (but not nonsense)
         """
         
@@ -75,27 +78,32 @@ class SiteRates(object):
         
         return False   
     
-    def build_weighted_site_rates_for_gene(self):
+    def get_gene_range(self):
+        """ get the start and end points for a gene
+        """
+        
+        start = self.gene.get_cds_start()
+        if self.gene.strand == "+":
+            start -= 1
+        
+        end = self.gene.get_cds_end() + 1
+        
+        return (start, end)
+    
+    def build_weighted_site_rates_for_gene(self, mut_type):
         """ build a list of sites in a gene that can give missense mutations, along 
         with their weighted probability of the mutation occuring.
         
         Args:
-            gene: Interval object for a gene
-            mut_dict: dictionary of trinucleotide specific mutation rates
+            mut_type: function to check if a site matches the mutation type
         
         Returns:
             WeightedChoice object, for random sampling by the weight of the mutation
             probabilities
         """
         
-        missense_probs = []
-        nonsense_probs = []
-        functional_probs = []
-        
-        range_start = self.gene.get_cds_start()
-        if self.gene.strand == "+":
-            range_start -= 1
-        range_end = self.gene.get_cds_end() + 1
+        probs = []
+        range_start, range_end = self.get_gene_range()
         
         for bp in range(range_start, range_end):
             if not self.gene.in_coding_region(bp):
@@ -122,18 +130,9 @@ class SiteRates(object):
             for base in sorted(bases):
                 mutated_aa = self.get_mutated_aa(base, self.codon, self.codon_pos)
                 mutated_seq = self.seq[0] + base + self.seq[2]
-                if self.check_for_missense_mutation(initial_aa, mutated_aa):
-                    missense_probs.append([cds_pos, self.mut_dict[self.seq][mutated_seq]])
-                elif self.check_for_nonsense_mutation(initial_aa, mutated_aa):
-                    nonsense_probs.append([cds_pos, self.mut_dict[self.seq][mutated_seq]])
-                
-                if self.check_for_functional_mutation(initial_aa, mutated_aa):
-                    functional_probs.append([cds_pos, self.mut_dict[self.seq][mutated_seq]])
+                if mut_type(initial_aa, mutated_aa):
+                    probs.append([cds_pos, self.mut_dict[self.seq][mutated_seq]])
         
-        # throw the mutation probabilities into a weighted random sampler
-        missense_sampler = WeightedChoice(missense_probs)
-        nonsense_sampler = WeightedChoice(nonsense_probs)
-        functional_sampler = WeightedChoice(functional_probs)
-        
-        return (missense_sampler, nonsense_sampler, functional_sampler)
+        return WeightedChoice(probs)
+
 
