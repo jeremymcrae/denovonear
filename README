@@ -1,0 +1,29 @@
+
+Obtain the code from the bitbucket repository with:
+
+git clone https://bitbucket.org/jeremy_mcrae/de_novo_clustering.git
+
+The code depends on two python modules (xlrd and requests), which can be 
+installed with:
+
+pip install --user xlrd
+pip install --user requests
+
+Then you can shift to the code folder, and analyse with:
+cd  de_novo_clustering/
+
+python clustering.py \
+   --in data/example_de_novos.txt \
+   --rates data/forSanger_1KG_mutation_rate_table.txt \
+   --deprecated-genes data/deprecated_ddg2p_hgnc_ids.txt \
+   --out test.txt
+
+That command uses a minimal example de novo input file, included in the git 
+repository. The input is a tab-separated file with a line for each de novo 
+event. The columns are HGNC symbol, chromosome, position and whether the de novo
+is a SNP or indel (the analysis excludes indels). 
+
+The deprecated gene ID file is a manually generated file for the genes where 
+the code failed to retrieve coordinates from Ensembl, so it's built from the 
+gene symbols from analysed files to date, so ongoing analyses might pick up 
+additional genes with old gene symbols.

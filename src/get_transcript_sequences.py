@@ -33,14 +33,20 @@ class GetTranscriptSequence(object):
         ext = "/info/rest"
         r = requests.get(self.server + ext, headers=headers)
         
-        response = r.json()
-        release = response["release"].split(".")
-        
-        major = release[0]
-        minor = release[1]
-        
-        if major != "1" or minor != "6":
-            raise ValueError("check ensembl api version")
+        try:
+            response = r.json()
+            release = response["release"].split(".")
+            
+            major = release[0]
+            minor = release[1]
+            
+            if major != "1" or minor != "6":
+                raise ValueError("check ensembl api version")
+            
+            return
+        except ValueError:
+            self.rate_limit_ensembl_requests()
+            self.check_ensembl_api_version()
     
     def ensembl_request(self, ext, sequence_id, headers):
         """ obtain sequence via the ensembl REST API
