@@ -11,7 +11,7 @@ import itertools
 import math
 import operator
 
-from analyse_de_novos import AnalyseDeNovos
+from src.analyse_de_novos import AnalyseDeNovos
 
 class AnalyseDeNovoClustering(AnalyseDeNovos):
     """ class to analyse clustering of de novo events via site specific 

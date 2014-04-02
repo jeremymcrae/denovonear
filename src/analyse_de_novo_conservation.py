@@ -13,7 +13,7 @@ import operator
 import random
 
 
-from analyse_de_novos import AnalyseDeNovos
+from src.analyse_de_novos import AnalyseDeNovos
 
 class AnalyseDeNovoConservation(AnalyseDeNovos):
     """ class to analyse conservation of de novo events via site specific 

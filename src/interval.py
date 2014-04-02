@@ -1,8 +1,8 @@
 """ class to hold interval objects (such as genes, transcript regions etc)
 """
 
-from interval_sequence_methods import SequenceMethods
-from interval_conservation_methods import ConservationMethods
+from src.interval_sequence_methods import SequenceMethods
+from src.interval_conservation_methods import ConservationMethods
 
 class Interval(SequenceMethods, ConservationMethods):
     """ class to hold intervals for gene regions, including CDS positions

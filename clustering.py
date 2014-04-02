@@ -4,19 +4,20 @@ within a single gene.
 
 from __future__ import print_function
 from __future__ import division
+from __future__ import absolute_import
 
 import sys
 import os
 import argparse
 
-from interval import Interval
-from get_transcript_sequences import GetTranscriptSequence
-from load_mutation_rates import load_trincleotide_mutation_rates
-from load_known_de_novos import load_known_de_novos
-from load_conservation_scores import load_conservation_scores
-from site_specific_rates import SiteRates
-from analyse_de_novo_clustering import AnalyseDeNovoClustering
-from analyse_de_novo_conservation import AnalyseDeNovoConservation
+from src.interval import Interval
+from src.get_transcript_sequences import GetTranscriptSequence
+from src.load_mutation_rates import load_trincleotide_mutation_rates
+from src.load_known_de_novos import load_known_de_novos
+from src.load_conservation_scores import load_conservation_scores
+from src.site_specific_rates import SiteRates
+from src.analyse_de_novo_clustering import AnalyseDeNovoClustering
+from src.analyse_de_novo_conservation import AnalyseDeNovoConservation
 
 
 def get_options():
@@ -184,9 +185,7 @@ def main():
     output = open(output_file, "w")
     output.write("\t".join(["gene_id", \
         "missense_events_n", "missense_dist", "missense_probability", 
-        "missense_conservation", "missense_conservation_probabilty", \
-        "nonsense_events_n", "nonsense_distance", "nonsense_dist_probability", \
-        "nonsense_conservation", "nonsense_conservation_probability"]) + "\n")
+        "nonsense_events_n", "nonsense_distance", "nonsense_dist_probability"]) + "\n")
     
     initial_iterations = 1000000
     for gene_id in known_de_novos:
@@ -234,7 +233,7 @@ def main():
         #     len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
         #     len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
         
-        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, \
+        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n".format(gene_id, \
             len(missense_events), miss_dist, miss_prob, \
             len(nonsense_events), nons_dist, nons_prob ))
         

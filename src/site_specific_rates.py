@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-from weighted_choice import WeightedChoice
+from src.weighted_choice import WeightedChoice
 
 
 class SiteRates(object):
