@@ -43,8 +43,6 @@ class GetTranscriptSequence(object):
             
             if major != "1" or minor != "6":
                 raise ValueError("check ensembl api version")
-            
-            return
         except ValueError:
             self.rate_limit_ensembl_requests()
             self.check_ensembl_api_version()
@@ -85,7 +83,7 @@ class GetTranscriptSequence(object):
             try:
                 r.json()
             except ValueError:
-                logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url, "cannot obtain json output"))
+                logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url, "cannot obtain json output"))
                 self.ensembl_request(ext, sequence_id, headers)
         
         return r
