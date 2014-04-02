@@ -2,6 +2,7 @@
 """
 
 from __future__ import print_function
+
 import time
 import requests
 import logging
@@ -76,6 +77,16 @@ class GetTranscriptSequence(object):
         elif r.status_code != 200:
             raise ValueError("Invalid Ensembl response: " + str(r.status_code)\
                 + " for " + str(sequence_id) + ". Submitted URL was: " + r.url)
+        
+        # sometimes ensembl returns odd data. I don't know what it is, but the 
+        # json interpreter can't handle it. Rather than trying to catch it, 
+        # simply re-request the data
+        if headers["Content-Type"] == "application/json":
+            try:
+                r.json()
+            except ValueError:
+                logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url, "cannot obtain json output"))
+                self.ensembl_request(ext, sequence_id, headers)
         
         return r
     

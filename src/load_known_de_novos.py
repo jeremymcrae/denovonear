@@ -21,6 +21,7 @@ def load_known_de_novos(filename):
     """ load known mutations into dict indexed by HGNC ID.
     """
     
+    # sometimes the input is an excel file
     if filename.endswith("xlsx"):
         # open an xlsx file containing the current list of de novo mutations in
         # probands studied to date
@@ -35,8 +36,8 @@ def load_known_de_novos(filename):
             row += 1
             values = table.row_values(row)
             table.append(values)
-        
-    elif filename.endswith("txt"):
+    # otherwise assume the file is a tab-separated text file
+    else:
         f = open(filename, "r")
         read = f.readlines()
         header = read[0].strip().split("\t")
