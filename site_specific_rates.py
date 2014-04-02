@@ -15,20 +15,14 @@ class SiteRates(object):
         
         self.gene = gene
         self.mut_dict = mut_dict
-        
-        # (self.missense_sampler, self.nonsense_sampler, \
-        #     self.functional_sampler) = self.build_weighted_site_rates_for_gene()
     
     def get_missense_rates_for_gene(self):
-        # return self.missense_sampler
         return self.build_weighted_site_rates_for_gene(self.missense_check)
     
     def get_nonsense_rates_for_gene(self):
-        # return self.nonsense_sampler
         return self.build_weighted_site_rates_for_gene(self.nonsense_check)
     
     def get_functional_rates_for_gene(self):
-        # return self.functional_sampler
         return self.build_weighted_site_rates_for_gene(self.functional_check)
     
     def get_mutated_aa(self, base, codon, codon_pos):

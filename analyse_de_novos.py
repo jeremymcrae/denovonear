@@ -10,7 +10,7 @@ import bisect
 import itertools
 import math
 import operator
-
+from functools import reduce
 
 class AnalyseDeNovos(object):
     """ class to analyse clustering of de novo events via site specific 
@@ -85,11 +85,14 @@ class AnalyseDeNovos(object):
             
             iterations += 1000000 # for if we need to run more iterations
         
+        # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/distribution.txt", "w")
+        # for val in dist:
+        #     output.write(str(val) + "\n")
+        
         if type(observed_value) != "str":
             observed_value = "{0:0.1f}".format(observed_value)
         
         return (observed_value, sim_prob)
-    
     
     def simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
         """ creates a distribution of mutation scores in a single gene
@@ -101,6 +104,8 @@ class AnalyseDeNovos(object):
             max_iter: number of iterations/simulations to run
         """
         
+        # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/sampled_sites.txt", "w")
+        
         iteration = len(dist)
         while iteration < max_iter:
             iteration += 1
@@ -109,11 +114,15 @@ class AnalyseDeNovos(object):
             while len(positions) < sample_n:
                 site = weights.choice()
                 positions.append(site)
+                # chr_pos = self.transcript.get_position_on_chrom(site)
+                # output.write(str(chr_pos) + "\n")
             
             # the following line is class specific - can do distance clustering,
             # conservation scores
             value = self.get_score(positions)
             dist.append(value)
+        
+        # output.close()
         
         dist.sort()
         
