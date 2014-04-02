@@ -1,33 +1,10 @@
 """ Script to investigate the probability of multiple mutations clustering 
 within a single gene.
-
-simulate multiple mutations within a single gene using mutation rates
-    only consider nonsynonymous mutations
-    check functional type
-
-simulate clustering of mutations
-    sum the probabilities at each variant in the CDS for nonsynonymous mutations
-    sum all the probabilities across all the positions in the CDS
-    the likelihood of a specific mutation at a particular location is the 
-    ratio of that specific trinucleotide change to the summed gene probability
-
-cluster by distance:
-    determine distance between two mutations (distance defined as within 
-        coding sequence for longest CDS (if > one transcript))
-
-    Rationale is:
-        de novos closer together are increasingly unlikely
-        multiple de novos hitting same position is near impossible
-        three or more de novos - use mean distance between variants
-
-compare clustering of simulated mutations to known mutations
-    eg only 1% of the time we obtain de novos within 10 bp of each other
-
 """
-
 
 from __future__ import print_function
 from __future__ import division
+
 import sys
 import os
 import argparse
@@ -41,23 +18,6 @@ from site_specific_rates import SiteRates
 from analyse_de_novo_clustering import AnalyseDeNovoClustering
 from analyse_de_novo_conservation import AnalyseDeNovoConservation
 
-# define some paths and config files
-USER_FOLDER = "/nfs/users/nfs_j/jm33/"
-LUSTRE_FOLDER = "/lustre/scratch109/sanger/jm33/"
-APP_FOLDER = os.path.join(USER_FOLDER, "apps", "mutation_rates")
-DATA_FOLDER = os.path.join(APP_FOLDER, "data")
-
-DEPRECATED_GENE_ID_FILE = os.path.join(DATA_FOLDER, "deprecated_ddg2p_hgnc_ids.txt")
-MUTATION_RATES_FILE = os.path.join(DATA_FOLDER, "forSanger_1KG_mutation_rate_table.txt")
-CONSERVATION_FOLDER = os.path.join(LUSTRE_FOLDER, "phyloP46way", "vertebrate")
-# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_28Jan2014.xlsx")
-# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "DNG_Variants_20Feb2014_NonRed_Clean_NoTwins_NoClusters.txt")
-# OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.geometric_mean.tsv")
-# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "Meta_DNMs_4Jeremy_100314.txt")
-# OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.increased_set.geometric_mean.tsv")
-# KNOWN_MUTATIONS_FILE = os.path.join(DATA_FOLDER, "Meta_DNMs_4Jeremy_100314_all_newest.txt")
-# OUTPUT_FILE = os.path.join(DATA_FOLDER, "de_novo_distance_simulations.increased_set_all.geometric_mean.tsv")
-
 
 def get_options():
     """ get the command line switches
@@ -66,10 +26,12 @@ def get_options():
     parser = argparse.ArgumentParser(description='examine mutation clustering in genes')
     parser.add_argument("--in", dest="input", help="input filename for file listing known mutations in genes")
     parser.add_argument("--out", dest="output", help="output filename")
+    parser.add_argument("--rates", dest="mut_rates", help="mutation rates filename")
+    parser.add_argument("--deprecated-genes", dest="deprecated_genes", help="deprecated gene IDs filename")
 
     args = parser.parse_args()
     
-    return args.input, args.output
+    return args.input, args.output, args.mut_rates, args.deprecated_genes
 
 def get_deprecated_gene_ids(filename):
     """ gets a dict of the gene IDs used during in DDD datasets that have been 
@@ -199,25 +161,24 @@ def load_gene(ensembl, gene_id, de_novos):
     start = transcript.get_start()
     end = transcript.get_end()
     
-    print("loading conservation scores")
-    # add in phyloP conservation scores
-    conservation_scores = load_conservation_scores(CONSERVATION_FOLDER, chrom, start, end)
-    try:
-        transcript.add_conservation_scores(conservation_scores)
-    except ValueError:
-        pass
+    # print("loading conservation scores")
+    # # add in phyloP conservation scores
+    # conservation_scores = load_conservation_scores(CONSERVATION_FOLDER, chrom, start, end)
+    # try:
+    #     transcript.add_conservation_scores(conservation_scores)
+    # except ValueError:
+    #     pass
     
     return transcript
 
 def main():
     
-    
-    input_file, output_file = get_options()
+    input_file, output_file, mut_rates_file, deprecated_gene_id_file = get_options()
     
     # load all the data
     ensembl = GetTranscriptSequence()
-    mut_dict = load_trincleotide_mutation_rates(MUTATION_RATES_FILE)
-    old_gene_ids = get_deprecated_gene_ids(DEPRECATED_GENE_ID_FILE)
+    mut_dict = load_trincleotide_mutation_rates(mut_rates_file)
+    old_gene_ids = get_deprecated_gene_ids(deprecated_gene_id_file)
     known_de_novos = load_known_de_novos(input_file)
     
     output = open(output_file, "w")
@@ -252,28 +213,30 @@ def main():
         
         site_weights = SiteRates(transcript, mut_dict)
         
-        print("simulating clustering and conservation")
+        print("simulating clustering")
         probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
         
         # (func_dist, func_prob) = probs.analyse_functional(func_events)
         (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
         (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
         
-        # sys.exit()
-        
-        [cons_func, cons_func_p, cons_miss, cons_miss_p, cons_nons, \
-            cons_nons_p] = ["NA"] * 6
-        if hasattr(transcript, "conservation_scores"):
-            probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
+        # [cons_func, cons_func_p, cons_miss, cons_miss_p, cons_nons, \
+        #     cons_nons_p] = ["NA"] * 6
+        # if hasattr(transcript, "conservation_scores"):
+        #     probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
             
-            # (cons_func, cons_func_p) = probs.analyse_functional(func_events)
-            (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
-            (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
+        #     # (cons_func, cons_func_p) = probs.analyse_functional(func_events)
+        #     (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
+        #     (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
         
-        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n".\
-            format(gene_id, \
-            len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
-            len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
+        # output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n".\
+        #     format(gene_id, \
+        #     len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
+        #     len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
+        
+        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, \
+            len(missense_events), miss_dist, miss_prob, \
+            len(nonsense_events), nons_dist, nons_prob ))
         
         # sys.exit()
     
