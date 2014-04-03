@@ -190,8 +190,6 @@ def main():
         "missense_events_n", "missense_dist", "missense_probability", 
         "nonsense_events_n", "nonsense_distance", "nonsense_dist_probability"]) + "\n")
     
-    print(known_de_novos)
-    
     initial_iterations = 1000000
     for gene_id in known_de_novos:
         iterations = initial_iterations
