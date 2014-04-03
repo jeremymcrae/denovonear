@@ -67,11 +67,11 @@ class GetTranscriptSequence(object):
         # the period is finished before retrying
         if r.status_code == 429:
             time.sleep(int(r.headers["X-RateLimit-Reset"]))
-            self.ensembl_request(ext, sequence_id, headers)
+            return self.ensembl_request(ext, sequence_id, headers)
         # retry after 30 seconds if we get service unavailable error
         elif r.status_code == 503 or r.status_code == 504:
             time.sleep(30)
-            self.ensembl_request(ext, sequence_id, headers)
+            return self.ensembl_request(ext, sequence_id, headers)
         elif r.status_code != 200:
             raise ValueError("Invalid Ensembl response: " + str(r.status_code)\
                 + " for " + str(sequence_id) + ". Submitted URL was: " + r.url)
@@ -84,7 +84,7 @@ class GetTranscriptSequence(object):
                 r.json()
             except ValueError:
                 logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url, "cannot obtain json output"))
-                self.ensembl_request(ext, sequence_id, headers)
+                return self.ensembl_request(ext, sequence_id, headers)
         
         return r
     

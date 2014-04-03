@@ -149,7 +149,10 @@ def load_gene(ensembl, gene_id, de_novos):
     while not check_denovos_in_gene(transcript, de_novos) and pos < (len(transcripts) - 1):
         pos += 1
         transcript_id = transcripts[sorted(transcripts)[::-1][pos]]
-        transcript = construct_gene_object(ensembl, transcript_id)
+        try:
+            transcript = construct_gene_object(ensembl, transcript_id)
+        except ValueError:
+            continue
     
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
@@ -190,7 +193,6 @@ def main():
     initial_iterations = 1000000
     for gene_id in known_de_novos:
         iterations = initial_iterations
-        # gene_id = "SMARCA2"
         print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]
@@ -237,7 +239,7 @@ def main():
             len(missense_events), miss_dist, miss_prob, \
             len(nonsense_events), nons_dist, nons_prob ))
         
-        # sys.exit()
+        sys.exit()
     
 if __name__ == '__main__':
     main()
