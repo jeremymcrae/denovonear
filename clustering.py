@@ -237,7 +237,7 @@ def main():
         #     len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
         
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\n".format(gene_id, \
-            len(functional_events), func_dist, func_prob, \
+            len(func_events), func_dist, func_prob, \
             len(missense_events), miss_dist, miss_prob, \
             len(nonsense_events), nons_dist, nons_prob ))
         
