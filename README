@@ -20,10 +20,11 @@ python clustering.py \
 
 That command uses a minimal example de novo input file, included in the git 
 repository. The input is a tab-separated file with a line for each de novo 
-event. The columns are HGNC symbol, chromosome, position and whether the de novo
-is a SNP or indel (the analysis excludes indels). 
+event. The columns are HGNC symbol, chromosome, position, VEP consequence for 
+the variant, and whether the de novo is a SNP or indel (the analysis excludes 
+indels). 
 
 The deprecated gene ID file is a manually generated file for the genes where 
 the code failed to retrieve coordinates from Ensembl, so it's built from the 
 gene symbols from analysed files to date, so ongoing analyses might pick up 
-additional genes with old gene symbols.
+additional genes with out of date gene symbols.
