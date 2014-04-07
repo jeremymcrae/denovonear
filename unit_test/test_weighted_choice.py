@@ -1,9 +1,10 @@
 """ unit test the WeightedChoice class"""
 
 from __future__ import division
+
 import unittest
 
-from weighted_choice import WeightedChoice
+from src.weighted_choice import WeightedChoice
 
 class TestWeightedChoicePy(unittest.TestCase):
     """ unit test the WeightedChoice class
@@ -78,13 +79,13 @@ class TestWeightedChoicePy(unittest.TestCase):
         
         # check that the sampling works correctly at low weight values
         small = [x * 0.000000000001 for x in range(1000, 3000)]
-        choices = WeightedChoice(zip(small, small))
+        choices = WeightedChoice(list(zip(small, small)))
         s = self.sample(choices, 100000)
         self.assertAlmostEqual(s.count(small[0])/len(s), 0.0001, places=3)
         
         
     
 
-if __name__ == '__main__':
-    unittest.main()
+# if __name__ == '__main__':
+#     unittest.main()
 

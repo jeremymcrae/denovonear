@@ -107,6 +107,9 @@ class SequenceMethods(object):
         """ obtains the trinucleotide sequence around a cds position
         """
         
+        assert cds_position >= 0 
+        assert cds_position < len(self.cds_sequence)
+        
         if cds_position == 0:
             tri = self.upstream_sequence + self.cds_sequence[:2]
         elif cds_position == len(self.cds_sequence) - 1:
@@ -119,6 +122,9 @@ class SequenceMethods(object):
     def get_codon_sequence(self, codon_number):
         """ get the codon sequence for a given codon_number
         """
+        
+        assert codon_number >= 0
+        assert codon_number <= len(self.cds_sequence) / 3
         
         start = codon_number * 3
         end = start + 3

@@ -21,8 +21,8 @@ class WeightedChoice(object):
         # make a list of the cumulative probabilities
         cum_prob = 0
         self.cum_probs = []
-        for pos in range(len(self.choices)):
-            cum_prob += self.choices[pos][1]
+        for pair in self.choices:
+            cum_prob += pair[1]
             self.cum_probs.append(cum_prob)
         
     def choice(self):

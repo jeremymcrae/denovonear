@@ -324,7 +324,7 @@ class Interval(SequenceMethods, ConservationMethods):
         if self.strand == "-":
             cds_start = self.get_cds_end()
         
-        pos += 1 # offset to zero based chrom
+        pos += 1 # offset from zero based chrom
         try:
             dist = self.get_coding_distance(cds_start, pos)
         except AssertionError:
@@ -342,7 +342,7 @@ class Interval(SequenceMethods, ConservationMethods):
                 dist = self.get_coding_distance(cds_start, end)
             else:
                 raise ValueError("distance to exon (" + str(min(start_dist,\
-                    end_dist)) + ") > 2 bp for " + str(pos) + " in " + \
+                    end_dist)) + ") > 10 bp for " + str(pos) + " in " + \
                     "transcript " + self.get_name())
         
         return dist
