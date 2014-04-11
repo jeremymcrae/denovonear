@@ -3,11 +3,6 @@ Obtain the code from the bitbucket repository with:
 
 git clone https://bitbucket.org/jeremy_mcrae/de_novo_clustering.git
 
-The code depends on a python module (requests), which can be installed with:
-
-pip install --user requests 
-# or python3 -m pip install --user requests
-
 Then you can shift to the code folder, and analyse with:
 cd  de_novo_clustering/
 
