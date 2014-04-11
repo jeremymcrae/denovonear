@@ -1,25 +1,52 @@
-""" Obtains genomic sequence for transcripts from Ensembl
+""" Obtains genomic sequence, transcript IDs, gene, exon and CDS coordinates for
+transcripts from Ensembl.
 """
 
 from __future__ import print_function
 
+import sys
+import json
 import time
-import requests
 import logging
+
+IS_PYTHON2 = sys.version_info[0] == 2
+IS_PYTHON3 = sys.version_info[0] == 3
+
+# load python version specific url opener library
+if IS_PYTHON2:
+    import urllib2
+elif IS_PYTHON3:
+    import urllib.request
+else:
+    raise ValueError("unknown python version")
 
 logging.basicConfig(filename='ensembl_requests.log',level=logging.WARNING)
 
-class GetTranscriptSequence(object):
+class EnsemblRequest(object):
+    """ Uses the Ensembl REST API to obtain gene information from Ensembl.
+    
+    Can find:
+         - gene IDs for a HGNC symbol
+         - transcript IDs for a gene ID
+         - exon coordinates for an ensembl transcript ID
+         - CDS coordinates for an ensembl transcript ID
+         - transcript and genomic DNA sequences for an ensembl transcript ID
+    """
     
     def __init__(self):
         """ obtain the sequence for a transcript from ensembl
         """
         
+        # set the function to load urls, which is python version specific
+        if IS_PYTHON2:
+            self.open_url = self.open_url_python2
+        elif IS_PYTHON3:
+            self.open_url = self.open_url_python3
+        
         self.prior_time = time.time()
         self.rate_limit = 0.335
         
         self.server = "http://beta.rest.ensembl.org"
-        self.headers={"Content-Type": "text/plain"}
         
         self.check_ensembl_api_version()
     
@@ -30,22 +57,52 @@ class GetTranscriptSequence(object):
         change, and we can manually check the responses for the new version.
         """
         
+        self.request_attempts = 0
         headers = {"Content-Type": "application/json"}
         ext = "/info/rest"
-        r = requests.get(self.server + ext, headers=headers)
+        r = self.ensembl_request(ext, "version_check", headers)
         
-        try:
-            response = r.json()
-            release = response["release"].split(".")
-            
-            major = release[0]
-            minor = release[1]
-            
-            if major != "1" or minor != "6":
-                raise ValueError("check ensembl api version")
-        except ValueError:
-            self.rate_limit_ensembl_requests()
-            self.check_ensembl_api_version()
+        response = json.loads(r)
+        release = response["release"].split(".")
+        
+        major = release[0]
+        minor = release[1]
+        
+        if major != "1" or minor != "6":
+            raise ValueError("check ensembl api version")
+        
+    def open_url_python2(self, url, headers):
+        """ open url with python2 libraries
+        """
+        
+        req = urllib2.Request(url, headers=headers)
+        handler = urllib2.urlopen(req)
+        
+        response = handler.read()
+        status_code = handler.getcode()
+        
+        headers = {}
+        for line in handler.headers.headers:
+            line = line.strip().split(": ")
+            headers[line[0]] = line[1]
+        
+        return response, status_code, headers
+    
+    def open_url_python3(self, url, headers):
+        """ open url with python3 libraries
+        """
+        
+        req = urllib.request.Request(url, headers=headers)
+        handler = urllib.request.urlopen(req)
+        
+        response = handler.read().decode("utf-8")
+        status_code = handler.getcode()
+        
+        headers = {}
+        for line in handler.getheaders():
+            headers[line[0]] = line[1]
+        
+        return response, status_code, headers
     
     def ensembl_request(self, ext, sequence_id, headers):
         """ obtain sequence via the ensembl REST API
@@ -57,36 +114,36 @@ class GetTranscriptSequence(object):
         
         self.rate_limit_ensembl_requests()
         try:
-            r = requests.get(self.server + ext, headers=headers)
-        except ConnectionError:
+            response, status_code, headers = self.open_url(self.server + ext, headers=headers)
+        except IOError:
             self.ensembl_request(ext, sequence_id, headers)
         
-        logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url))
+        logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext))
         
         # we might end up passing too many requests per hour, just wait until
         # the period is finished before retrying
-        if r.status_code == 429:
-            time.sleep(int(r.headers["X-RateLimit-Reset"]))
+        if status_code == 429:
+            time.sleep(int(headers["X-RateLimit-Reset"]))
             return self.ensembl_request(ext, sequence_id, headers)
         # retry after 30 seconds if we get service unavailable error
-        elif r.status_code == 503 or r.status_code == 504:
+        elif status_code == 503 or status_code == 504:
             time.sleep(30)
             return self.ensembl_request(ext, sequence_id, headers)
-        elif r.status_code != 200:
-            raise ValueError("Invalid Ensembl response: " + str(r.status_code)\
-                + " for " + str(sequence_id) + ". Submitted URL was: " + r.url)
+        elif status_code != 200:
+            raise ValueError("Invalid Ensembl response: " + str(status_code)\
+                + " for " + str(sequence_id) + ". Submitted URL was: " + self.server + ext)
         
         # sometimes ensembl returns odd data. I don't know what it is, but the 
         # json interpreter can't handle it. Rather than trying to catch it, 
         # simply re-request the data
         if headers["Content-Type"] == "application/json":
             try:
-                r.json()
+                json.loads(response)
             except ValueError:
-                logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), r.status_code, sequence_id, r.url, "cannot obtain json output"))
+                logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext, "cannot obtain json output"))
                 return self.ensembl_request(ext, sequence_id, headers)
         
-        return r
+        return response
     
     def get_genes_for_hgnc_id(self, hgnc_id):
         """ obatin the sensembl gene IDs that correspond to a HGNC symbol
@@ -101,7 +158,7 @@ class GetTranscriptSequence(object):
         r = self.ensembl_request(ext, hgnc_id, headers)
         
         genes = []
-        for item in r.json():
+        for item in json.loads(r):
             if item["type"] == "gene":
                 genes.append(item["id"])
         
@@ -121,7 +178,7 @@ class GetTranscriptSequence(object):
             ext = "/feature/id/{0}?feature=transcript".format(gene_id)
             r = self.ensembl_request(ext, gene_id, headers)
             
-            for item in r.json():
+            for item in json.loads(r):
                 # ignore transcripts not on the standard chromosomes 
                 # (non-default chroms fail to map the known de novo variants 
                 # to the gene location
@@ -142,7 +199,7 @@ class GetTranscriptSequence(object):
         ext = "/sequence/id/{0}?type=genomic;expand_3prime={1};expand_5prime={1}".format(transcript_id, expand)
         r = self.ensembl_request(ext, transcript_id, headers)
         
-        gene = r.json()
+        gene = json.loads(r)
         
         seq = gene["seq"]
         seq_id = gene["id"]
@@ -173,7 +230,7 @@ class GetTranscriptSequence(object):
         ext = "/sequence/id/" + transcript_id + "?type=cds"
         r =  self.ensembl_request(ext, transcript_id, headers)
         
-        return r.text
+        return r
     
     def get_protein_seq_for_transcript(self, transcript_id):
         """ obtain the sequence for a transcript from ensembl
@@ -185,7 +242,7 @@ class GetTranscriptSequence(object):
         ext = "/sequence/id/" + transcript_id + "?type=protein"
         r =  self.ensembl_request(ext, transcript_id, headers)
         
-        return r.text
+        return r
     
     def get_chrom_for_transcript(self, transcript_id, hgnc_id):
         """ obtain the sequence for a transcript from ensembl
@@ -197,7 +254,7 @@ class GetTranscriptSequence(object):
         ext = "/feature/id/" + transcript_id + "?feature=gene"
         r =  self.ensembl_request(ext, transcript_id, headers)
         
-        for gene in r.json():
+        for gene in json.loads(r):
             if gene["external_name"] == hgnc_id:
                 return gene["seq_region_name"]
         
@@ -214,7 +271,7 @@ class GetTranscriptSequence(object):
         r = self.ensembl_request(ext, transcript_id, headers)
         
         exon_ranges = []
-        for exon in r.json():
+        for exon in json.loads(r):
             if exon["Parent"] != transcript_id:
                 continue
             
@@ -236,7 +293,7 @@ class GetTranscriptSequence(object):
         r = self.ensembl_request(ext, transcript_id, headers)
         
         cds_ranges = []
-        for cds_range in r.json():
+        for cds_range in json.loads(r):
             if cds_range["Parent"] != transcript_id:
                 continue
             

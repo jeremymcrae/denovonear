@@ -11,7 +11,7 @@ import os
 import argparse
 
 from src.interval import Interval
-from src.get_transcript_sequences import GetTranscriptSequence
+from src.ensembl_requester import EnsemblRequest
 from src.load_mutation_rates import load_trincleotide_mutation_rates
 from src.load_known_de_novos import load_known_de_novos
 from src.load_conservation_scores import load_conservation_scores
@@ -29,7 +29,7 @@ def get_options():
     parser.add_argument("--out", dest="output", help="output filename")
     parser.add_argument("--rates", dest="mut_rates", help="mutation rates filename")
     parser.add_argument("--deprecated-genes", dest="deprecated_genes", help="deprecated gene IDs filename")
-
+    
     args = parser.parse_args()
     
     return args.input, args.output, args.mut_rates, args.deprecated_genes
@@ -53,7 +53,7 @@ def identify_transcript(ensembl, transcript_ids):
     """ for a given HGNC ID, finds the transcript with the longest CDS
     
     Args:
-        ensembl: GetTranscriptSequence object to request sequences and data 
+        ensembl: EnsemblRequest object to request sequences and data 
             from the ensembl REST API
         transcript_ids: list of transcript IDs for a single gene
     
@@ -112,7 +112,7 @@ def load_gene(ensembl, gene_id, de_novos):
     """ sort out all the necessary sequences and positions for a gene
     
     Args:
-        ensembl: GetTranscriptSequence object to request data from ensembl
+        ensembl: EnsemblRequest object to request data from ensembl
         gene_id: HGNC symbol for gene
         de_novos: list of de novo positions, so we can check they all fit in 
             the gene transcript
@@ -180,7 +180,7 @@ def main():
     input_file, output_file, mut_rates_file, deprecated_gene_id_file = get_options()
     
     # load all the data
-    ensembl = GetTranscriptSequence()
+    ensembl = EnsemblRequest()
     mut_dict = load_trincleotide_mutation_rates(mut_rates_file)
     old_gene_ids = get_deprecated_gene_ids(deprecated_gene_id_file)
     known_de_novos = load_known_de_novos(input_file)
@@ -242,7 +242,7 @@ def main():
             len(nonsense_events), nons_dist, nons_prob ))
         
         # sys.exit()
-    
+
 if __name__ == '__main__':
     main()
 
