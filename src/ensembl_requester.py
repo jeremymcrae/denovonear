@@ -109,14 +109,14 @@ class EnsemblRequest(object):
         """
         
         self.request_attempts += 1
-        if self.request_attempts > 10:
+        if self.request_attempts > 5:
             raise ValueError("too many attempts, figure out why its failing")
         
         self.rate_limit_ensembl_requests()
         try:
             response, status_code, headers = self.open_url(self.server + ext, headers=headers)
         except IOError:
-            self.ensembl_request(ext, sequence_id, headers)
+            return self.ensembl_request(ext, sequence_id, headers)
         
         logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext))
         

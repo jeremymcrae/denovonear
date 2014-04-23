@@ -192,18 +192,6 @@ class Interval(SequenceMethods, ConservationMethods):
     def __hash__(self):
         return hash((self.get_chrom(), self.get_start(), self.get_end()))
     
-    def contains_position(self, position):
-        """ check if a position lies within the interval boundaries
-        
-        Args:
-            position: nucleotide position in bp
-        
-        Returns:
-            True/False for whether the position is within the gene
-        """
-        
-        return self.start <= int(position) <= self.end
-    
     def in_exons(self, position):
         """ determines if a nucleotide position lies within the exons
         """

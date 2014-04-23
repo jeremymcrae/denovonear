@@ -88,30 +88,6 @@ class TestIntervalPy(unittest.TestCase):
         self.assertEqual(self.gene.convert_chrom_to_int("chrmt"), 25)
         self.assertRaises(KeyError, self.gene.convert_chrom_to_int, "Z")
     
-    def test_contains_position(self):
-        """ test that contains_position() works correctly
-        """
-        
-        self.gene.start = 1000
-        self.gene.end = 1100
-        
-        self.assertTrue(self.gene.contains_position(1000))
-        self.assertTrue(self.gene.contains_position(1001))
-        self.assertTrue(self.gene.contains_position(1100))
-        self.assertFalse(self.gene.contains_position(999))
-        self.assertFalse(self.gene.contains_position(1101))
-        
-        # also test that it works at chrom positions well beyond what we 
-        # expect to encounter. This will be the only check that it can handle
-        # large positions
-        self.gene.start = 1000001000
-        self.gene.end = 1000001100
-        
-        self.assertTrue(self.gene.contains_position(1000001000))
-        self.assertTrue(self.gene.contains_position(1000001100))
-        self.assertFalse(self.gene.contains_position(1000000999))
-        self.assertFalse(self.gene.contains_position(1000001101))
-    
     def test_in_exons(self):
         """ test that in_exons() works correctly
         """

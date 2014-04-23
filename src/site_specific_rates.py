@@ -36,34 +36,49 @@ class SiteRates(object):
         
         return self.gene.translate_codon(mutated_codon)
     
-    def functional_check(self, initial_aa, mutated_aa):
+    def functional_check(self, initial_aa, mutated_aa, position):
         """ checks if two amino acids are have a functional mutation (either
         nonsense or missense)
         """
         
         # only include the site specific probability if it mutates to a 
-        # different amino acid, or occurs close to an intron/exon boundary.
-        if initial_aa != mutated_aa or self.exon_start_dist < 3 or \
-                self.exon_end_dist < 3:
+        # different amino acid, or occurs close to an intron/exon boundary
+        # (using the splice_region_variant definition at: 
+        # http://www.ensembl.org/info/genome/variation/predicted_data.html)
+        if initial_aa != mutated_aa or self.exon_start_dist < 4 or \
+                self.exon_end_dist < 4:
             return True
         
         return False
     
-    def nonsense_check(self, initial_aa, mutated_aa):
-        """ checks if two amino acids are a nonsense (ie stop) mutation
+    def nonsense_check(self, initial_aa, mutated_aa, position):
+        """ checks if two amino acids are a nonsense (eg stop_gained) mutation
         """
         
+        # print("stop", initial_aa != "*" and mutated_aa == "*")
+        # print("near splice", not self.gene.in_coding_region(position) and \
+        #     (self.exon_start_dist < 3 or self.exon_end_dist < 3))
+        # print("not in coding", not self.gene.in_coding_region(position))
+        # print("distance less than 3 bp", self.exon_start_dist < 3 or self.exon_end_dist < 3)
+        
         return initial_aa != "*" and mutated_aa == "*" or \
-            self.exon_start_dist < 3 or self.exon_end_dist < 3
+            (not self.gene.in_coding_region(position) and \
+            (self.exon_start_dist < 3 or self.exon_end_dist < 3))
     
-    def missense_check(self, initial_aa, mutated_aa):
+    def missense_check(self, initial_aa, mutated_aa, position):
         """ checks if two amino acids are a missense mutation (but not nonsense)
         """
         
-        # trim out nonsense mutations such as stop mutations, and splice site mutations
+        # trim out nonsense mutations such as stop_gained mutations, and splice 
+        # site mutations
         if initial_aa != "*" and mutated_aa == "*" or \
-            self.exon_start_dist < 3 and self.exon_end_dist < 3:
+            (not self.gene.in_coding_region(position) and \
+            (self.exon_start_dist < 3 or self.exon_end_dist < 3)):
             return False
+        
+        # if initial_aa != "*" and mutated_aa == "*" or \
+        #     self.exon_start_dist < 3 and self.exon_end_dist < 3:
+        #     return False
         
         # only include the site specific probability if it mutates to a 
         # different amino acid, or occurs close to an intron/exon boundary.
@@ -122,7 +137,7 @@ class SiteRates(object):
             
             initial_aa = self.gene.translate_codon(self.codon)
             for base in sorted(bases):
-                mutated_aa = self.get_mutated_aa(base, self.codon, self.codon_pos)
+                mutated_aa = self.get_mutated_aa(base, self.codon, self.codon_pos, bp)
                 mutated_seq = self.seq[0] + base + self.seq[2]
                 if mut_type(initial_aa, mutated_aa):
                     probs.append([cds_pos, self.mut_dict[self.seq][mutated_seq]])
