@@ -137,9 +137,9 @@ class SiteRates(object):
             
             initial_aa = self.gene.translate_codon(self.codon)
             for base in sorted(bases):
-                mutated_aa = self.get_mutated_aa(base, self.codon, self.codon_pos, bp)
+                mutated_aa = self.get_mutated_aa(base, self.codon, self.codon_pos)
                 mutated_seq = self.seq[0] + base + self.seq[2]
-                if mut_type(initial_aa, mutated_aa):
+                if mut_type(initial_aa, mutated_aa, bp):
                     probs.append([cds_pos, self.mut_dict[self.seq][mutated_seq]])
         
         return WeightedChoice(probs)
