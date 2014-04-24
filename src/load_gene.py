@@ -19,8 +19,8 @@ def get_deprecated_gene_ids(filename):
     
     return deprecated
 
-def identify_transcript(ensembl, transcript_ids):
-    """ for a given HGNC ID, finds the transcript with the longest CDS
+def get_transcript_lengths(ensembl, transcript_ids):
+    """ finds the protein length for ensembl transcript IDs for a gene
     
     Args:
         ensembl: EnsemblRequest object to request sequences and data 
@@ -28,7 +28,7 @@ def identify_transcript(ensembl, transcript_ids):
         transcript_ids: list of transcript IDs for a single gene
     
     Returns:
-        the transcript ID of the longest protein coding transcript in the list
+        dictionary of transcript IDs, indexed by their length in amino acids
     """
     
     transcripts = {}
@@ -94,7 +94,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
     print("loading transcript ID")
     ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
     transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, gene_id)
-    transcripts = identify_transcript(ensembl, transcript_ids)
+    transcripts = get_transcript_lengths(ensembl, transcript_ids)
     
     # start with the longest transcript
     lengths = sorted(transcripts)[::-1]
@@ -105,36 +105,45 @@ def load_gene(ensembl, gene_id, de_novos=[]):
         raise ValueError(gene_id + " lacks coding transcripts")
     
     # create a Interval object using the longest transcript, but if we cannot
-    # obtain a vaild sequence or coordinates, or the transcript doesn't contain
+    # obtain a valid sequence or coordinates, or the transcript doesn't contain
     # all the de novo positions, run through alternate transcripts in order of
     # length (allows for CSMD2 variant chr1:34071484 and PHACTR1 chr6:12933929).
-    transcript = None
+    gene = None
     pos = 0
-    while transcript is None or (not check_denovos_in_gene(transcript, de_novos) and pos < (len(transcripts) - 1)):
+    while gene is None or (not check_denovos_in_gene(gene, de_novos) and \
+            pos < (len(transcripts) - 1)):
         try:
             transcript_id = transcripts[lengths[pos]]
             pos += 1
-            transcript = construct_gene_object(ensembl, transcript_id)
+            gene = construct_gene_object(ensembl, transcript_id)
         except ValueError:
             pass
     
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
     # mutually exclusive transcripts
-    if not check_denovos_in_gene(transcript, de_novos):
+    if not check_denovos_in_gene(gene, de_novos):
         raise IndexError(gene_id + " de novos aren't in CDS sequence")
+    
+    return gene
+
+def load_conservation(transcript, folder):
+    """ loads the conservation scores at base level for a gene
+    """
     
     # make sure we have the gene location for loading the conservation scores
     chrom = transcript.get_chrom()
     start = transcript.get_start()
     end = transcript.get_end()
     
-    # print("loading conservation scores")
-    # # add in phyloP conservation scores
-    # conservation_scores = load_conservation_scores(CONSERVATION_FOLDER, chrom, start, end)
-    # try:
-    #     transcript.add_conservation_scores(conservation_scores)
-    # except ValueError:
-    #     pass
+    print("loading conservation scores")
+    # add in phyloP conservation scores
+    scores = load_conservation_scores(folder, chrom, start, end)
+    try:
+        transcript.add_conservation_scores(scores)
+    except ValueError:
+        pass
     
     return transcript
+    
+    
