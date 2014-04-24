@@ -104,25 +104,19 @@ def load_gene(ensembl, gene_id, de_novos=[]):
     if transcript_id == {}:
         raise ValueError(gene_id + " lacks coding transcripts")
     
-    try:
-        transcript = construct_gene_object(ensembl, transcript_id)
-    except ValueError:
-        # some genes raise errors when loading the gene sequence e.g. CCDC18
-        transcript_id = transcripts[lengths[1]]
-        transcript = construct_gene_object(ensembl, transcript_id)
-    
-    # create a Interval object using the longest transcript, but if that 
-    # transcript doesn't contain all the de novo positions, run through the 
-    # alternate transcripts in order of length (allows for CSMD2 variant 
-    # chr1:34071484 and PHACTR1 chr6:12933929).
+    # create a Interval object using the longest transcript, but if we cannot
+    # obtain a vaild sequence or coordinates, or the transcript doesn't contain
+    # all the de novo positions, run through alternate transcripts in order of
+    # length (allows for CSMD2 variant chr1:34071484 and PHACTR1 chr6:12933929).
+    transcript = None
     pos = 0
-    while not check_denovos_in_gene(transcript, de_novos) and pos < (len(transcripts) - 1):
-        pos += 1
-        transcript_id = transcripts[sorted(transcripts)[::-1][pos]]
+    while transcript is None or (not check_denovos_in_gene(transcript, de_novos) and pos < (len(transcripts) - 1)):
         try:
+            transcript_id = transcripts[lengths[pos]]
+            pos += 1
             transcript = construct_gene_object(ensembl, transcript_id)
         except ValueError:
-            continue
+            pass
     
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
