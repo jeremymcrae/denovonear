@@ -12,14 +12,6 @@ import logging
 IS_PYTHON2 = sys.version_info[0] == 2
 IS_PYTHON3 = sys.version_info[0] == 3
 
-# load python version specific url opener library
-if IS_PYTHON2:
-    import urllib2
-elif IS_PYTHON3:
-    import urllib.request
-else:
-    raise ValueError("unknown python version")
-
 logging.basicConfig(filename='ensembl_requests.log',level=logging.WARNING)
 
 class EnsemblRequest(object):
@@ -37,11 +29,16 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        # set the function to load urls, which is python version specific
+        # load python version specific url opener library and set the function
+        # to load urls, which is python version specific
         if IS_PYTHON2:
+            import urllib2
             self.open_url = self.open_url_python2
         elif IS_PYTHON3:
+            import urllib.request
             self.open_url = self.open_url_python3
+        else:
+            raise ValueError("unknown python version")
         
         self.prior_time = time.time()
         self.rate_limit = 0.335

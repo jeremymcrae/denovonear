@@ -43,7 +43,12 @@ def main():
     # load all the data
     ensembl = EnsemblRequest()
     mut_dict = load_trincleotide_mutation_rates(mut_rates_file)
-    old_gene_ids = get_deprecated_gene_ids(deprecated_gene_id_file)
+    
+    old_gene_ids = {}
+    # only load the old gene ID converter if we have specified the file
+    if deprecated_gene_id_file is not None:
+        old_gene_ids = get_deprecated_gene_ids(deprecated_gene_id_file)
+    
     known_de_novos = load_known_de_novos(input_file)
     
     output = open(output_file, "w")
