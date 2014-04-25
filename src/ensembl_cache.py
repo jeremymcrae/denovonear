@@ -4,6 +4,7 @@ repeatedly re-request information from the REST API if we have done so recently.
 
 import os
 import json
+import gzip
 from datetime import datetime
 
 class EnsemblCache(object):
@@ -72,9 +73,8 @@ class EnsemblCache(object):
         
         path = self.parse_url(url)
         
-        f = open(path, "r")
-        data = f.read()
-        f.close()
+        with gzip.GzipFile(path, "r") as infile:
+            data = infile.read()
         
         return data
     
@@ -119,9 +119,8 @@ class EnsemblCache(object):
         json_data["data"] = data
         
         # write the data to a file
-        output = open(path, "w")
-        json.dump(json_data, output)
-        output.close()
+        with gzip.GzipFile(path, "w") as output:
+            output.write(json.dumps(json_data))
     
     def make_folder(self, path):
         """ make a folder, starting from the first path that exists
@@ -180,6 +179,10 @@ class EnsemblCache(object):
         # replace characters not tolerated in paths
         for pos in range(len(path)):
             path[pos] = path[pos].replace(":", "_")
+        
+        # if the url ended with "?", then the final list element will be ""
+        if path[-1] == "":
+            path = path[:-1]
         
         path = os.path.join(self.cache_folder, *path)
         
