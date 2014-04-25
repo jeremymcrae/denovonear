@@ -20,29 +20,38 @@ from src.site_specific_rates import SiteRates
 from src.analyse_de_novo_clustering import AnalyseDeNovoClustering
 from src.analyse_de_novo_conservation import AnalyseDeNovoConservation
 
-
 def get_options():
     """ get the command line switches
     """
     
-    parser = argparse.ArgumentParser(description='examine mutation clustering in genes')
-    parser.add_argument("--in", dest="input", help="input filename for file listing known mutations in genes")
-    parser.add_argument("--out", dest="output", help="output filename")
-    parser.add_argument("--rates", dest="mut_rates", help="mutation rates filename")
-    parser.add_argument("--deprecated-genes", dest="deprecated_genes", help="deprecated gene IDs filename")
+    parser = argparse.ArgumentParser(description="Examines the proximity \
+        clustering of de novo mutations in genes.")
+    parser.add_argument("--in", dest="input", required=True, help="Path to \
+        file listing known mutations in genes. See example file in data folder \
+        for format.")
+    parser.add_argument("--out", dest="output", required=True, help="output \
+        filename")
+    parser.add_argument("--rates", dest="mut_rates", required=True, \
+        help="Path to file containing trinucleotide mutation rates.")
+    parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
+        help="deprecated gene IDs filename")
+    parser.add_argument("--cache-folder", dest="cache_folder", \
+        default=os.path.join(os.getcwd(), "cache"), help="folder to cache \
+        Ensembl data into (defaults to current working directory)")
     
     args = parser.parse_args()
     
-    return args.input, args.output, args.mut_rates, args.deprecated_genes
+    return args.input, args.output, args.mut_rates, args.deprecated_genes, \
+        args.cache_folder
 
 
 def main():
     
-    input_file, output_file, mut_rates_file, deprecated_gene_id_file = get_options()
+    input_file, output_file, rates_file, old_gene_id_file, cache_dir = get_options()
     
     # load all the data
-    ensembl = EnsemblRequest()
-    mut_dict = load_trincleotide_mutation_rates(mut_rates_file)
+    ensembl = EnsemblRequest(cache_dir)
+    mut_dict = load_trincleotide_mutation_rates(rates_file)
     
     old_gene_ids = {}
     # only load the old gene ID converter if we have specified the file

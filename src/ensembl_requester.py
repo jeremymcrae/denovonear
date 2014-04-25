@@ -19,6 +19,8 @@ elif IS_PYTHON3:
     import urllib.request
 else:
     raise ValueError("unknown python version")
+    
+from src.ensembl_cache import EnsemblCache
 
 logging.basicConfig(filename='ensembl_requests.log',level=logging.WARNING)
 
@@ -33,9 +35,11 @@ class EnsemblRequest(object):
          - transcript and genomic DNA sequences for an ensembl transcript ID
     """
     
-    def __init__(self):
+    def __init__(self, cache_folder):
         """ obtain the sequence for a transcript from ensembl
         """
+        
+        self.cache = EnsemblCache(cache_folder)
         
         # set the function to load urls, which is python version specific
         if IS_PYTHON2:
@@ -66,6 +70,7 @@ class EnsemblRequest(object):
         
         response = json.loads(r)
         release = response["release"].split(".")
+        self.cache.set_ensembl_api_version(response["release"])
         
         major = release[0]
         minor = release[1]
@@ -113,6 +118,9 @@ class EnsemblRequest(object):
         self.request_attempts += 1
         if self.request_attempts > 5:
             raise ValueError("too many attempts, figure out why its failing")
+            
+        if self.cache.check_if_data_in_cache(self.server + ext):
+            return self.cache.retrieve_data()
         
         self.rate_limit_ensembl_requests()
         try:
@@ -144,6 +152,8 @@ class EnsemblRequest(object):
             except ValueError:
                 logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext, "cannot obtain json output"))
                 return self.ensembl_request(ext, sequence_id, headers)
+        
+        self.cache.cache_url_data(self.server + ext, response)
         
         return response
     
