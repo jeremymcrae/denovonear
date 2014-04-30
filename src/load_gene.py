@@ -48,7 +48,6 @@ def construct_gene_object(ensembl, transcript_id):
     """ creates and Interval object for a gene from ensembl databases
     """
     
-    print("loading features and sequence")
     # get the sequence for the identified transcript
     (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id, expand=10)
     cds_sequence = ensembl.get_cds_seq_for_transcript(transcript_id)
@@ -91,7 +90,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
         Interval object for gene, including genomic ranges and sequences
     """
     
-    print("loading transcript ID")
+    print("loading: " + str(gene_id))
     ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
     transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, gene_id)
     transcripts = get_transcript_lengths(ensembl, transcript_ids)

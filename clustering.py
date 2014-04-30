@@ -55,8 +55,8 @@ def main():
     
     old_gene_ids = {}
     # only load the old gene ID converter if we have specified the file
-    if deprecated_gene_id_file is not None:
-        old_gene_ids = get_deprecated_gene_ids(deprecated_gene_id_file)
+    if old_gene_id_file is not None:
+        old_gene_ids = get_deprecated_gene_ids(old_gene_id_file)
     
     known_de_novos = load_known_de_novos(input_file)
     
@@ -69,7 +69,7 @@ def main():
     initial_iterations = 1000000
     for gene_id in known_de_novos:
         iterations = initial_iterations
-        print(gene_id)
+        # print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]
         missense_events = known_de_novos[gene_id]["missense"]

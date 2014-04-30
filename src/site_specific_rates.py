@@ -45,8 +45,8 @@ class SiteRates(object):
         # different amino acid, or occurs close to an intron/exon boundary
         # (using the splice_region_variant definition at: 
         # http://www.ensembl.org/info/genome/variation/predicted_data.html)
-        if initial_aa != mutated_aa or self.exon_start_dist < 4 or \
-                self.exon_end_dist < 4:
+        if initial_aa != mutated_aa or self.exon_start_dist < 3 or \
+                self.exon_end_dist < 3:
             return True
         
         return False
@@ -54,12 +54,6 @@ class SiteRates(object):
     def nonsense_check(self, initial_aa, mutated_aa, position):
         """ checks if two amino acids are a nonsense (eg stop_gained) mutation
         """
-        
-        # print("stop", initial_aa != "*" and mutated_aa == "*")
-        # print("near splice", not self.gene.in_coding_region(position) and \
-        #     (self.exon_start_dist < 3 or self.exon_end_dist < 3))
-        # print("not in coding", not self.gene.in_coding_region(position))
-        # print("distance less than 3 bp", self.exon_start_dist < 3 or self.exon_end_dist < 3)
         
         return initial_aa != "*" and mutated_aa == "*" or \
             (not self.gene.in_coding_region(position) and \
@@ -71,9 +65,7 @@ class SiteRates(object):
         
         # trim out nonsense mutations such as stop_gained mutations, and splice 
         # site mutations
-        if initial_aa != "*" and mutated_aa == "*" or \
-            (not self.gene.in_coding_region(position) and \
-            (self.exon_start_dist < 3 or self.exon_end_dist < 3)):
+        if self.nonsense_check(initial_aa, mutated_aa, position):
             return False
         
         # if initial_aa != "*" and mutated_aa == "*" or \

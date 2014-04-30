@@ -3,8 +3,9 @@ repeatedly re-request information from the REST API if we have done so recently.
 """
 
 import os
+import sqlite3
 import json
-import gzip
+import zlib
 from datetime import datetime
 
 class EnsemblCache(object):
@@ -20,6 +21,32 @@ class EnsemblCache(object):
         """
         
         self.cache_folder = cache_folder
+        self.cache_path = os.path.join(self.cache_folder, "ensembl_cache.db")
+        
+        self.connect_to_database()
+    
+    def connect_to_database(self):
+        """ connect to a sqlite database for the cached data (creates a new 
+        database if it doesn't already exist).
+        """
+        
+        # create a folder for the cache database (this will raise an error
+        # if we cannot create the folder)
+        if not os.path.exists(self.cache_folder):
+            os.mkdir(self.cache_folder)
+        
+        # generate a database with tables if it doesn't already exist
+        if not os.path.exists(self.cache_path):
+            conn = sqlite3.connect(self.cache_path)
+            c = conn.cursor()
+            c.execute("CREATE TABLE ensembl (key text PRIMARY KEY, cache_date text, api_version text, data blob)")
+            conn.commit()
+            c.close()
+        
+        self.conn = sqlite3.connect(self.cache_path)
+        self.conn.text_factory = str
+        self.conn.row_factory = sqlite3.Row
+        self.c = self.conn.cursor()
     
     def set_ensembl_api_version(self, version):
         """ set the ensembl API version, so we can check for obsolete data
@@ -44,16 +71,24 @@ class EnsemblCache(object):
             True/False for having the data in the cache
         """
         
-        path = self.parse_url(url)
+        key = self.get_key_from_url(url)
         
         # if the data has been cached, check that it is not out of date, and 
         # the data was generated from the same Ensembl API version
-        if os.path.exists(path):
-            data = self.open_url_data(url)
-            self.data = json.loads(data)
-            api_version = self.data["ensembl_api"]
+        
+        self.c.execute("SELECT * FROM ensembl WHERE key =?", (key, ))
+        rows = self.c.fetchall()
+        row_count = self.c.rowcount
+        
+        if len(rows) > 1:
+            raise ValueError("more than one row for this key: " + str(key))
+        
+        if len(rows) == 1:
+            row = rows[0]
+            api_version = row["api_version"]
+            self.data = zlib.decompress(row["data"])
             
-            cache_date = datetime.strptime(self.data["cache_date"], "%Y-%m-%d")
+            cache_date = datetime.strptime(row["cache_date"], "%Y-%m-%d")
             diff = datetime.today() - cache_date
             
             if diff.days < 180 and self.api_version == api_version:
@@ -61,36 +96,19 @@ class EnsemblCache(object):
         
         return False
     
-    def open_url_data(self, url):
-        """ open the json data for a url, but don't do any processing
-        
-        Args:
-            url: URL for the Ensembl REST service
-        
-        Returns:
-            contents of a cached file for the URL.
-        """
-        
-        path = self.parse_url(url)
-        
-        with gzip.GzipFile(path, "r") as infile:
-            data = infile.read()
-        
-        return data
-    
     def retrieve_data(self):
-        """ retrieves data for a URL (checked earlier that this exists)
+        """retrieves data for a URL (checked earlier that this exists)
         
         The function is only used if the data exists in the cache. In order to 
-        check if the data is in the cache, we loaded the file, and lightly 
+        check if the data is in the cache, we selected database rows, and 
         parsed the contents (to check if the data is obsolete). Rather than 
-        reloading the file, just use the data loaded earlier.
+        reselecting the data, just use the data loaded earlier.
         
         Returns:
             the data object for the URL (which will be parsed elsewhere)
         """
         
-        return self.data["data"]
+        return self.data
     
     def cache_url_data(self, url, data):
         """ cache the data retrieved from ensembl
@@ -100,55 +118,27 @@ class EnsemblCache(object):
             data: response data from Ensembl
         """
         
-        path = self.parse_url(url)
+        key = self.get_key_from_url(url)
         
         # don't cache the ensembl version check
-        if path.endswith("info/rest"):
+        if key == "info.rest":
             return
-        
-        # make sure a folder is availble to write a file into
-        folder = os.path.dirname(path)
-        self.make_folder(folder)
         
         current_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
         
-        # set up the data to write
-        json_data = {}
-        json_data["cache_date"] = current_date
-        json_data["ensembl_api"] = self.api_version
-        json_data["data"] = data
+        t = (key, current_date, self.api_version, zlib.compress(data))
         
-        # write the data to a file
-        with gzip.GzipFile(path, "w") as output:
-            output.write(json.dumps(json_data))
+        self.c.execute("INSERT OR REPLACE INTO ensembl (key, cache_date, api_version, data) VALUES (?,?,?,?)", t)
+        self.conn.commit()
     
-    def make_folder(self, path):
-        """ make a folder, starting from the first path that exists
-        
-        Args:
-            path: folder path to save data into
-        """
-        
-        folders = []
-        
-        # find the first folder in the path that exists
-        while not os.path.exists(path):
-            folders.insert(0, os.path.basename(path))
-            path = os.path.dirname(path)
-        
-        # make each folder in turn, until we have completed the full path
-        for folder in folders:
-            path = os.path.join(path, folder)
-            os.mkdir(path)
-    
-    def parse_url(self, url):
+    def get_key_from_url(self, url):
         """ parses the url into a list of folder locations
         
         Args:
             url: URL for the Ensembl REST service
         
         Returns:
-            a parsed path to load from or save into
+            a parsed unique database key for the URLs data
         """
         
         # Potential URLs types to parse into paths:
@@ -162,30 +152,28 @@ class EnsemblCache(object):
         # http://beta.rest.ensembl.org/vep/human/id/rs3887873/consequences?
         # http://beta.rest.ensembl.org/vep/human/9:22125503-22125502:1/C/consequences?
         
-        path = url.split("/")[3:]
+        key = url.split("/")[3:]
         
         # fix the final bit of the url, which can have additional requirements,
         # none of which are necessary for uniquely defining the data
-        path[-1] = path[-1].split(";")[0]
+        key[-1] = key[-1].split(";")[0]
         
         # convert "feature=transcript" to "transcript" or "type=protein" to 
         # "protein"
-        final = path[-1].split("?")
+        final = key[-1].split("?")
         if "=" in final[-1]:
             final[-1] = final[-1].split("=")[1]
         
-        path = path[:-1] + final
+        key = key[:-1] + final
         
-        # replace characters not tolerated in paths
-        for pos in range(len(path)):
-            path[pos] = path[pos].replace(":", "_")
+        # replace characters not tolerated in keys
+        for pos in range(len(key)):
+            key[pos] = key[pos].replace(":", "_")
         
         # if the url ended with "?", then the final list element will be ""
-        if path[-1] == "":
-            path = path[:-1]
+        if key[-1] == "":
+            key = key[:-1]
         
-        path = os.path.join(self.cache_folder, *path)
+        key = ".".join(key)
         
-        return path
-            
-        
+        return key
