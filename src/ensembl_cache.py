@@ -80,9 +80,6 @@ class EnsemblCache(object):
         rows = self.c.fetchall()
         row_count = self.c.rowcount
         
-        if len(rows) > 1:
-            raise ValueError("more than one row for this key: " + str(key))
-        
         if len(rows) == 1:
             row = rows[0]
             api_version = row["api_version"]

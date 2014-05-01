@@ -92,14 +92,14 @@ class SiteRates(object):
         return (start, end)
     
     def build_weighted_site_rates_for_gene(self, mut_type):
-        """ build a list of sites in a gene that can give missense mutations, along 
-        with their weighted probability of the mutation occuring.
+        """ build a list of sites in a gene that can give missense mutations,  
+        along with their weighted probability of the mutation occuring.
         
         Args:
             mut_type: function to check if a site matches the mutation type
         
         Returns:
-            WeightedChoice object, for random sampling by the weight of the mutation
+            WeightedChoice object, for random sampling by the weight of the 
             probabilities
         """
         
@@ -120,6 +120,10 @@ class SiteRates(object):
             exon_start, exon_end = self.gene.find_closest_exon(bp)
             self.exon_start_dist = abs(exon_start - bp)
             self.exon_end_dist = abs(exon_end - bp)
+            
+            # TODO: add in positions between exons, since they will include
+            # loss of function types such as splice_donor_variant and 
+            # splice_acceptor_variant
             
             self.seq = self.gene.get_trinucleotide_around_cds_position(cds_pos)
             

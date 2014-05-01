@@ -63,8 +63,8 @@ def main():
     """
     """
     
-    # chroms = list(range(1, 22))
-    chroms = list(range(9, 22))
+    chroms = list(range(1, 22))
+    # chroms = list(range(9, 22))
     chroms.append("X")
     chroms.append("Y")
     
