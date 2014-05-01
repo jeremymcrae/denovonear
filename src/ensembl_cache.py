@@ -77,11 +77,10 @@ class EnsemblCache(object):
         # the data was generated from the same Ensembl API version
         
         self.c.execute("SELECT * FROM ensembl WHERE key =?", (key, ))
-        rows = self.c.fetchall()
-        row_count = self.c.rowcount
+        row = self.c.fetchone()
         
-        if len(rows) == 1:
-            row = rows[0]
+        if row is not None:
+            # row = rows[0]
             api_version = row["api_version"]
             self.data = zlib.decompress(row["data"])
             
@@ -138,17 +137,6 @@ class EnsemblCache(object):
             a parsed unique database key for the URLs data
         """
         
-        # Potential URLs types to parse into paths:
-        # http://beta.rest.ensembl.org/info/rest
-        # http://beta.rest.ensembl.org/xrefs/symbol/homo_sapiens/ABO
-        # http://beta.rest.ensembl.org/sequence/id/ENST00000378520?type=protein
-        # http://beta.rest.ensembl.org/feature/id/ENSG00000175164?feature=transcript
-        # http://beta.rest.ensembl.org/sequence/id/ENST00000538324?type=genomic;expand_3prime=10;expand_5prime=10
-        # http://beta.rest.ensembl.org/sequence/id/ENST00000538324?type=cds
-        # http://beta.rest.ensembl.org/feature/id/ENST00000538324?feature=exon
-        # http://beta.rest.ensembl.org/vep/human/id/rs3887873/consequences?
-        # http://beta.rest.ensembl.org/vep/human/9:22125503-22125502:1/C/consequences?
-        
         key = url.split("/")[3:]
         
         # fix the final bit of the url, which can have additional requirements,
@@ -167,7 +155,8 @@ class EnsemblCache(object):
         for pos in range(len(key)):
             key[pos] = key[pos].replace(":", "_")
         
-        # if the url ended with "?", then the final list element will be ""
+        # if the url ended with "?", then the final list element will be "", 
+        # which we should remove
         if key[-1] == "":
             key = key[:-1]
         

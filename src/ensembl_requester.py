@@ -49,7 +49,7 @@ class EnsemblRequest(object):
         else:
             raise ValueError("unknown python version")
         
-        self.prior_time = time.time()
+        self.prior_time = time.time() - 1
         self.rate_limit = 0.335
         
         self.server = "http://beta.rest.ensembl.org"

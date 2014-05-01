@@ -140,18 +140,5 @@ class TestEnsemblCachePy(unittest.TestCase):
         url = "http://beta.rest.ensembl.org/info/rest"
         self.cache.cache_url_data(url, temp_data)
         self.assertFalse(self.cache.check_if_data_in_cache(url))
-        
-        
-        
-        
-        
-        
 
 
-
-
-
-
-
-
-    
