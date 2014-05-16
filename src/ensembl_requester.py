@@ -14,12 +14,12 @@ IS_PYTHON3 = sys.version_info[0] == 3
 
 # load python version specific url opener library
 if IS_PYTHON2:
-    import urllib2
+    import urllib2 as request
 elif IS_PYTHON3:
-    import urllib.request
+    import urllib.request as request
 else:
     raise ValueError("unknown python version")
-    
+
 from src.ensembl_cache import EnsemblCache
 
 logging.basicConfig(filename='ensembl_requests.log',level=logging.WARNING)
@@ -40,14 +40,6 @@ class EnsemblRequest(object):
         """
         
         self.cache = EnsemblCache(cache_folder)
-        
-        # set the function to load urls, which is python version specific
-        if IS_PYTHON2:
-            self.open_url = self.open_url_python2
-        elif IS_PYTHON3:
-            self.open_url = self.open_url_python3
-        else:
-            raise ValueError("unknown python version")
         
         self.prior_time = time.time() - 1
         self.rate_limit = 0.335
@@ -78,36 +70,26 @@ class EnsemblRequest(object):
         if major != "1" or minor != "6":
             raise ValueError("check ensembl api version")
         
-    def open_url_python2(self, url, headers):
-        """ open url with python2 libraries
+    def open_url(self, url, headers):
+        """ open url with python libraries
         """
         
-        req = urllib2.Request(url, headers=headers)
-        handler = urllib2.urlopen(req)
+        req = request.Request(url, headers=headers)
         
+        try:
+            handler = request.urlopen(req)
+        except (urllib2.HTTPError, urllib.error.HTTPError) as e:
+            handler = e
+        
+        status_code = handler.getcode()
         response = handler.read()
-        status_code = handler.getcode()
+        if IS_PYTHON3:
+            response = response.decode("utf-8")
         
+        # parse the headers into a key, value dictionary
         headers = {}
-        for line in handler.headers.headers:
-            line = line.strip().split(": ")
-            headers[line[0]] = line[1]
-        
-        return response, status_code, headers
-    
-    def open_url_python3(self, url, headers):
-        """ open url with python3 libraries
-        """
-        
-        req = urllib.request.Request(url, headers=headers)
-        handler = urllib.request.urlopen(req)
-        
-        response = handler.read().decode("utf-8")
-        status_code = handler.getcode()
-        
-        headers = {}
-        for line in handler.getheaders():
-            headers[line[0]] = line[1]
+        for key, value in zip(handler.headers.keys(), handler.headers.values()):
+            headers[key.lower()] = value
         
         return response, status_code, headers
     
@@ -123,35 +105,38 @@ class EnsemblRequest(object):
             return self.cache.retrieve_data()
         
         self.rate_limit_ensembl_requests()
-        try:
-            response, status_code, headers = self.open_url(self.server + ext, headers=headers)
-        except IOError:
-            return self.ensembl_request(ext, sequence_id, headers)
-        
+        response, status_code, requested_headers = self.open_url(self.server + ext, headers=headers)
         logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext))
         
-        # we might end up passing too many requests per hour, just wait until
-        # the period is finished before retrying
+        # we might end up passing too many simultaneous requests, or too many 
+        # requests per hour, just wait until the period is finished before 
+        # retrying
         if status_code == 429:
-            time.sleep(int(headers["X-RateLimit-Reset"]))
+            if "retry-after" in requested_headers:
+                time.sleep(float(requested_headers["retry-after"]))
+            elif "x-ratelimit-reset" in requested_headers:
+                time.sleep(int(requested_headers["x-ratelimit-reset"]))
+            
             return self.ensembl_request(ext, sequence_id, headers)
         # retry after 30 seconds if we get service unavailable error
-        elif status_code == 503 or status_code == 504:
+        elif status_code in [503, 504]:
             time.sleep(30)
             return self.ensembl_request(ext, sequence_id, headers)
         elif status_code != 200:
             raise ValueError("Invalid Ensembl response: " + str(status_code)\
-                + " for " + str(sequence_id) + ". Submitted URL was: " + self.server + ext)
+                + " for " + str(sequence_id) + ".\nqSubmitted URL was: " + \
+                self.server + ext + "\nheaders: " + str(requested_headers) + \
+                "\nresponse: " + response)
         
         # sometimes ensembl returns odd data. I don't know what it is, but the 
         # json interpreter can't handle it. Rather than trying to catch it, 
         # simply re-request the data
-        if headers["Content-Type"] == "application/json":
+        if requested_headers["content-type"] == "application/json":
             try:
                 json.loads(response)
             except ValueError:
                 logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext, "cannot obtain json output"))
-                return self.ensembl_request(ext, sequence_id, headers)
+                return self.ensembl_request(ext, sequence_id, requested_headers)
         
         self.cache.cache_url_data(self.server + ext, response)
         

@@ -61,22 +61,22 @@ def main():
     known_de_novos = load_known_de_novos(input_file)
     
     output = open(output_file, "w")
-    output.write("\t".join(["gene_id", \
-        "functional_events_n", "functional_dist", "functional_probability", 
-        "missense_events_n", "missense_dist", "missense_probability", 
-        "nonsense_events_n", "nonsense_distance", "nonsense_dist_probability"]) + "\n")
+    output.write("\t".join(["gene_id", "mutation_category", "events_n", \
+        "dist", "probability"]) + "\n")
     
     initial_iterations = 1000000
-    for gene_id in known_de_novos:
+    for gene_id in sorted(known_de_novos):
         iterations = initial_iterations
+        # gene_id = "ATP1A2"
         # print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]
         missense_events = known_de_novos[gene_id]["missense"]
         nonsense_events = known_de_novos[gene_id]["nonsense"]
         
-        # don't analyse genes with only one de novo functional mutation
-        if len(func_events) < 2:
+        # don't analyse genes with only one de novo functional mutation, and 
+        # for now, exclude genes with numerous events
+        if len(func_events) < 2 or len(func_events) > 15:
             continue
         
         # fix HGNC IDs that have been discontinued in favour of other gene IDs
@@ -94,7 +94,7 @@ def main():
         print("simulating clustering")
         probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
         
-        (func_dist, func_prob) = probs.analyse_functional(func_events)
+        # (func_dist, func_prob) = probs.analyse_functional(func_events)
         (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
         (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
         
@@ -107,15 +107,10 @@ def main():
         #     (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
         #     (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
         
-        # output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\t{10}\n".\
-        #     format(gene_id, \
-        #     len(missense_events), miss_dist, miss_prob, cons_miss, cons_miss_p, \
-        #     len(nonsense_events), nons_dist, nons_prob, cons_nons, cons_nons_p ))
-        
-        output.write("{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\t{8}\t{9}\n".format(gene_id, \
-            len(func_events), func_dist, func_prob, \
-            len(missense_events), miss_dist, miss_prob, \
-            len(nonsense_events), nons_dist, nons_prob ))
+        output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "missense", \
+            len(missense_events), miss_dist, miss_prob))
+        output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "nonsense", \
+            len(nonsense_events), nons_dist, nons_prob))
         
         # sys.exit()
 

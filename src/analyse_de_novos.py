@@ -144,12 +144,6 @@ class AnalyseDeNovos(object):
             cds_positions.append(dist)
         
         return cds_positions
-        
-    def product(self, iterable):
-        """ get the product (multiplication sum) of a list of numbers
-        """
-        
-        return reduce(operator.mul, iterable, 1)
     
     def geomean(self, values):
         """ get the geometric mean of a list of values
@@ -160,13 +154,13 @@ class AnalyseDeNovos(object):
         if 0 in values:
             # allow for 0s in a geometric mean by shifting everything up one, 
             # then dropping the mean by one at the end
-            values = [x + 1 for x in values]
-            total = self.product(values)
-            mean = total ** (1/len(values))
-            mean -= 1
+            values = [math.log10(x + 1) for x in values]
+            logmean = sum(values)/len(values)
+            mean = (10 ** logmean) - 1
         else:
-            total = self.product(values)
-            mean = total ** (1/len(values))
+            values = [math.log10(x) for x in values]
+            logmean = sum(values)/len(values)
+            mean = 10 ** logmean
         
         return mean
 

@@ -4,9 +4,14 @@ repeatedly re-request information from the REST API if we have done so recently.
 
 import os
 import sqlite3
+import sys
+import time
 import json
 import zlib
 from datetime import datetime
+
+IS_PYTHON2 = sys.version_info[0] == 2
+IS_PYTHON3 = sys.version_info[0] == 3
 
 class EnsemblCache(object):
     """ Instead of repeatedly re-acquiring data from Ensembl each run, cache
@@ -36,13 +41,23 @@ class EnsemblCache(object):
             os.mkdir(self.cache_folder)
         
         # generate a database with tables if it doesn't already exist
+        
         if not os.path.exists(self.cache_path):
             conn = sqlite3.connect(self.cache_path)
             c = conn.cursor()
-            c.execute("CREATE TABLE ensembl (key text PRIMARY KEY, cache_date text, api_version text, data blob)")
-            conn.commit()
-            c.close()
-        
+            try:
+                c.execute("CREATE TABLE ensembl (key text PRIMARY KEY, cache_date text, api_version text, data blob)")
+                conn.commit()
+                c.close()
+            except sqlite3.OperationalError:
+                # occurs when multiple processes simultaneously try to create the 
+                # database
+                
+                # briefly sleep, so the process creating the database has time to 
+                # construct it
+                c.close()
+                time.sleep(5)
+            
         self.conn = sqlite3.connect(self.cache_path)
         self.conn.text_factory = str
         self.conn.row_factory = sqlite3.Row
@@ -83,6 +98,8 @@ class EnsemblCache(object):
             # row = rows[0]
             api_version = row["api_version"]
             self.data = zlib.decompress(row["data"])
+            if IS_PYTHON3:
+                self.data = self.data.decode("utf-8")
             
             cache_date = datetime.strptime(row["cache_date"], "%Y-%m-%d")
             diff = datetime.today() - cache_date
@@ -121,6 +138,11 @@ class EnsemblCache(object):
             return
         
         current_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
+        
+        if IS_PYTHON2:
+            data = zlib.compress(data)
+        elif IS_PYTHON3:
+            data = zlib.compress(data.encode("utf-8"))
         
         t = (key, current_date, self.api_version, zlib.compress(data))
         
