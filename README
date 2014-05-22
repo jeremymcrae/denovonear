@@ -3,9 +3,11 @@ Obtain the code from the bitbucket repository with:
 
 git clone https://bitbucket.org/jeremy_mcrae/de_novo_clustering.git
 
-Then you can shift to the code folder, and analyse with:
+Then you can shift to the code folder, and set up the code with:
 cd  de_novo_clustering/
+python setup.py build
 
+Analyse your de novos with:
 python clustering.py \
    --in data/example_de_novos.txt \
    --rates data/forSanger_1KG_mutation_rate_table.txt \
