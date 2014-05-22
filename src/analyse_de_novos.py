@@ -1,5 +1,5 @@
-""" class to analyse clustering of known de novos in genes according to their 
-distances apart within the gene, and compare that to simulated de novo events 
+""" class to analyse clustering of known de novos in genes according to their
+distances apart within the gene, and compare that to simulated de novo events
 within the same gene.
 """
 
@@ -7,15 +7,19 @@ from __future__ import division
 from __future__ import print_function
 
 import bisect
-import itertools
 import math
-import operator
-from functools import reduce
+import ctypes
 
 class AnalyseDeNovos(object):
-    """ class to analyse clustering of de novo events via site specific 
+    """ class to analyse clustering of de novo events via site specific
     mutation rates
     """
+    
+    # define the c library to use
+    lib = ctypes.cdll.LoadLibrary('./build/lib.linux-x86_64-2.7/libweightedchoice.so')
+    # make sure we set the return type
+    lib.c_simulate_distribution.restype = ctypes.py_object
+    
     def __init__(self, transcript, site_weights, iterations):
         """ initialise the class
         """
@@ -80,6 +84,7 @@ class AnalyseDeNovos(object):
             minimum_prob = 1/(1 + iterations)
             
             dist = self.simulate_distribution(weights, dist, len(de_novos), iterations)
+            # dist = self.c_simulation(weights, dist, len(de_novos), iterations)
             pos = bisect.bisect_right(dist, observed_value)
             sim_prob = (1 + pos)/(1 + len(dist))
             
@@ -104,6 +109,8 @@ class AnalyseDeNovos(object):
             max_iter: number of iterations/simulations to run
         """
         
+        print("python simulation")
+        
         # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/sampled_sites.txt", "w")
         
         iteration = len(dist)
@@ -124,6 +131,40 @@ class AnalyseDeNovos(object):
         
         # output.close()
         
+        dist.sort()
+        
+        return dist
+    
+    def c_simulation(self, weights, dist=[], sample_n=2, max_iter=100):
+        """
+        """
+        
+        print("c simulation")
+        
+        sites = []
+        probs = []
+        for (pos, rate) in weights.choices:
+            sites.append(pos)
+            probs.append(rate)
+        
+        # sites = range(1000, 2000)
+        # probs = [(x * 0.00001) for x in sites]
+        
+        # convert the sampler sites to c types
+        c_sites = ctypes.c_int * len(sites)
+        c_sites = c_sites(*sites)
+        
+        # convert the mutation rates associated with the sites into c types
+        c_probs = ctypes.c_double * len(sites)
+        c_probs = c_probs(*probs)
+        
+        # convert the number of iterations and de novos to ctypes
+        length = ctypes.c_int(len(sites))
+        iterations = ctypes.c_int(max_iter)
+        de_novo_count = ctypes.c_int(sample_n)
+        
+        new_distances = self.lib.c_simulate_distribution(c_sites, c_probs, length, iterations, de_novo_count)
+        dist = dist + new_distances
         dist.sort()
         
         return dist
