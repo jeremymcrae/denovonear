@@ -78,7 +78,7 @@ class EnsemblRequest(object):
         
         try:
             handler = request.urlopen(req)
-        except (urllib2.HTTPError, urllib.error.HTTPError) as e:
+        except Exception as e:
             handler = e
         
         status_code = handler.getcode()

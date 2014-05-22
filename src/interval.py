@@ -322,6 +322,14 @@ class Interval(SequenceMethods, ConservationMethods):
             start_dist = abs(start - pos)
             end_dist = abs(end - pos)
             
+            # catch the few variants that lie near an exon, but that exon isn't
+            # part of the coding sequence
+            try:
+                self.get_coding_distance(cds_start, start)
+            except AssertionError:
+                raise ValueError("Not near coding exon: " + str(pos) + " in " \
+                    + "transcript " + self.get_name())
+            
             # if the var is outside the exon, but might affect a splice site, 
             # swap it to using the splice site location
             if start_dist < 10:

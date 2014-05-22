@@ -67,7 +67,7 @@ def main():
     initial_iterations = 1000000
     for gene_id in sorted(known_de_novos):
         iterations = initial_iterations
-        # gene_id = "ATP1A2"
+        # gene_id = "CDKN2A"
         # print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]

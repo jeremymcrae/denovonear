@@ -6,7 +6,7 @@ import os
 import sqlite3
 import sys
 import time
-import json
+# import json
 import zlib
 from datetime import datetime
 
@@ -144,7 +144,7 @@ class EnsemblCache(object):
         elif IS_PYTHON3:
             data = zlib.compress(data.encode("utf-8"))
         
-        t = (key, current_date, self.api_version, zlib.compress(data))
+        t = (key, current_date, self.api_version, data)
         
         self.c.execute("INSERT OR REPLACE INTO ensembl (key, cache_date, api_version, data) VALUES (?,?,?,?)", t)
         self.conn.commit()
