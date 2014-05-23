@@ -9,16 +9,25 @@ from __future__ import print_function
 import bisect
 import math
 import ctypes
+import os
+
+BUILD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "build")
 
 class AnalyseDeNovos(object):
     """ class to analyse clustering of de novo events via site specific
     mutation rates
     """
     
-    # define the c library to use
-    lib = ctypes.cdll.LoadLibrary('./build/lib.linux-x86_64-2.7/libweightedchoice.so')
-    # make sure we set the return type
-    lib.c_simulate_distribution.restype = ctypes.py_object
+    try:
+        # define the c library to use
+        lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libweightedchoice.so"))
+        # make sure we set the return type
+        lib.c_simulate_distribution.restype = ctypes.py_object
+        self.simulate_distribution = self.c_simulate_distribution
+    except OSError:
+        # if we can't find the external library, then default to the equivalent
+        # python code
+        self.simulate_distribution = self.python_simulate_distribution
     
     def __init__(self, transcript, site_weights, iterations):
         """ initialise the class
@@ -84,7 +93,6 @@ class AnalyseDeNovos(object):
             minimum_prob = 1/(1 + iterations)
             
             dist = self.simulate_distribution(weights, dist, len(de_novos), iterations)
-            # dist = self.c_simulation(weights, dist, len(de_novos), iterations)
             pos = bisect.bisect_right(dist, observed_value)
             sim_prob = (1 + pos)/(1 + len(dist))
             
@@ -99,7 +107,7 @@ class AnalyseDeNovos(object):
         
         return (observed_value, sim_prob)
     
-    def simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
+    def python_simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
         """ creates a distribution of mutation scores in a single gene
         
         Args:
@@ -108,8 +116,6 @@ class AnalyseDeNovos(object):
             sample_n: number of de novo mutations to sample
             max_iter: number of iterations/simulations to run
         """
-        
-        print("python simulation")
         
         # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/sampled_sites.txt", "w")
         
@@ -136,19 +142,23 @@ class AnalyseDeNovos(object):
         return dist
     
     def c_simulation(self, weights, dist=[], sample_n=2, max_iter=100):
-        """
-        """
+        """ creates a distribution of mutation scores in a single gene
         
-        print("c simulation")
+        This calls an external library written in C++, which runs in about 1/3
+        of the time that the python code does.
+        
+        Args:
+            weights: WeightedChoice object
+            dist: current list of simulated scores
+            sample_n: number of de novo mutations to sample
+            max_iter: number of iterations/simulations to run
+        """
         
         sites = []
         probs = []
         for (pos, rate) in weights.choices:
             sites.append(pos)
             probs.append(rate)
-        
-        # sites = range(1000, 2000)
-        # probs = [(x * 0.00001) for x in sites]
         
         # convert the sampler sites to c types
         c_sites = ctypes.c_int * len(sites)
