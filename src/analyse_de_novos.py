@@ -18,20 +18,20 @@ class AnalyseDeNovos(object):
     mutation rates
     """
     
-    try:
-        # define the c library to use
-        lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libweightedchoice.so"))
-        # make sure we set the return type
-        lib.c_simulate_distribution.restype = ctypes.py_object
-        self.simulate_distribution = self.c_simulate_distribution
-    except OSError:
-        # if we can't find the external library, then default to the equivalent
-        # python code
-        self.simulate_distribution = self.python_simulate_distribution
-    
     def __init__(self, transcript, site_weights, iterations):
         """ initialise the class
         """
+        
+        try:
+            # define the c library to use
+            self.lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libweightedchoice.so"))
+            # make sure we set the return type
+            self.lib.c_simulate_distribution.restype = ctypes.py_object
+            self.simulate_distribution = self.c_simulate_distribution
+        except OSError:
+            # if we can't find the external library, then default to the equivalent
+            # python code
+            self.simulate_distribution = self.python_simulate_distribution
         
         self.transcript = transcript
         self.site_weights = site_weights
@@ -141,7 +141,7 @@ class AnalyseDeNovos(object):
         
         return dist
     
-    def c_simulation(self, weights, dist=[], sample_n=2, max_iter=100):
+    def c_simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
         """ creates a distribution of mutation scores in a single gene
         
         This calls an external library written in C++, which runs in about 1/3
