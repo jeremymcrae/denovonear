@@ -220,7 +220,8 @@ class TestIntervalPy(unittest.TestCase):
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1798), 101)
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1799), 101)
         
-        # check that sites sufficiently distant from an exon raise an error, or sites upstream of a gene, just outside the CDS, but within an exon
+        # check that sites sufficiently distant from an exon raise an error, or 
+        # sites upstream of a gene, just outside the CDS, but within an exon
         with self.assertRaises(ValueError):
             self.gene.convert_chr_pos_to_cds_positions(1215)
         with self.assertRaises(ValueError):

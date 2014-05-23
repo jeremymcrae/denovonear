@@ -317,25 +317,31 @@ class Interval(SequenceMethods, ConservationMethods):
             dist = self.get_coding_distance(cds_start, pos)
         except AssertionError:
             # catch the splice site functional mutations
-            (start, end) = self.find_closest_exon(pos)
+            (exon_start, exon_end) = self.find_closest_exon(pos)
             
-            start_dist = abs(start - pos)
-            end_dist = abs(end - pos)
+            start_dist = abs(exon_start - pos)
+            end_dist = abs(exon_end - pos)
+            
+            # use the closest end of the exon
+            if start_dist <= end_dist:
+                exon_dist = start_dist
+                exon_pos = exon_start
+            else:
+                exon_dist = end_dist
+                exon_pos = exon_end
             
             # catch the few variants that lie near an exon, but that exon isn't
             # part of the coding sequence
             try:
-                self.get_coding_distance(cds_start, start)
+                self.get_coding_distance(cds_start, exon_pos)
             except AssertionError:
                 raise ValueError("Not near coding exon: " + str(pos) + " in " \
                     + "transcript " + self.get_name())
             
             # if the var is outside the exon, but might affect a splice site, 
             # swap it to using the splice site location
-            if start_dist < 10:
-                dist = self.get_coding_distance(cds_start, start)
-            elif end_dist < 10:
-                dist = self.get_coding_distance(cds_start, end)
+            if exon_dist < 10:
+                dist = self.get_coding_distance(cds_start, exon_pos)
             else:
                 raise ValueError("distance to exon (" + str(min(start_dist,\
                     end_dist)) + ") > 10 bp for " + str(pos) + " in " + \
