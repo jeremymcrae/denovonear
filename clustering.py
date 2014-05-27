@@ -36,8 +36,8 @@ def get_options():
     parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
         help="deprecated gene IDs filename")
     parser.add_argument("--cache-folder", dest="cache_folder", \
-        default=os.path.join(os.getcwd(), "cache"), help="folder to cache \
-        Ensembl data into (defaults to current working directory)")
+        default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
+        to cache Ensembl data into (defaults to clustering code directory)")
     
     args = parser.parse_args()
     

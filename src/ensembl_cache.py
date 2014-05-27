@@ -6,7 +6,6 @@ import os
 import sqlite3
 import sys
 import time
-# import json
 import zlib
 from datetime import datetime
 
@@ -41,12 +40,11 @@ class EnsemblCache(object):
             os.mkdir(self.cache_folder)
         
         # generate a database with tables if it doesn't already exist
-        
         if not os.path.exists(self.cache_path):
             conn = sqlite3.connect(self.cache_path)
             c = conn.cursor()
             try:
-                c.execute("CREATE TABLE ensembl (key text PRIMARY KEY, cache_date text, api_version text, data blob)")
+                c.execute(u"CREATE TABLE ensembl (key text PRIMARY KEY, cache_date text, api_version text, data blob)")
                 conn.commit()
                 c.close()
             except sqlite3.OperationalError:
@@ -59,7 +57,6 @@ class EnsemblCache(object):
                 time.sleep(5)
             
         self.conn = sqlite3.connect(self.cache_path)
-        self.conn.text_factory = str
         self.conn.row_factory = sqlite3.Row
         self.c = self.conn.cursor()
     
@@ -88,15 +85,16 @@ class EnsemblCache(object):
         
         key = self.get_key_from_url(url)
         
-        # if the data has been cached, check that it is not out of date, and 
-        # the data was generated from the same Ensembl API version
-        
         self.c.execute("SELECT * FROM ensembl WHERE key =?", (key, ))
         row = self.c.fetchone()
         
+        # if the data has been cached, check that it is not out of date, and 
+        # the data was generated from the same Ensembl API version
         if row is not None:
-            # row = rows[0]
             api_version = row["api_version"]
+            
+            # by default extract the data, so we don't have to repeat the
+            # sql query later.
             self.data = zlib.decompress(row["data"])
             if IS_PYTHON3:
                 self.data = self.data.decode("utf-8")
@@ -139,10 +137,16 @@ class EnsemblCache(object):
         
         current_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
         
+        # python3 zlib requires encoded strings
+        if IS_PYTHON3:
+            data = data.encode("utf-8")
+        
+        data = zlib.compress(data)
+        
+        # python2 sqlite3 can't write "8-bit bytestrings", but it can handle 
+        # buffer versions of the bytestrings
         if IS_PYTHON2:
-            data = zlib.compress(data)
-        elif IS_PYTHON3:
-            data = zlib.compress(data.encode("utf-8"))
+            data = buffer(data)
         
         t = (key, current_date, self.api_version, data)
         

@@ -22,6 +22,7 @@ class AnalyseDeNovos(object):
         """ initialise the class
         """
         
+        
         try:
             # define the c library to use
             self.lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libweightedchoice.so"))
@@ -117,7 +118,7 @@ class AnalyseDeNovos(object):
             max_iter: number of iterations/simulations to run
         """
         
-        # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/sampled_sites.txt", "w")
+        # output = open("/nfs/users/nfs_j/jm33/apps/de_novo_clustering/data/sampled_sites.weighted.txt", "w")
         
         iteration = len(dist)
         while iteration < max_iter:
