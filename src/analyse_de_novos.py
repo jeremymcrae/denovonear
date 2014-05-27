@@ -10,6 +10,10 @@ import bisect
 import math
 import ctypes
 import os
+import sys
+
+IS_PYTHON2 = sys.version_info[0] == 2
+IS_PYTHON3 = sys.version_info[0] == 3
 
 BUILD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "build")
 
@@ -25,7 +29,10 @@ class AnalyseDeNovos(object):
         
         try:
             # define the c library to use
-            self.lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libweightedchoice.so"))
+            if IS_PYTHON2:
+                self.lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libweightedchoice.so"))
+            elif IS_PYTHON3:
+                self.lib = ctypes.cdll.LoadLibrary(os.path.join(BUILD_DIR, "lib.linux-x86_64-3.3", "libweightedchoice.cpython-33m.so"))
             # make sure we set the return type
             self.lib.c_simulate_distribution.restype = ctypes.py_object
             self.simulate_distribution = self.c_simulate_distribution

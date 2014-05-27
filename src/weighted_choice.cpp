@@ -17,7 +17,7 @@ class WeightedChoice
     int * sites;
     double * probs;
     int length;
-    std::default_random_engine generator;
+    std::mt19937_64 generator;
     std::vector<double> cumulative;
     double cumulative_sum;
     
