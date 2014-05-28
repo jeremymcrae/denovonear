@@ -9,11 +9,15 @@ import unittest
 import tempfile
 import random
 import os
+import sys
 import shutil
 import zlib
 from datetime import datetime, timedelta
 
 from src.ensembl_cache import EnsemblCache
+
+IS_PYTHON2 = sys.version_info[0] == 2
+IS_PYTHON3 = sys.version_info[0] == 3
 
 class TestEnsemblCachePy(unittest.TestCase):
     """ unit test the EnsemblCache class
@@ -89,7 +93,13 @@ class TestEnsemblCachePy(unittest.TestCase):
         url = "http://beta.rest.ensembl.org/feature/id/temp1?feature=exon"
         key = self.cache.get_key_from_url(url)
         api_version = self.cache.api_version
-        temp_data = zlib.compress("temp_data")
+        string = "temp_data"
+        if IS_PYTHON3:
+            string = string.encode("utf-8")
+        temp_data = zlib.compress(string)
+        
+        if IS_PYTHON2:
+            temp_data = buffer(temp_data)
         
         # check that the data not in the database returns False
         self.assertFalse(self.cache.check_if_data_in_cache(url))
@@ -102,7 +112,10 @@ class TestEnsemblCachePy(unittest.TestCase):
         self.assertTrue(self.cache.check_if_data_in_cache(url))
         
         # check that the cache's data object is set correctly if the row is in the database
-        self.assertEqual(self.cache.data, zlib.decompress(temp_data))
+        if IS_PYTHON2:
+            self.assertEqual(self.cache.data, zlib.decompress(temp_data))
+        elif IS_PYTHON3:
+            self.assertEqual(self.cache.data, zlib.decompress(temp_data).decode("utf-8"))
         
         # check that obsolete data returns False
         old_date = datetime.strftime(datetime.today() - timedelta(days=181), "%Y-%m-%d")

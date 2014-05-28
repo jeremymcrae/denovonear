@@ -64,10 +64,10 @@ def main():
     output.write("\t".join(["gene_id", "mutation_category", "events_n", \
         "dist", "probability"]) + "\n")
     
-    initial_iterations = 1000000
+    initial_iterations = 100000
     for gene_id in sorted(known_de_novos):
         iterations = initial_iterations
-        # gene_id = "CDKN2A"
+        # gene_id = "PPP2R5D"
         # print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]

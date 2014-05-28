@@ -158,13 +158,25 @@ class Interval(SequenceMethods, ConservationMethods):
         """ returns the cds start position for the interval
         """
         
-        return self.cds_start
+        if self.strand == "+":
+            return self.cds_start
+        elif self.strand == "-":
+            return self.cds_end
+        else:
+            raise ValueError("unknown strand type" + self.strand)
     
     def get_cds_end(self):
         """ returns the cds end position for the interval
         """
         
-        return self.cds_end
+        if self.strand == "+":
+            return self.cds_end
+        elif self.strand == "-":
+            return self.cds_start
+        else:
+            raise ValueError("unknown strand type" + self.strand)
+        
+        # return self.cds_end
     
     def __eq__(self, other):
         return self.get_chrom() == other.get_chrom() and \
@@ -309,8 +321,6 @@ class Interval(SequenceMethods, ConservationMethods):
         
         # need to convert the de novo event positions into CDS positions
         cds_start = self.get_cds_start()
-        if self.strand == "-":
-            cds_start = self.get_cds_end()
         
         pos += 1 # offset from zero based chrom
         try:

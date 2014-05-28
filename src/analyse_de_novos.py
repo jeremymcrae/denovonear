@@ -88,7 +88,7 @@ class AnalyseDeNovos(object):
         
         minimum_prob = 1/(1 + iterations)
         sim_prob = minimum_prob
-        dist = []
+        self.dist = []
         
         cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
         observed_value = self.get_score(cds_positions)
@@ -100,11 +100,26 @@ class AnalyseDeNovos(object):
         while iterations < 100000000 and sim_prob == minimum_prob:
             minimum_prob = 1/(1 + iterations)
             
-            dist = self.simulate_distribution(weights, dist, len(de_novos), iterations)
-            pos = bisect.bisect_right(dist, observed_value)
-            sim_prob = (1 + pos)/(1 + len(dist))
+            self.simulate_distribution(weights, len(de_novos), iterations)
+            pos = bisect.bisect_right(self.dist, observed_value)
+            sim_prob = (1 + pos)/(1 + len(self.dist))
             
-            iterations += 1000000 # for if we need to run more iterations
+            # assess whether the P-value could never fall below 0.1, and cut 
+            # out after a smaller number of iterations, in order to minimise 
+            # run time. Figure out the lower bound of the confidence interval
+            # for the current simulated P value.
+            z = 10
+            delta = (z * math.sqrt((sim_prob * (1 - sim_prob))))/iterations
+            lower_bound = sim_prob - delta
+            
+            # if the lower bound of the confidence interval exceeds 0.1, then we
+            # can be sure it's not going to ever get lower than 0.05.
+            if lower_bound > 0.1:
+                break
+            
+            iterations += 100000 # for if we need to run more iterations
+        
+        print(iterations)
         
         # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/distribution.txt", "w")
         # for val in dist:
@@ -115,19 +130,24 @@ class AnalyseDeNovos(object):
         
         return (observed_value, sim_prob)
     
-    def python_simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
+    def python_simulate_distribution(self, weights, sample_n=2, max_iter=100):
         """ creates a distribution of mutation scores in a single gene
         
         Args:
             weights: WeightedChoice object
-            dist: current list of simulated scores
             sample_n: number of de novo mutations to sample
             max_iter: number of iterations/simulations to run
         """
         
-        # output = open("/nfs/users/nfs_j/jm33/apps/de_novo_clustering/data/sampled_sites.weighted.txt", "w")
+        # # occasionally we want to find the dispersion of sampled sites in a gene
+        # # so we write the sampled sites to a file for analysis
+        # src_dir = os.path.dirname(__file__)
+        # cluster_dir = os.path.dirname(src_dir)
+        # path = os.path.join(cluster_dir, "data", "sampled_sites.weighted.txt")
+        # output = open(path, "w")
+        # chrom_positions = []
         
-        iteration = len(dist)
+        iteration = len(self.dist)
         while iteration < max_iter:
             iteration += 1
             
@@ -136,31 +156,32 @@ class AnalyseDeNovos(object):
                 site = weights.choice()
                 positions.append(site)
                 # chr_pos = self.transcript.get_position_on_chrom(site)
-                # output.write(str(chr_pos) + "\n")
+                # chrom_positions.append(str(chr_pos))
             
             # the following line is class specific - can do distance clustering,
             # conservation scores
             value = self.get_score(positions)
-            dist.append(value)
+            self.dist.append(value)
         
+        # output.write("\n".join(chrom_positions))
         # output.close()
         
-        dist.sort()
-        
-        return dist
+        self.dist.sort()
     
-    def c_simulate_distribution(self, weights, dist=[], sample_n=2, max_iter=100):
+    def c_simulate_distribution(self, weights, sample_n=2, max_iter=100):
         """ creates a distribution of mutation scores in a single gene
         
-        This calls an external library written in C++, which runs in about 1/3
+        This calls an external library written in C++, which runs in about 20%
         of the time that the python code does.
         
         Args:
             weights: WeightedChoice object
-            dist: current list of simulated scores
             sample_n: number of de novo mutations to sample
             max_iter: number of iterations/simulations to run
         """
+        
+        iters_run = len(self.dist)
+        iterations = max_iter - iters_run
         
         sites = []
         probs = []
@@ -178,14 +199,13 @@ class AnalyseDeNovos(object):
         
         # convert the number of iterations and de novos to ctypes
         length = ctypes.c_int(len(sites))
-        iterations = ctypes.c_int(max_iter)
+        iterations = ctypes.c_int(iterations)
         de_novo_count = ctypes.c_int(sample_n)
         
         new_distances = self.lib.c_simulate_distribution(c_sites, c_probs, length, iterations, de_novo_count)
-        dist = dist + new_distances
-        dist.sort()
         
-        return dist
+        self.dist = self.dist + new_distances
+        self.dist.sort()
     
     def convert_de_novos_to_cds_positions(self, de_novos):
         """ convert cds positions for de novo events into cds positions

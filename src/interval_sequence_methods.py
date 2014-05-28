@@ -13,28 +13,47 @@ class SequenceMethods(object):
         """ figure out the coding position relative to the CDS start site
         """
         
-        if self.strand == "+":
-            return self.get_coding_distance(self.get_cds_start(), chr_position)
-        elif self.strand == "-":
-            return self.get_coding_distance(self.get_cds_end(), chr_position)
-        else:
-            raise ValueError("unknown strand type" + self.strand)
+        return self.get_coding_distance(self.get_cds_start(), chr_position)
     
     def get_position_on_chrom(self, cds_position):
         """ figure out the chromosome position of a CDS site
+        
+        Args:
+            cds_position:  position of a variant in CDS
+        
+        Returns:
+            chromosome bp position of the CDS site
         """
         
+        # cache the exon boundaries in CDS distances
+        if not hasattr(self, "exon_to_cds"):
+            self.exon_to_cds = {}
+            
+            for start, end in self.cds:
+                # get the positions of the exon boundaries in CDS distance from 
+                # the start site
+                end_pos = end
+                start_pos = start
+                if self.strand == "-":
+                    end_pos = start
+                    start_pos = end
+                    
+                start_cds = self.get_coding_distance(self.get_cds_start(), start_pos)
+                end_cds = self.get_coding_distance(self.get_cds_start(), end_pos)
+                
+                # cache the CDS positions of the exon boundaries
+                self.exon_to_cds[start] = start_cds
+                self.exon_to_cds[end] = end_cds
+        
+        # quickly find the exon containing the CDS position
         for start, end in self.cds:
-            if self.strand == "+":
-                start_cds = self.get_coding_distance(self.get_cds_start(), start)
-                end_cds = self.get_coding_distance(self.get_cds_start(), end)
-            else:
-                start_cds = self.get_coding_distance(self.get_cds_end(), end)
-                end_cds = self.get_coding_distance(self.get_cds_end(), start)
+            start_cds = self.exon_to_cds[start]
+            end_cds = self.exon_to_cds[end]
             
             if start_cds <= cds_position <= end_cds:
                 break
         
+        # convert the CDS position to a chromosomal coordinate
         if self.strand == "+":
             return start + (cds_position - start_cds)
         else:

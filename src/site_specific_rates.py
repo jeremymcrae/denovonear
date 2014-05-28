@@ -80,14 +80,19 @@ class SiteRates(object):
         return False   
     
     def get_gene_range(self):
-        """ get the start and end points for a gene
+        """ get the lowest and highest base positions of a genes CDS
         """
         
-        start = self.gene.get_cds_start()
+        boundary_1 = self.gene.get_cds_start()
+        boundary_2 = self.gene.get_cds_end()
+        
+        start = min(boundary_1, boundary_2)
+        end = max(boundary_1, boundary_2)
+        
         if self.gene.strand == "+":
             start -= 1
         
-        end = self.gene.get_cds_end() + 1
+        end += 1
         
         return (start, end)
     

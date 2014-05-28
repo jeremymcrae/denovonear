@@ -52,6 +52,7 @@ class TestSequenceMthodsPy(unittest.TestCase):
         
         # check CDS positions for gene on the reverse strand
         self.gene.strand = "-"
+        del self.gene.exon_to_cds
         self.assertEqual(self.gene.get_position_on_chrom(1), 189)
         self.assertEqual(self.gene.get_position_on_chrom(10), 180)
         self.assertEqual(self.gene.get_position_on_chrom(11), 120)
