@@ -67,7 +67,7 @@ def main():
     initial_iterations = 100000
     for gene_id in sorted(known_de_novos):
         iterations = initial_iterations
-        # gene_id = "PPP2R5D"
+        # gene_id = "PACS1"
         # print(gene_id)
         
         func_events = known_de_novos[gene_id]["functional"]
@@ -76,7 +76,7 @@ def main():
         
         # don't analyse genes with only one de novo functional mutation, and 
         # for now, exclude genes with numerous events
-        if len(func_events) < 2 or len(func_events) > 15:
+        if len(func_events) < 2 or len(func_events) > 25:
             continue
         
         # fix HGNC IDs that have been discontinued in favour of other gene IDs

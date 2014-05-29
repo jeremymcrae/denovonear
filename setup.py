@@ -7,9 +7,9 @@ EXTRA_COMPILE_ARGS = ["-std=c++0x"]
 if sys.platform == "darwin":
     EXTRA_COMPILE_ARGS.extend(["-stdlib=libc++"])
 
-module1 = Extension("libweightedchoice",
+module1 = Extension("libsimulatedenovo",
         extra_compile_args = EXTRA_COMPILE_ARGS,
-        sources = ["src/weighted_choice.cpp"])
+        sources = ["src/cpp/simulate.cpp", "src/cpp/weighted_choice.cpp"])
 
 setup (name = "De novo clustering",
         description = 'Package to examine de novo clustering',

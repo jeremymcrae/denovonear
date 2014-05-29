@@ -1,96 +1,10 @@
 #include <iostream>
-#include <random>
-#include <string>
-#include <array>
-#include <vector>
-#include <chrono>
 #include <algorithm>
 #include <cmath>
+#include <vector>
 #include <python2.7/Python.h>
+#include "weighted_choice.h"
 
-
-// g++ -std=c++0x -c -fPIC weighted_choice.cpp -o weighted_choice.o
-// g++ -shared -Wl,-soname,libweightedchoice.so -o libweightedchoice.so weighted_choice.o
-
-class WeightedChoice 
-{
-    int * sites;
-    double * probs;
-    int length;
-    std::mt19937_64 generator;
-    std::vector<double> cumulative;
-    double cumulative_sum;
-    
-    public:
-        WeightedChoice (int sites[], double probs[], int len);
-        std::vector<double> make_cumulative_sums();
-        int choice();
-};
-
-WeightedChoice::WeightedChoice(int pos[], double p[], int len)
-{
-    /**
-        Constructor for WeightedChoice class
-        
-        @sites array of variant positions
-        @p array of variant mutation rates
-        @len length of the sites array
-    */
-    
-    sites = pos;
-    probs = p;
-    length = len;
-    
-    // start the random sampler
-    int random_seed;
-    random_seed = std::chrono::system_clock::now().time_since_epoch().count();
-    generator.seed(random_seed);
-    cumulative = make_cumulative_sums();
-}
-
-std::vector< double > WeightedChoice::make_cumulative_sums()
-{
-     /**
-        generates an array of cumulative probabilities
-        
-        @return array of cumulative probabilities corresponding to each element
-            of the variants array
-    */
-    
-    std::vector< double > cumulative;
-    cumulative_sum = 0.0;
-    for (int n=0; n<length; n++)
-    {
-        cumulative_sum += probs[n];
-        cumulative.push_back(cumulative_sum);
-    }
-    
-    return cumulative;
-}
-
-
-
-int WeightedChoice::choice()
-{
-    /**
-        chooses a random element using a set of probability weights
-        
-        @return the name of the randomly selected element (e.g. position)
-    */
-    
-    // get a random float between 0 and the cumulative sum
-    std::uniform_real_distribution<double> dist(0.0, cumulative_sum);
-    double number = dist(generator);
-    
-    // figure out where in the list a random probability would fall
-    std::vector< double >::iterator pos;
-    pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
-    
-    int position = sites[pos - cumulative.begin()];
-    
-    // return the site position matching the probability
-    return position;
-}
 
 std::vector<double> get_distances(int sites[], short len)
 {
@@ -184,7 +98,7 @@ double get_geomean(std::vector<double> distances)
     return mean;
 }
 
-PyObject* simulate_distribution(int sites[], double probs[], int len,
+std::vector<double> simulate_distribution(int sites[], double probs[], int len,
     int iterations, int de_novo_count)
 {
     /**
@@ -198,12 +112,16 @@ PyObject* simulate_distribution(int sites[], double probs[], int len,
         @return a list of mean distances for each iteration
     */
     
+    // construct the weighted sampler
+    // TODO: figure out why I can't start this in the function that calls this,
+    // TODO: when I tried, each set of simulations gave the same choices, which
+    // TODO: implies the sampler restarts each time with the same seed.
+    WeightedChoice weights (sites, probs, len);
+    
     // use a python object to return the mean distances, makes it easier to
     // call from python
-    PyObject* mean_distances = PyList_New(0);
-    
-    // construct the weighted sampler
-    WeightedChoice weights (sites, probs, len);
+    std::vector<double> mean_distances;
+    // double mean_distances[iterations];
     
     // run through the required iterations
     for (int n=0; n < iterations; n++)
@@ -220,18 +138,86 @@ PyObject* simulate_distribution(int sites[], double probs[], int len,
         // geometric mean distance of all the distances
         std::vector<double> distances = get_distances(positions, de_novo_count);
         double mean_distance = get_geomean(distances);
-        PyList_Append(mean_distances, PyFloat_FromDouble(mean_distance));
+        mean_distances.push_back(mean_distance);
     }
+    
+    // make sure the mean distances are sorted, so we can quickly merge with
+    // previous distances
+    std::sort(mean_distances.begin(), mean_distances.end());
     
     return mean_distances;
 }
 
+double analyse_de_novos(int sites[], double probs[], int len,
+    int iterations, int de_novo_count, double observed_value)
+{
+    /**
+        simulates de novos weighted by mutation rate
+        
+        @sites array of CDS positions
+        @probs array of mutation rates matches to the sites
+        @len length of the sites and probs arrays
+        @iteration number of iterations to run
+        @de_novo_count number of de novos to simulate per iteration
+        @observed_value mean distance observed in the real de novo events
+        @return a list of mean distances for each iteration
+    */
+    
+    double minimum_prob = 1.0/(1.0 + (double) iterations);
+    double sim_prob = minimum_prob;
+    std::vector<double> dist;
+    
+    while (iterations < 100000000 and sim_prob == minimum_prob)
+    {
+        int iters_to_run = iterations - dist.size();
+        
+        minimum_prob = 1.0/(1.0 + (double) iterations);
+        
+        // simulate mean distances between de novos
+        std::vector<double> new_dist = simulate_distribution(sites, probs, len, iters_to_run, de_novo_count);
+        
+        // merge the two sorted lists into a sorted vector
+        std::vector<double> v(iterations);
+        std::merge(dist.begin(), dist.end(), new_dist.begin(), new_dist.end(), v.begin());
+        dist = v;
+        
+        // figure out where in the list a random probability would fall
+        std::vector< double >::iterator pos;
+        pos = std::upper_bound(dist.begin(), dist.end(), observed_value);
+        double position = pos - dist.begin();
+        
+        // estimate the probability from the position
+        sim_prob = (1.0 + position)/(1.0 + dist.size());
+        
+        // assess whether the P-value could never fall below 0.1, and cut 
+        // out after a smaller number of iterations, in order to minimise 
+        // run time. Figure out the lower bound of the confidence interval
+        // for the current simulated P value.
+        // TODO: figure out whether this is legit, perhaps a Sequential 
+        // TODO: Probability Ratio Test (SPRT) would be more appropriate.
+        double z = 10.0;
+        double alpha = 0.1;
+        double delta = (z * sqrt((sim_prob * (1 - sim_prob))))/iterations;
+        double lower_bound = sim_prob - delta;
+        
+        // if the lower bound of the confidence interval exceeds 0.1, then we
+        // can be sure it's not going to ever get lower than 0.05.
+        if (lower_bound > alpha) { break; }
+        
+        iterations += 100000; // for if we need to run more iterations
+    }
+    
+    return sim_prob;
+}
+
+
 extern "C" {
     WeightedChoice* WeightedChoice_new(int pos[], double p[], int len) { return new WeightedChoice(pos, p, len); }
     int WeightedChoice_choice(WeightedChoice* chooser) { return  chooser->choice(); }
-    PyObject* c_simulate_distribution(int pos[], double p[], int len, 
-        int iterations, int de_novo_count) 
+    double c_analyse_de_novos(int sites[], double probs[], int len,
+        int iterations, int de_novo_count, double observed_value) 
     { 
-        return simulate_distribution(pos, p, len, iterations, de_novo_count); 
+        return analyse_de_novos(sites, probs, len, iterations, de_novo_count, observed_value);
     }
 }
+
