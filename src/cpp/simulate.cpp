@@ -9,7 +9,7 @@
 std::vector<double> get_distances(int sites[], short len)
 {
     /**
-        makes a vector of all the two element combinations of two elements
+        gets the distances between all the pairs of elements from a list
         
         @sites array of positions
         @len length of the sites array
@@ -148,6 +148,34 @@ std::vector<double> simulate_distribution(int sites[], double probs[], int len,
     return mean_distances;
 }
 
+bool halt_permutation(double p_val, int iterations, double z, double alpha)
+{
+    /**
+        halt permutations if the P value could never be significant
+    
+        assess whether the P-value could never fall below 0.1, and cut 
+        out after a smaller number of iterations, in order to minimise 
+        run time. Figure out the lower bound of the confidence interval
+        for the current simulated P value.
+        TODO: figure out whether this is legit, perhaps a Sequential 
+        TODO: Probability Ratio Test (SPRT) would be more appropriate.
+        
+        @p_val current simulated P value
+        @iterations iterations run in order to obtain the simulated P value
+        @z standard normal deviate (eg 1.96 for 95% CI)
+        @alpha value above which to cease permuting
+        @return True/False for whether to halt the permuations
+    */
+    double delta = (z * sqrt((p_val * (1 - p_val))))/iterations;
+    double lower_bound = p_val - delta;
+    
+    // if the lower bound of the confidence interval exceeds 0.1, then we
+    // can be sure it's not going to ever get lower than 0.05.
+    bool exceeds = lower_bound > alpha;
+    
+    return exceeds;
+}
+
 double analyse_de_novos(int sites[], double probs[], int len,
     int iterations, int de_novo_count, double observed_value)
 {
@@ -189,20 +217,10 @@ double analyse_de_novos(int sites[], double probs[], int len,
         // estimate the probability from the position
         sim_prob = (1.0 + position)/(1.0 + dist.size());
         
-        // assess whether the P-value could never fall below 0.1, and cut 
-        // out after a smaller number of iterations, in order to minimise 
-        // run time. Figure out the lower bound of the confidence interval
-        // for the current simulated P value.
-        // TODO: figure out whether this is legit, perhaps a Sequential 
-        // TODO: Probability Ratio Test (SPRT) would be more appropriate.
+        // halt permutations if the P value could never be significant
         double z = 10.0;
         double alpha = 0.1;
-        double delta = (z * sqrt((sim_prob * (1 - sim_prob))))/iterations;
-        double lower_bound = sim_prob - delta;
-        
-        // if the lower bound of the confidence interval exceeds 0.1, then we
-        // can be sure it's not going to ever get lower than 0.05.
-        if (lower_bound > alpha) { break; }
+        if (halt_permutation(sim_prob, iterations, z, alpha)) { break; }
         
         iterations += 100000; // for if we need to run more iterations
     }

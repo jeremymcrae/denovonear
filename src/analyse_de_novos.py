@@ -6,17 +6,13 @@ within the same gene.
 from __future__ import division
 from __future__ import print_function
 
+import os
+import sys
 import bisect
 import math
 import ctypes
-import os
-import sys
+import glob
 import heapq
-
-IS_PYTHON2 = sys.version_info[0] == 2
-IS_PYTHON3 = sys.version_info[0] == 3
-
-BUILD_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "build")
 
 class AnalyseDeNovos(object):
     """ class to analyse clustering of de novo events via site specific
@@ -28,16 +24,17 @@ class AnalyseDeNovos(object):
         """
         
         # define the c library to use
-        if IS_PYTHON2:
-            lib_path = os.path.join(BUILD_DIR, "lib.linux-x86_64-2.7", "libsimulatedenovo.so")
-        elif IS_PYTHON3:
-            lib_path = os.path.join(BUILD_DIR, "lib.linux-x86_64-3.3", "libsimulatedenovo.cpython-33m.so")
-        
-        if os.path.exists(lib_path):
-            self.lib = ctypes.cdll.LoadLibrary(lib_path)
-            # make sure we set the return type
-            self.lib.c_analyse_de_novos.restype = ctypes.c_double
-            self.analyse_de_novos = self.c_analyse_de_novos
+        for path in sys.path:
+            if os.path.isdir(path):
+                files = glob.glob(os.path.join(path, "*simulatedenovo*so"))
+                if len(files) > 0:
+                    lib_path = files[0]
+                    self.lib = ctypes.CDLL(lib_path)
+                    
+                    # make sure we set the return type
+                    self.lib.c_analyse_de_novos.restype = ctypes.c_double
+                    self.analyse_de_novos = self.c_analyse_de_novos
+                    break
         
         self.transcript = transcript
         self.site_weights = site_weights
@@ -62,6 +59,13 @@ class AnalyseDeNovos(object):
         """
         
         weights = self.site_weights.get_functional_rates_for_gene()
+        return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
+    
+    def analyse_synonymous(self, de_novo_events):
+        """ analyse clustering of synonymous de novos
+        """
+        
+        weights = self.site_weights.get_synonymous_rates_for_gene()
         return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
     
     def analyse_de_novos(self, de_novos, weights, iterations):
@@ -102,21 +106,13 @@ class AnalyseDeNovos(object):
             pos = bisect.bisect_right(self.dist, observed_value)
             sim_prob = (1 + pos)/(1 + len(self.dist))
             
-            # assess whether the P-value could never fall below 0.1, and cut 
-            # out after a smaller number of iterations, in order to minimise 
-            # run time. Figure out the lower bound of the confidence interval
-            # for the current simulated P value.
+            # halt permutations if the P value could never be significant
             z = 10
             alpha = 0.1
-            delta = (z * math.sqrt((sim_prob * (1 - sim_prob))))/iterations
-            lower_bound = sim_prob - delta
-            
-            # if the lower bound of the confidence interval exceeds 0.1, then we
-            # can be sure it's not going to ever get lower than 0.05.
-            if lower_bound > alpha:
+            if self.adaptive_permutation(sim_prob, iterations, z, alpha):
                 break
             
-            iterations += 100000 # for if we need to run more iterations
+            iterations += 1000000 # for if we need to run more iterations
         
         # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/distribution.txt", "w")
         # for val in dist:
@@ -126,6 +122,30 @@ class AnalyseDeNovos(object):
             observed_value = "{0:0.1f}".format(observed_value)
         
         return (observed_value, sim_prob)
+    
+    def adaptive_permutation(self, p_val, iterations, z_score=10, alpha=0.1):
+        """ halt permutations if the P value could never be significant
+        
+        Args:
+            p_val: current simulated P value
+            iterations: iterations run in order to obtain the simulated P value
+            z_score: 
+            alpha: threshold 
+        
+        Returns:
+            True/False for whether to halt the permuations
+        """
+        
+        # assess whether the P-value could never fall below 0.1, and halt after 
+        # a smaller number of iterations, in order to minimise run time. Figure 
+        # out the lower bound of the confidence interval for the current 
+        # simulated P value.
+        delta = (z_score * math.sqrt((p_val * (1 - p_val))))/iterations
+        lower_bound = p_val - delta
+        
+        # if the lower bound of the confidence interval exceeds our alpha, then
+        # we can be sure it's not going to ever get lower than 0.05.
+        return lower_bound > alpha
     
     def c_analyse_de_novos(self, de_novos, weights, iterations):
         """ find the probability of getting de novos with a mean conservation
@@ -187,8 +207,8 @@ class AnalyseDeNovos(object):
             max_iter: number of iterations/simulations to run
         """
         
-        # # occasionally we want to find the dispersion of sampled sites in a gene
-        # # so we write the sampled sites to a file for analysis
+        # # occasionally we want to find the dispersion of sampled sites in a 
+        # # gene so we write the sampled sites to a file for analysis
         # src_dir = os.path.dirname(__file__)
         # cluster_dir = os.path.dirname(src_dir)
         # path = os.path.join(cluster_dir, "data", "sampled_sites.weighted.txt")
@@ -215,7 +235,8 @@ class AnalyseDeNovos(object):
         # output.write("\n".join(chrom_positions))
         # output.close()
         
-        # sort the current distances, then use a
+        # sort the current distances, then use a sort function that is fast 
+        # when merging two sorted lists
         temp_dist = sorted(temp_dist)
         self.dist = list(heapq.merge(self.dist, temp_dist))
     

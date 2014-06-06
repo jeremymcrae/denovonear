@@ -14,6 +14,8 @@ missense_consequences = ["initiator_codon_variant", "missense_variant",\
 
 nonsense_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
     "stop_gained"]
+    
+synonymous_consequences = ["synonymous_variant"]
 
 def load_known_de_novos(filename):
     """ load known mutations into dict indexed by HGNC ID.
@@ -36,10 +38,6 @@ def load_known_de_novos(filename):
         consequence = line[consequence_col]
         snp_or_indel = line[snp_or_indel_col]
         
-        # don't include de novos that aren't functionally important
-        if consequence not in functional_consequences:
-            continue
-        
         # ignore indels (some splice_acceptor_variants (in the
         # functional_consequences) are indels
         if "INDEL" in snp_or_indel:
@@ -50,14 +48,17 @@ def load_known_de_novos(filename):
             continue
         
         if gene not in genes_dict:
-            genes_dict[gene] = {"functional": [], "missense": [], "nonsense": []}
+            genes_dict[gene] = {"functional": [], "missense": [], \
+                "nonsense": [], "synonymous": []}
         
         genes_dict[gene]["functional"].append(int(position))
         if consequence in missense_consequences:
             genes_dict[gene]["missense"].append(int(position))
         elif consequence in nonsense_consequences:
             genes_dict[gene]["nonsense"].append(int(position))
-    
+        elif consequence in synonymous_consequences:
+            genes_dict[gene]["synonymous"].append(int(position))
+        
     return genes_dict
         
         

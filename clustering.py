@@ -64,7 +64,7 @@ def main():
     output.write("\t".join(["gene_id", "mutation_category", "events_n", \
         "dist", "probability"]) + "\n")
     
-    initial_iterations = 100000
+    initial_iterations = 1000000
     for gene_id in sorted(known_de_novos):
         iterations = initial_iterations
         # gene_id = "PACS1"
@@ -73,10 +73,11 @@ def main():
         func_events = known_de_novos[gene_id]["functional"]
         missense_events = known_de_novos[gene_id]["missense"]
         nonsense_events = known_de_novos[gene_id]["nonsense"]
+        synonymous_events = known_de_novos[gene_id]["synonymous"]
         
         # don't analyse genes with only one de novo functional mutation, and 
         # for now, exclude genes with numerous events
-        if len(func_events) < 2 or len(func_events) > 25:
+        if len(synonymous_events) < 2 and len(missense_events) < 2 and len(nonsense_events) < 2:
             continue
         
         # fix HGNC IDs that have been discontinued in favour of other gene IDs
@@ -97,6 +98,7 @@ def main():
         # (func_dist, func_prob) = probs.analyse_functional(func_events)
         (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
         (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
+        # (syn_dist, syn_prob) = probs.analyse_synonymous(synonymous_events)
         
         # [cons_func, cons_func_p, cons_miss, cons_miss_p, cons_nons, \
         #     cons_nons_p] = ["NA"] * 6
@@ -111,6 +113,8 @@ def main():
             len(missense_events), miss_dist, miss_prob))
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "nonsense", \
             len(nonsense_events), nons_dist, nons_prob))
+        # output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "synonymous", \
+        #     len(synonymous_events), syn_dist, syn_prob))
         
         # sys.exit()
 

@@ -25,6 +25,9 @@ class SiteRates(object):
     def get_functional_rates_for_gene(self):
         return self.build_weighted_site_rates_for_gene(self.functional_check)
     
+    def get_synonymous_rates_for_gene(self):
+        return self.build_weighted_site_rates_for_gene(self.synonymous_check)
+    
     def get_mutated_aa(self, base, codon, codon_pos):
         """ find the amino acid resulting from a base change to a codon
         """
@@ -78,6 +81,12 @@ class SiteRates(object):
             return True
         
         return False   
+    
+    def synonymous_check(self, initial_aa, mutated_aa, position):
+        """ checks if two amino acids are synonymous
+        """
+        
+        return not self.functional_check(initial_aa, mutated_aa, position)
     
     def get_gene_range(self):
         """ get the lowest and highest base positions of a genes CDS

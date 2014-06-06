@@ -5,7 +5,7 @@ git clone https://bitbucket.org/jeremy_mcrae/de_novo_clustering.git
 
 Then you can shift to the code folder, and set up the code with:
 cd  de_novo_clustering/
-python setup.py build
+python setup.py install --user
 
 Analyse your de novos with:
 python clustering.py \
