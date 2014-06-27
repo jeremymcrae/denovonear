@@ -42,9 +42,9 @@ class EnsemblRequest(object):
         self.cache = EnsemblCache(cache_folder)
         
         self.prior_time = time.time() - 1
-        self.rate_limit = 0.335
+        self.rate_limit = 0.067
         
-        self.server = "http://beta.rest.ensembl.org"
+        self.server = "http://rest.ensembl.org"
         
         self.check_ensembl_api_version()
     
@@ -67,7 +67,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "1" or minor != "6":
+        if major != "2" or minor != "0":
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
@@ -124,7 +124,7 @@ class EnsemblRequest(object):
             return self.ensembl_request(ext, sequence_id, headers)
         elif status_code != 200:
             raise ValueError("Invalid Ensembl response: " + str(status_code)\
-                + " for " + str(sequence_id) + ".\nqSubmitted URL was: " + \
+                + " for " + str(sequence_id) + ".\nSubmitted URL was: " + \
                 self.server + ext + "\nheaders: " + str(requested_headers) + \
                 "\nresponse: " + response)
         
@@ -172,7 +172,7 @@ class EnsemblRequest(object):
         transcript_ids = []
         for gene_id in gene_ids:
             self.request_attempts = 0
-            ext = "/feature/id/{0}?feature=transcript".format(gene_id)
+            ext = "/overlap/id/{0}?feature=transcript".format(gene_id)
             r = self.ensembl_request(ext, gene_id, headers)
             
             for item in json.loads(r):
@@ -182,7 +182,7 @@ class EnsemblRequest(object):
                 if item["Parent"] != gene_id or item["seq_region_name"] not in \
                         chroms or hgnc_id not in item["external_name"]:
                     continue
-                transcript_ids.append(item["ID"])
+                transcript_ids.append(item["id"])
         
         return transcript_ids
     
@@ -248,7 +248,7 @@ class EnsemblRequest(object):
         headers = {"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/feature/id/" + transcript_id + "?feature=gene"
+        ext = "/overlap/id/" + transcript_id + "?feature=gene"
         r =  self.ensembl_request(ext, transcript_id, headers)
         
         for gene in json.loads(r):
@@ -264,7 +264,7 @@ class EnsemblRequest(object):
         headers={"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/feature/id/" + transcript_id + "?feature=exon"
+        ext = "/overlap/id/" + transcript_id + "?feature=exon"
         r = self.ensembl_request(ext, transcript_id, headers)
         
         exon_ranges = []
@@ -286,7 +286,7 @@ class EnsemblRequest(object):
         headers={"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/feature/id/" + transcript_id + "?feature=cds"
+        ext = "/overlap/id/" + transcript_id + "?feature=cds"
         r = self.ensembl_request(ext, transcript_id, headers)
         
         cds_ranges = []

@@ -64,7 +64,7 @@ class EnsemblCache(object):
         """ set the ensembl API version, so we can check for obsolete data
         
         Args:
-            version: Ensembl API version string eg "1.6.0"
+            version: Ensembl API version string eg "2.0.0"
         """
         
         self.api_version = version

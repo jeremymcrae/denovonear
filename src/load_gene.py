@@ -34,10 +34,9 @@ def get_transcript_lengths(ensembl, transcript_ids):
     transcripts = {}
     for transcript_id in transcript_ids:
         # get the transcript's protein sequence via the ensembl REST API
-        seq = ensembl.get_protein_seq_for_transcript(transcript_id)
-        
-        # ignore transcripts without protein sequence
-        if seq == "Sequence unavailable":
+        try:
+            seq = ensembl.get_protein_seq_for_transcript(transcript_id)
+        except ValueError:
             continue
         
         transcripts[len(seq)] = transcript_id
