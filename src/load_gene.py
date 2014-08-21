@@ -63,15 +63,12 @@ def construct_gene_object(ensembl, transcript_id):
     return transcript
 
 def check_denovos_in_gene(transcript, de_novos):
-    """ make sure that all the  de novos occur in the loaded gene
+    """ make sure that all the  de novos occur in the transcript
     """
     
     for pos in de_novos:
-        # convert the de novo positions to cds positions, which raises an error
-        # if the position is not in the CDS exons
-        try:   
-            transcript.convert_chr_pos_to_cds_positions(pos)
-        except ValueError:
+        # check if the de novo is within the transcript sequence
+        if not transcript.in_coding_region(pos):
             return False
     
     return True

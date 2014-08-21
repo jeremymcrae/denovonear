@@ -195,11 +195,11 @@ class Interval(SequenceMethods, ConservationMethods):
                 other.get_start(), other.get_end())
     
     def __repr__(self):
-        return "{0}({1}:{2}-{3})".format(self.__class__.__name__, \
-            self.get_chrom(), self.get_start(), self.get_end())
+        return "{0}({1} {2}:{3}-{4})".format(self.__class__.__name__, \
+            self.name, self.get_chrom(), self.get_start(), self.get_end())
     
     def __str__(self):
-        return "\t".join(self.line)
+        return self.__repr__()
     
     def __hash__(self):
         return hash((self.get_chrom(), self.get_start(), self.get_end()))

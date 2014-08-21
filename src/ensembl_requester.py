@@ -44,7 +44,7 @@ class EnsemblRequest(object):
         self.prior_time = time.time() - 1
         self.rate_limit = 0.067
         
-        self.server = "http://rest.ensembl.org"
+        self.server = "http://grch37.rest.ensembl.org"
         
         self.check_ensembl_api_version()
     
@@ -67,7 +67,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "2" or minor != "0":
+        if major != "3" or minor != "0":
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
