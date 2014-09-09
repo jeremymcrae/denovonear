@@ -1,10 +1,10 @@
 
 Obtain the code from the bitbucket repository with:
 
-git clone https://bitbucket.org/jeremy_mcrae/de_novo_clustering.git
+git clone https://github.com/jeremymcrae/denovonear.git
 
 Then you can shift to the code folder, and set up the code with:
-cd  de_novo_clustering/
+cd  denovonear/
 python setup.py install --user
 
 Analyse your de novos with:
