@@ -24,19 +24,17 @@ def load_known_de_novos(filename):
     f = open(filename, "r")
     header = f.readline().strip().split("\t")
     
-    # get the positions of the columns that we are interested in
-    gene_name_col = header.index("gene_name")
-    position_col = header.index("pos")
-    consequence_col = header.index("consequence")
-    snp_or_indel_col = header.index("snp_or_indel")
-    
     genes_dict = {}
     for line in f:
+        # ignore header lines
+        if line.startswith("gene") or line.lower().startswith("HGNC"):
+            continue
+        
         line = line.rstrip().split("\t")
-        gene = line[gene_name_col]
-        position = line[position_col]
-        consequence = line[consequence_col]
-        snp_or_indel = line[snp_or_indel_col]
+        gene = line[0]
+        position = line[1]
+        consequence = line[2]
+        snp_or_indel = line[3]
         
         # ignore indels (some splice_acceptor_variants (in the
         # functional_consequences) are indels
