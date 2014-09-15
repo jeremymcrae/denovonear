@@ -35,8 +35,12 @@ class EnsemblRequest(object):
          - transcript and genomic DNA sequences for an ensembl transcript ID
     """
     
-    def __init__(self, cache_folder):
+    def __init__(self, cache_folder, genome_build):
         """ obtain the sequence for a transcript from ensembl
+        
+        Args:
+            cache_folder: path to folder for caching data requested from Ensembl
+            genome_build: string indicating the genome build ("grch37" or "grch38")
         """
         
         self.cache = EnsemblCache(cache_folder)
@@ -44,7 +48,9 @@ class EnsemblRequest(object):
         self.prior_time = time.time() - 1
         self.rate_limit = 0.067
         
-        self.server = "http://grch37.rest.ensembl.org"
+        server_dict = {"grch37": "grch37.", "grch38": ""}
+        
+        self.server = "http://{}rest.ensembl.org".format(server_dict[genome_build])
         
         self.check_ensembl_api_version()
     

@@ -35,6 +35,9 @@ def get_options():
         help="Path to file containing trinucleotide mutation rates.")
     parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
         help="deprecated gene IDs filename")
+    parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
+        "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
+        "that the de novo coordinates are based on (GrCh37 or GRCh38")
     parser.add_argument("--cache-folder", dest="cache_folder", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory)")
@@ -42,15 +45,16 @@ def get_options():
     args = parser.parse_args()
     
     return args.input, args.output, args.mut_rates, args.deprecated_genes, \
-        args.cache_folder
+        args.cache_folder, args.genome_build.lower()
 
 
 def main():
     
-    input_file, output_file, rates_file, old_gene_id_file, cache_dir = get_options()
+    input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
+        genome_build = get_options()
     
     # load all the data
-    ensembl = EnsemblRequest(cache_dir)
+    ensembl = EnsemblRequest(cache_dir, genome_build)
     mut_dict = load_trincleotide_mutation_rates(rates_file)
     
     old_gene_ids = {}
