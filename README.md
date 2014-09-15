@@ -1,7 +1,11 @@
 ## Denovonear
 
-This code is used to assess whether recurrent de novo single-nucleotide variants
-lie closer together within the coding sequence of a gene than expected by chance.
+This code assesses whether recurrent de novo single-nucleotide variants lie 
+closer together within the coding sequence of a gene than expected by chance. 
+We use mutation rates based on the local sequence context to determine the 
+expected likelyhood that specific regions of the gene contain mutations. 
+Currently, the local sequence context mutation rates are per-trinucleotide 
+mutation ratesb provided by Kaitlin Samocha of the Broad Institute.
 
 Obtain the code from the bitbucket repository with:
 
@@ -13,6 +17,7 @@ cd  denovonear/
 python setup.py install --user
 ```
 
+### Analysis
 Analyse your de novos with:
 ```python
 python clustering.py \
@@ -37,6 +42,6 @@ the code failed to retrieve coordinates from Ensembl, so it's built from the
 gene symbols from analysed files to date, so ongoing analyses might pick up 
 additional genes with out of date gene symbols.
 
-The cache folder defaults to making a "cache" folder within the working 
+The cache folder defaults to making a folder named "cache" within the working 
 directory. The genome build indicates which genome build the coordinates of the
 de novo variants are based on, and defaults to GRCh37.
