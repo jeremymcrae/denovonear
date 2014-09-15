@@ -12,14 +12,14 @@ Obtain the code from the bitbucket repository with:
 `git clone https://github.com/jeremymcrae/denovonear.git`
 
 Then you can shift to the code folder, and set up the code with:
-```
+```sh
 cd  denovonear/
 python setup.py install --user
 ```
 
 ### Analysis
 Analyse your de novos with:
-```python
+```sh
 python clustering.py \
    --in data/example_de_novos.txt \
    --rates data/forSanger_1KG_mutation_rate_table.txt \
