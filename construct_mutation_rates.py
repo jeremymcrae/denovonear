@@ -23,13 +23,16 @@ def get_options():
     parser = argparse.ArgumentParser(description="determine mutation rates \
         for genes given transcript IDs.")
     parser.add_argument("--transcripts", dest="input", required=True, help="Path to \
-        file listing transcript IDs.")
+        file listing Ensembl transcript IDs.")
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
     parser.add_argument("--rates", dest="mut_rates", required=True, \
         help="Path to file containing trinucleotide mutation rates.")
     parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
         help="deprecated gene IDs filename")
+    parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
+        "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
+        "that the de novo coordinates are based on (GrCh37 or GRCh38")
     parser.add_argument("--cache-folder", dest="cache_folder", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory)")
@@ -37,7 +40,7 @@ def get_options():
     args = parser.parse_args()
     
     return args.input, args.output, args.mut_rates, args.deprecated_genes, \
-        args.cache_folder
+        args.cache_folder, args.genome_build.lower()
 
 def load_transcripts(path):
     """ load a file listing transcript IDs per line
@@ -58,10 +61,11 @@ def load_transcripts(path):
 
 def main():
     
-    input_file, output_file, rates_file, old_gene_id_file, cache_dir = get_options()
+    input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
+        genome_build = get_options()
     
     # load all the data
-    ensembl = EnsemblRequest(cache_dir)
+    ensembl = EnsemblRequest(cache_dir, genome_build)
     mut_dict = load_trincleotide_mutation_rates(rates_file)
     
     transcript_ids = load_transcripts(input_file)
