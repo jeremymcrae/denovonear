@@ -51,7 +51,7 @@ You can identify transcripts containing de novos events with the
 `identify_transcripts.py` script. This either identifies all transcripts for a
 gene with one or more de novo events, or identifyies the minimal set of 
 transcripts to contain all de novos (where transcrips are prioritised on the 
-basis of number of de novo veents, and length of coding sequence). Transcripts
+basis of number of de novo events, and length of coding sequence). Transcripts
 can be identified with:
 ```sh
 python identify_transcripts.py \
@@ -61,7 +61,7 @@ python identify_transcripts.py \
     --all-transcripts
 ```
 Other options are:
- * `--minimise-transcripts`
+ * `--minimise-transcripts` (to find the minimal set of transcripts)
  * `--genome-build "grch37" or "grch38" (default=grch37)`
 
 #### Transcript mutation rates
