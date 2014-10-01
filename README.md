@@ -46,6 +46,24 @@ The cache folder defaults to making a folder named "cache" within the working
 directory. The genome build indicates which genome build the coordinates of the
 de novo variants are based on, and defaults to GRCh37.
 
+#### Identify transcripts containing de novo events
+You can identify transcripts containing de novos events with the 
+`identify_transcripts.py` script. This either identifies all transcripts for a
+gene with one or more de novo events, or identifyies the minimal set of 
+transcripts to contain all de novos (where transcrips are prioritised on the 
+basis of number of de novo veents, and length of coding sequence). Transcripts
+can be identified with:
+```sh
+python identify_transcripts.py \
+    --de-novos data/example_de_novos.txt \
+    --out output.txt \
+    --rates data/forSanger_1KG_mutation_rate_table.txt \
+    --all-transcripts
+```
+Other options are:
+ * `--minimise-transcripts`
+ * `--genome-build "grch37" or "grch38" (default=grch37)`
+
 #### Transcript mutation rates
 You can generate mutation rates for an Ensembl transcript ID with the 
 `construct_mutation_rates.py` script. Lof and missense mutation rates can be 
