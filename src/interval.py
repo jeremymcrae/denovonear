@@ -204,6 +204,55 @@ class Interval(SequenceMethods, ConservationMethods):
     def __hash__(self):
         return hash((self.get_chrom(), self.get_start(), self.get_end()))
     
+    def __add__(self, other):
+        """ combine the coding sequences of two interval objects
+        
+        When we determine the sites for sampling, occasioally we want to 
+        use sites from multiple alternative transcripts. We determine the sites
+        for each transcript in turn, but mask the sites that have been collected
+        in the preceeding transcripts. In order to be able to mask all previous 
+        trabnscripts, we need to combine the coding sequence of the transcripts
+        as we move through them. This function performs the union of coding
+        sequence regions between different transcripts.
+        
+        Args:
+            other: a transcript to be combined with the current object.
+        
+        Returns:
+            nothing, instead extends the coding sequence regions of the current
+            object. This will naturally disrupt the ability to get meaningingful
+            transcript sequence from the object, so don't perform this on
+            objects need to have sequence extracted from them.
+        """
+        
+        cds_min = min(other.get_cds_start(), other.get_cds_end())
+        cds_max = max(other.get_cds_start(), other.get_cds_end())
+        
+        for (start, end) in other.exons:
+            if not other.in_coding_region(start) and not other.in_coding_region(end):
+                continue
+            
+            # if the exon overlaps the start of the CDS, use the CDS start site
+            # rather than the exon start
+            if not other.in_coding_region(start) and other.in_coding_region(end):
+                start = cds_min
+                
+            # if the exon overlaps the end of the CDS, use the CDS end site
+            # rather than the exon end
+            if other.in_coding_region(start) and not other.in_coding_region(end):
+                end = cds_max
+            
+            # if the CDS region is already in the current object,we don't need 
+            # to extend the current objects coordinates
+            if self.in_coding_region(start) and self.in_coding_region(end):
+                continue
+            
+            # for
+            if not self.in_coding_region(start) and not self.in_coding_region(end):
+                closest_start, closest_end = self.find_closest_exon(start):
+                if self.in_coding_region(closest_start):
+                    pass
+    
     def in_exons(self, position):
         """ determines if a nucleotide position lies within the exons
         """
@@ -220,7 +269,7 @@ class Interval(SequenceMethods, ConservationMethods):
         """ finds the positions of the exon closest to a position
         """
         
-        max_distance = 999999999
+        max_distance = 1e10
         ref_start = 0
         ref_end = 0
         
