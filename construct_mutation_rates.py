@@ -1,5 +1,5 @@
-""" Script to investigate the probability of multiple mutations clustering 
-within a single gene.
+""" Script to generate mutation rates based on local sequence context rates
+for Ensembl transcript IDs.
 """
 
 from __future__ import print_function
@@ -28,8 +28,6 @@ def get_options():
         filename")
     parser.add_argument("--rates", dest="mut_rates", required=True, \
         help="Path to file containing trinucleotide mutation rates.")
-    parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
-        help="deprecated gene IDs filename")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
         "that the de novo coordinates are based on (GrCh37 or GRCh38")
@@ -61,8 +59,7 @@ def load_transcripts(path):
 
 def main():
     
-    input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
-        genome_build = get_options()
+    input_file, output_file, rates_file, cache_dir, genome_build = get_options()
     
     # load all the data
     ensembl = EnsemblRequest(cache_dir, genome_build)

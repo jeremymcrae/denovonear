@@ -39,12 +39,12 @@ def get_transcript_lengths(ensembl, transcript_ids):
         except ValueError:
             continue
         
-        transcripts[len(seq)] = transcript_id
+        transcripts[transcript_id] = len(seq)
     
     return transcripts
 
 def construct_gene_object(ensembl, transcript_id):
-    """ creates and Interval object for a gene from ensembl databases
+    """ creates an Interval object for a gene from ensembl databases
     """
     
     # get the sequence for the identified transcript
@@ -62,16 +62,47 @@ def construct_gene_object(ensembl, transcript_id):
     
     return transcript
 
-def check_denovos_in_gene(transcript, de_novos):
-    """ make sure that all the  de novos occur in the transcript
+def get_de_novos_in_transcript(transcript, de_novos):
+    """ get the de novos within the coding sequence of a transcript
+    
+    Args:
+        transcript: Interval object, which defines the transcript coordinates
+        de_novos: list of chromosome sequence positions for de novo events
+    
+    Returns:
+        list of de novo positions found within the transcript
     """
     
-    for pos in de_novos:
-        # check if the de novo is within the transcript sequence
-        if not transcript.in_coding_region(pos):
-            return False
+    in_transcript = []
+    for de_novo in de_novos:
+        if transcript.in_coding_region(de_novo):
+            in_transcript.append(de_novo)
     
-    return True
+    return in_transcript
+    
+def get_transcript_ids_sorted_by_length(ensembl, gene_id):
+    """ gets transcript IDs for a gene, sorted by coding sequence length
+    
+    Args:
+        ensembl: EnsemblRequest object to request data from ensembl
+        gene_id: HGNC symbol for gene
+    
+    Returns:
+        list of (transcript ID, length) tuples for each protein coding 
+        transcript for a gene. The transcripts are sorted by transcript length,
+        with longest first.
+    """
+    
+    print("loading: {0}".format(gene_id))
+    ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
+    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, gene_id)
+    transcript_lengths = get_transcript_lengths(ensembl, transcript_ids)
+    
+    # sort by transcript length
+    transcripts = sorted(transcript_lengths.items(), key=lambda x: x[1])
+    transcripts = list(reversed(transcripts))
+    
+    return transcripts
 
 def load_gene(ensembl, gene_id, de_novos=[]):
     """ sort out all the necessary sequences and positions for a gene
@@ -86,39 +117,34 @@ def load_gene(ensembl, gene_id, de_novos=[]):
         Interval object for gene, including genomic ranges and sequences
     """
     
-    print("loading: " + str(gene_id))
-    ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
-    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, gene_id)
-    transcripts = get_transcript_lengths(ensembl, transcript_ids)
-    
-    # start with the longest transcript
-    lengths = sorted(transcripts)[::-1]
-    transcript_id = transcripts[lengths[0]]
+    transcripts = get_transcript_ids_sorted_by_length(ensembl, gene_id)
     
     # TODO: allow for genes without any coding sequence.
-    if transcript_id == {}:
-        raise ValueError(gene_id + " lacks coding transcripts")
+    if len(transcripts) == 0:
+        raise ValueError("{0} lacks coding transcripts".format(gene_id))
     
     # create a Interval object using the longest transcript, but if we cannot
     # obtain a valid sequence or coordinates, or the transcript doesn't contain
     # all the de novo positions, run through alternate transcripts in order of
     # length (allows for CSMD2 variant chr1:34071484 and PHACTR1 chr6:12933929).
-    gene = None
-    pos = 0
-    while gene is None or (not check_denovos_in_gene(gene, de_novos) and \
-            pos < (len(transcripts) - 1)):
+    for (transcript_id, length) in transcripts:
         try:
-            transcript_id = transcripts[lengths[pos]]
-            pos += 1
             gene = construct_gene_object(ensembl, transcript_id)
+            if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
+                # halt the loop, since we've found a transcript with all the de
+                # novos
+                break  
         except ValueError:
+            # this error occurs when the transcript sequence from genomic  
+            # sequence according to the gene positions, doesn't match the 
+            # transcript sequence obtained from ensembl for the transcript ID.
             pass
     
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
     # mutually exclusive transcripts
-    if not check_denovos_in_gene(gene, de_novos):
-        raise IndexError(gene_id + " de novos aren't in CDS sequence")
+    if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
+        raise IndexError("{0}: de novos aren't in CDS sequence".format(gene_id))
     
     return gene
 
