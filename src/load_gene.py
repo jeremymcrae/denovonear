@@ -1,4 +1,4 @@
-""" functions to load genes
+""" functions to load genes, and identify transcripts containing de novos.
 """
 
 from src.interval import Interval
@@ -28,7 +28,7 @@ def get_transcript_lengths(ensembl, transcript_ids):
         transcript_ids: list of transcript IDs for a single gene
     
     Returns:
-        dictionary of transcript IDs, indexed by their length in amino acids
+        dictionary of lengths (in amino acids), indexed by transcript IDs
     """
     
     transcripts = {}
@@ -45,6 +45,18 @@ def get_transcript_lengths(ensembl, transcript_ids):
 
 def construct_gene_object(ensembl, transcript_id):
     """ creates an Interval object for a gene from ensembl databases
+    
+    Args:
+        ensembl: EnsemblRequest object to request data from ensembl
+        transcript_id: string for an Ensembl transcript ID
+    
+    Returns:
+        an Interval object, containing transcript coordinates and gene and
+        transcript sequence.
+    
+    Raises:
+        ValueError if CDS from genomic sequence given gene coordinates and CDS
+        retrieved from Ensembl do not match.
     """
     
     # get the sequence for the identified transcript
@@ -147,6 +159,82 @@ def load_gene(ensembl, gene_id, de_novos=[]):
         raise IndexError("{0}: de novos aren't in CDS sequence".format(gene_id))
     
     return gene
+    
+def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
+    """ sort out all the necessary sequences and positions for a gene
+    
+    Args:
+        ensembl: EnsemblRequest object to request data from ensembl
+        gene_id: HGNC symbol for gene
+        de_novos: list of de novo positions, so we can check they all fit in 
+            the gene transcript
+        
+    Returns:
+        list of (transcript ID, de novo count) tuples, where the de novo count
+        shows the number of de novos found in the Ensembl transcript.
+    """
+    
+    transcripts = get_transcript_ids_sorted_by_length(ensembl, gene_id)
+    
+    # TODO: allow for genes without any coding sequence.
+    if len(transcripts) == 0:
+        raise ValueError("{0} lacks coding transcripts".format(gene_id))
+    
+    # count the de novos observed in all transcripts
+    counts = []
+    for (transcript_id, length) in transcripts:
+        try:
+            gene = construct_gene_object(ensembl, transcript_id)
+            total = len(get_de_novos_in_transcript(gene, de_novos))
+            if total > 0:
+                counts.append([transcript_id, total, length])
+        except ValueError:
+            pass
+    
+    return counts
+
+def minimise_transcripts(ensembl, gene_id, de_novos):
+    """ get a set of minimal transcripts to contain all the de novos.
+    
+    We identify the minimal number of transcripts to contain all de novos. This
+    allows for de novos on mutually exclusive transcripts. The transcripts are
+    selected on the basis of containing the most number of de novos, while also
+    being the longest possible transcript for the gene.
+    
+    Args:
+        ensembl: EnsemblRequest object to request data from ensembl
+        gene_id: HGNC symbol for gene
+        de_novos: list of de novo positions
+    
+    Returns:
+        list of [(transcript_id, de novo count, sequence length)] tuples for the
+        set of minimal transcripts necessary to contain all de novos.
+    """
+    
+    if len(de_novos) == 0:
+        return []
+    
+    counts = count_de_novos_per_transcript(ensembl, gene_id, de_novos)
+    
+    # find the transcripts with the most de novos
+    max_count = max(item[1] for item in counts)
+    transcripts = [item for item in counts if item[1] == max_count]
+    
+    # find the transcript with the greatest length, should be one transcript
+    max_length = max(item[2] for item in transcripts)
+    max_transcript = [item for item in transcripts if item[2] == max_length]
+    
+    # find which de novos occur in the transcript with the most de novos
+    gene = construct_gene_object(ensembl, max_transcript[0][0])
+    denovos_in_gene = get_de_novos_in_transcript(gene, de_novos)
+    
+    # trim the de novos to the ones not in the current transcript
+    leftovers = list(set(de_novos) - set(denovos_in_gene))
+    
+    # and recursively return the transcripts in the current transcript, along 
+    # with transcripts for the reminaing de novos
+    return max_transcript + minimise_transcripts(ensembl, gene_id, leftovers)
+
 
 def load_conservation(transcript, folder):
     """ loads the conservation scores at base level for a gene
