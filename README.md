@@ -61,7 +61,8 @@ python identify_transcripts.py \
     --all-transcripts
 ```
 Other options are:
- * `--minimise-transcripts` (to find the minimal set of transcripts)
+ * `--minimise-transcripts` in place of `--all-transcripts`, to find the minimal
+   set of transcripts
  * `--genome-build "grch37" or "grch38" (default=grch37)`
 
 #### Transcript mutation rates
