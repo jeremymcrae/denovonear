@@ -27,8 +27,6 @@ def get_options():
         file listing de novo variants in genes.")
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
-    parser.add_argument("--rates", dest="mut_rates", required=True, \
-        help="Path to file containing trinucleotide mutation rates.")
     parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
         help="deprecated gene IDs filename")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
@@ -48,18 +46,17 @@ def get_options():
     
     args = parser.parse_args()
     
-    return args.input, args.output, args.mut_rates, args.deprecated_genes, \
+    return args.input, args.output, args.deprecated_genes, \
         args.cache_folder, args.genome_build.lower(), args.all_transcripts, \
         args.minimise_transcripts
 
 def main():
     
-    input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
-        genome_build, all_transcripts, minimal_transcripts = get_options()
+    input_file, output_file, old_gene_id_file, cache_dir, genome_build, \
+        all_transcripts, minimal_transcripts = get_options()
     
     # load all the data
     ensembl = EnsemblRequest(cache_dir, genome_build)
-    mut_dict = load_trincleotide_mutation_rates(rates_file)
     
     old_gene_ids = {}
     if old_gene_id_file is not None:
@@ -68,7 +65,7 @@ def main():
     known_de_novos = load_known_de_novos(input_file)
     
     output = open(output_file, "w")
-    output.write("hgnc\ttranscript_id\tlength\tde_novos\n")
+    output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")
     
     for gene_id in sorted(known_de_novos):
         func_events = known_de_novos[gene_id]["functional"]
