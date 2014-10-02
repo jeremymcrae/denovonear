@@ -26,9 +26,11 @@ def get_options():
     
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--transcripts", dest="transcript_input",
-        help="Path to file listing Ensembl transcript IDs.")
+        help="Path to file listing Ensembl transcript IDs, one ID per line.")
     group.add_argument("--genes", dest="gene_input", help="Path to file" + \
-        " listing HGNC symbols, with one or more transcript IDs per gene.")
+        " listing HGNC symbols, with one or more transcript IDs per gene. " + \
+        "The tab-separated input format is gene symbol followed by transcript " + \
+        "ID. Alternative transcripts are listed on separate lines.")
     
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
@@ -36,10 +38,10 @@ def get_options():
         help="Path to file containing trinucleotide mutation rates.")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
-        "that the de novo coordinates are based on (GrCh37 or GRCh38")
+        "that the de novo coordinates are based on (currently GRCh37 or GRCh38).")
     parser.add_argument("--cache-folder", dest="cache_folder", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
-        to cache Ensembl data into (defaults to clustering code directory)")
+        to cache Ensembl data into (defaults to clustering code directory).")
     
     args = parser.parse_args()
     
@@ -188,8 +190,4 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
 

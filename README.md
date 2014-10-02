@@ -65,7 +65,7 @@ Other options are:
    set of transcripts
  * `--genome-build "grch37" or "grch38" (default=grch37)`
 
-#### Transcript mutation rates
+#### Transcript/Gene mutation rates
 You can generate mutation rates for an Ensembl transcript ID with the 
 `construct_mutation_rates.py` script. Lof and missense mutation rates can be 
 generated with:
@@ -75,7 +75,13 @@ python construct_mutation_rates.py \
     --rates data/forSanger_1KG_mutation_rate_table.txt \
     --out output.txt
 ```
+Other options are:
+ * `--genes` in place of `--transcripts`, to obtain a mutation rate from the
+   union of alternative transcripts for a gene. Requires a file listing HGNC 
+   symbols, with one or more transcript IDs per gene. The tab-separated input 
+   format is gene symbol followed by transcript ID. Alternative transcripts are 
+   listed on separate lines.
 
-The tab-separated output file will contain one row per transcript, with each
-line containing a transcript ID, a log10 transformed missense mutation rate, and
-a log10 transformed nonsense mutation rate. 
+The tab-separated output file will contain one row per gene/transcript, with 
+each line containing a transcript ID, a log10 transformed missense mutation
+rate, and a log10 transformed nonsense mutation rate.
