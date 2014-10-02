@@ -57,7 +57,6 @@ can be identified with:
 python identify_transcripts.py \
     --de-novos data/example_de_novos.txt \
     --out output.txt \
-    --rates data/forSanger_1KG_mutation_rate_table.txt \
     --all-transcripts
 ```
 Other options are:
