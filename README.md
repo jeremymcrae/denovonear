@@ -65,8 +65,9 @@ Other options are:
    set of transcripts
  * `--genome-build "grch37" or "grch38" (default=grch37)`
 
-#### Transcript/Gene mutation rates
-You can generate mutation rates for an Ensembl transcript ID with the 
+#### Gene or transcript based mutation rates
+You can generate mutation rates for either the union of alternative transcripts
+for a gene, or for a specific Ensembl transcript ID with the 
 `construct_mutation_rates.py` script. Lof and missense mutation rates can be 
 generated with:
 ```sh
