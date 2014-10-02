@@ -83,5 +83,5 @@ Other options are:
    listed on separate lines.
 
 The tab-separated output file will contain one row per gene/transcript, with 
-each line containing a transcript ID, a log10 transformed missense mutation
-rate, and a log10 transformed nonsense mutation rate.
+each line containing a transcript ID or gene symbol, a log10 transformed
+missense mutation rate, and a log10 transformed nonsense mutation rate.
