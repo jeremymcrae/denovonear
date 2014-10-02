@@ -11,10 +11,11 @@ class SiteRates(object):
     and functional classes of variants, using site specific mutation rates
     """
     
-    def __init__(self, gene, mut_dict):
+    def __init__(self, gene, mut_dict, masked_sites=None):
         
         self.gene = gene
         self.mut_dict = mut_dict
+        self.masked = masked_sites
     
     def get_missense_rates_for_gene(self):
         return self.build_weighted_site_rates_for_gene(self.missense_check)
@@ -122,6 +123,11 @@ class SiteRates(object):
         
         for bp in range(range_start, range_end):
             if not self.gene.in_coding_region(bp):
+                continue
+            
+            # ignore sites within masked regions (typically masked because the
+            # site has been picked up on alternative transcript)
+            if self.masked is not None and self.masked.in_coding_region(bp):
                 continue
             
             cds_pos = self.gene.get_position_in_cds(bp)

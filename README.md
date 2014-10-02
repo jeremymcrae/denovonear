@@ -57,7 +57,6 @@ can be identified with:
 python identify_transcripts.py \
     --de-novos data/example_de_novos.txt \
     --out output.txt \
-    --rates data/forSanger_1KG_mutation_rate_table.txt \
     --all-transcripts
 ```
 Other options are:
@@ -65,8 +64,9 @@ Other options are:
    set of transcripts
  * `--genome-build "grch37" or "grch38" (default=grch37)`
 
-#### Transcript mutation rates
-You can generate mutation rates for an Ensembl transcript ID with the 
+#### Gene or transcript based mutation rates
+You can generate mutation rates for either the union of alternative transcripts
+for a gene, or for a specific Ensembl transcript ID with the 
 `construct_mutation_rates.py` script. Lof and missense mutation rates can be 
 generated with:
 ```sh
@@ -75,7 +75,13 @@ python construct_mutation_rates.py \
     --rates data/forSanger_1KG_mutation_rate_table.txt \
     --out output.txt
 ```
+Other options are:
+ * `--genes` in place of `--transcripts`, to obtain a mutation rate from the
+   union of alternative transcripts for a gene. Requires a file listing HGNC 
+   symbols, with one or more transcript IDs per gene. The tab-separated input 
+   format is gene symbol followed by transcript ID. Alternative transcripts are 
+   listed on separate lines.
 
-The tab-separated output file will contain one row per transcript, with each
-line containing a transcript ID, a log10 transformed missense mutation rate, and
-a log10 transformed nonsense mutation rate. 
+The tab-separated output file will contain one row per gene/transcript, with 
+each line containing a transcript ID or gene symbol, a log10 transformed
+missense mutation rate, and a log10 transformed nonsense mutation rate.
