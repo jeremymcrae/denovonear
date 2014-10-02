@@ -72,12 +72,19 @@ class SiteRates(object):
         if self.nonsense_check(initial_aa, mutated_aa, position):
             return False
         
-        # if initial_aa != "*" and mutated_aa == "*" or \
-        #     self.exon_start_dist < 3 and self.exon_end_dist < 3:
-        #     return False
+        # catch splice region variants within the exon, and in the appropriate 
+        # region of the intron (note that loss of function splice_donor and 
+        # splice_acceptor variants have been excluded when we trimmed nonsense).
+        if self.gene.in_coding_region(position):
+            if self.exon_start_dist < 4 and self.exon_end_dist < 4:
+                # splice Region variant inside exon
+                return True
+        else:
+            if self.exon_start_dist < 9 and self.exon_end_dist < 9:
+                # splice_region_variant inside intron
+                return True
         
-        # only include the site specific probability if it mutates to a 
-        # different amino acid, or occurs close to an intron/exon boundary.
+        # include the site if it mutates to a different amino acid.
         if initial_aa != mutated_aa:
             return True
         
