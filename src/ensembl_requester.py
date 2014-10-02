@@ -43,7 +43,7 @@ class EnsemblRequest(object):
             genome_build: string indicating the genome build ("grch37" or "grch38")
         """
         
-        self.cache = EnsemblCache(cache_folder)
+        self.cache = EnsemblCache(cache_folder, genome_build)
         
         self.prior_time = time.time() - 1
         self.rate_limit = 0.067
@@ -73,7 +73,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "3" or minor != "0":
+        if major != "3" or minor not in ["0", "1"]:
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
