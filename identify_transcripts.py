@@ -77,10 +77,13 @@ def main():
         # find the counts per transcript, depending on whether we want to count
         # for all transcripts containing one or more de novos, or to find the 
         # minimum set of transcripts to contain the de novos
-        if all_transcripts:
-            counts = count_de_novos_per_transcript(ensembl, gene_id, func_events)
-        elif minimal_transcripts:
-            counts = minimise_transcripts(ensembl, gene_id, func_events)
+        try:
+            if all_transcripts:
+                counts = count_de_novos_per_transcript(ensembl, gene_id, func_events)
+            elif minimal_transcripts:
+                counts = minimise_transcripts(ensembl, gene_id, func_events)
+        except ValueError:
+            continue
         
         # write the transcript details to a file
         for (transcript_id, count, length) in counts:
