@@ -17,7 +17,7 @@ class EnsemblCache(object):
     the requested data for faster retrieval
     """
     
-    def __init__(self, cache_folder):
+    def __init__(self, cache_folder, genome_build):
         """ initialise the class with the local cache folder
         
         Args:
@@ -26,6 +26,8 @@ class EnsemblCache(object):
         
         self.cache_folder = cache_folder
         self.cache_path = os.path.join(self.cache_folder, "ensembl_cache.db")
+        
+        self.genome_build = genome_build
         
         self.connect_to_database()
     
@@ -44,7 +46,7 @@ class EnsemblCache(object):
             conn = sqlite3.connect(self.cache_path)
             c = conn.cursor()
             try:
-                c.execute(u"CREATE TABLE ensembl (key text PRIMARY KEY, cache_date text, api_version text, data blob)")
+                c.execute(u"CREATE TABLE ensembl (key text PRIMARY KEY, genome_build text, cache_date text, api_version text, data blob)")
                 conn.commit()
                 c.close()
             except sqlite3.OperationalError:
@@ -85,7 +87,7 @@ class EnsemblCache(object):
         
         key = self.get_key_from_url(url)
         
-        self.c.execute("SELECT * FROM ensembl WHERE key =?", (key, ))
+        self.c.execute("SELECT * FROM ensembl WHERE key =? AND genome_build=?", (key, self.genome_build))
         row = self.c.fetchone()
         
         # if the data has been cached, check that it is not out of date, and 
@@ -148,9 +150,9 @@ class EnsemblCache(object):
         if IS_PYTHON2:
             data = buffer(data)
         
-        t = (key, current_date, self.api_version, data)
+        t = (key, self.genome_build, current_date, self.api_version, data)
         
-        self.c.execute("INSERT OR REPLACE INTO ensembl (key, cache_date, api_version, data) VALUES (?,?,?,?)", t)
+        self.c.execute("INSERT OR REPLACE INTO ensembl (key, genome_build, cache_date, api_version, data) VALUES (?,?,?,?,?)", t)
         self.conn.commit()
     
     def get_key_from_url(self, url):
