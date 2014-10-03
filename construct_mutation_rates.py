@@ -167,6 +167,17 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     
     return (missense, nonsense, splice_lof, synonymous)
 
+def log_transform(value):
+    """ log transform a numeric value, unless it is zero, or negative
+    """
+    
+    try:
+        value = math.log10(value)
+    except ValueError:
+        value = "NA"
+    
+    return value
+
 def main():
     
     input_transcripts, input_genes, output_file, rates_file, cache_dir, genome_build = get_options()
@@ -188,10 +199,10 @@ def main():
         
         # log transform the rates, to keep them consistent with the rates from
         # Daly et al.
-        missense = math.log10(missense)
-        nonsense = math.log10(nonsense)
-        splice_lof = math.log10(splice_lof)
-        synonymous = math.log10(synonymous)
+        missense = log_transform(missense)
+        nonsense = log_transform(nonsense)
+        splice_lof = log_transform(splice_lof)
+        synonymous = log_transform(synonymous)
         
         line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, missense, nonsense, splice_lof, synonymous)
         output.write(line)
