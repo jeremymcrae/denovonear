@@ -98,10 +98,9 @@ def main():
         print("simulating clustering")
         probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
         
-        # (func_dist, func_prob) = probs.analyse_functional(func_events)
-        (miss_dist, miss_prob) = probs.analyse_missense(missense_events)
-        (nons_dist, nons_prob) = probs.analyse_nonsense(nonsense_events)
-        # (syn_dist, syn_prob) = probs.analyse_synonymous(synonymous_events)
+        (miss_dist, miss_prob) = probs.analyse_missense_and_splice_region(missense_events)
+        (nons_dist, nons_prob) = probs.analyse_lof(nonsense_events)
+        (syn_dist, syn_prob) = probs.analyse_synonymous(synonymous_events)
         
         # [cons_func, cons_func_p, cons_miss, cons_miss_p, cons_nons, \
         #     cons_nons_p] = ["NA"] * 6
@@ -116,8 +115,8 @@ def main():
             len(missense_events), miss_dist, miss_prob))
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "nonsense", \
             len(nonsense_events), nons_dist, nons_prob))
-        # output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "synonymous", \
-        #     len(synonymous_events), syn_dist, syn_prob))
+        output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "synonymous", \
+            len(synonymous_events), syn_dist, syn_prob))
         
         # sys.exit()
 

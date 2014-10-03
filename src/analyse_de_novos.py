@@ -40,18 +40,18 @@ class AnalyseDeNovos(object):
         self.site_weights = site_weights
         self.max_iter = iterations
     
-    def analyse_missense(self, de_novo_events):
-        """ analyse clustering of missense de novos
+    def analyse_missense_and_splice_region(self, de_novo_events):
+        """ analyse clustering of missense and splice_region de novos
         """
         
-        weights = self.site_weights.get_missense_rates_for_gene()
+        weights = self.site_weights.get_missense_and_splice_region_rates_for_gene()
         return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
     
-    def analyse_nonsense(self, de_novo_events):
-        """ analyse clustering of nonsense de novos
+    def analyse_lof(self, de_novo_events):
+        """ analyse clustering of loss of function de novos
         """
         
-        weights = self.site_weights.get_nonsense_rates_for_gene()
+        weights = self.site_weights.get_lof_rates_for_gene()
         return self.analyse_de_novos(de_novo_events, weights, self.max_iter)
     
     def analyse_functional(self, de_novo_events):

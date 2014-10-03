@@ -77,30 +77,28 @@ class SequenceMethods(object):
         
         self.cds_sequence = cds_dna
     
-    def add_genomic_sequence(self, gdna, offset=0):
+    def add_genomic_sequence(self, gdna):
         """ add and process the genomic sequence into a CDS sequence
         """
         
-        gdna = gdna[offset:]
         self.genomic_sequence = gdna
         
         cds_seq = ""
         for start, end in self.cds:
             if self.strand == "+":
                 start_bp = abs(start - self.get_start())
-                end_bp = abs(end - self.get_start())
-                cds_seq += gdna[start_bp:end_bp + 1]
+                end_bp = abs(end - self.get_start()) + 1
+                cds_seq += gdna[start_bp:end_bp]
             else:
-                start_bp = abs(self.get_end() - end)
+                start_bp = abs(self.get_end() - end) - 1
                 end_bp = abs(self.get_end() - start)
-                cds_seq = gdna[start_bp - 1:end_bp] + cds_seq
+                cds_seq = gdna[start_bp:end_bp] + cds_seq
         
         # do a sanity check to check that we've got the right cds sequence, this
         # fails for at least one gene (CCDC18), which begins with a N, and 
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
-            raise ValueError("haven't obtained the right CDS for " + \
-                self.get_name() + "\n" + cds_seq)
+            raise ValueError("haven't obtained the right CDS for {0}\n{1}".format(self.get_name, cds_seq))
         
         self.cds_sequence = cds_seq
         
@@ -122,19 +120,19 @@ class SequenceMethods(object):
         
         return seq.translate(transdict)[::-1]
     
-    def get_trinucleotide_around_cds_position(self, cds_position):
-        """ obtains the trinucleotide sequence around a cds position
+    def get_trinucleotide(self, pos):
+        """ obtains the trinucleotide sequence around a position
         """
         
-        assert cds_position >= 0 
-        assert cds_position < len(self.cds_sequence)
+        assert pos >= 0 
+        assert pos > self.get_start() and pos < self.get_end()
         
-        if cds_position == 0:
-            tri = self.upstream_sequence + self.cds_sequence[:2]
-        elif cds_position == len(self.cds_sequence) - 1:
-            tri = self.cds_sequence[-2:] + self.downstream_sequence
-        else:
-            tri = self.cds_sequence[cds_position - 1:cds_position + 2]
+        offset = self.get_start()
+        if self.strand == "-":
+            self.get_end()
+        
+        sequence_pos = abs(pos - offset)
+        tri = self.genomic_sequence[sequence_pos - 1:sequence_pos + 2]
         
         return tri
     

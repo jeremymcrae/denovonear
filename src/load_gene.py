@@ -60,7 +60,7 @@ def construct_gene_object(ensembl, transcript_id):
     """
     
     # get the sequence for the identified transcript
-    (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id, expand=10)
+    (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id)
     cds_sequence = ensembl.get_cds_seq_for_transcript(transcript_id)
     
     # get the locations of the exons and cds from ensembl
@@ -70,7 +70,7 @@ def construct_gene_object(ensembl, transcript_id):
     # start an interval object with the locations and sequence
     transcript = Interval(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
     transcript.add_cds_sequence(cds_sequence)
-    transcript.add_genomic_sequence(genomic_sequence, offset=10)
+    transcript.add_genomic_sequence(genomic_sequence)
     
     return transcript
 
@@ -155,7 +155,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
     # mutually exclusive transcripts
-    if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
+    if len(get_de_novos_in_transcript(gene, de_novos)) != len(de_novos):
         raise IndexError("{0}: de novos aren't in CDS sequence".format(gene_id))
     
     return gene

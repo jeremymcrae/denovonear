@@ -61,7 +61,7 @@ def load_transcripts(path):
     transcripts = {}
     with open(path, "r") as f:
         for line in f:
-            transcripts[line.strip()] = line.strip()
+            transcripts[line.strip()] = [line.strip()]
             
     return transcripts
     
@@ -133,6 +133,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     
     missense = 0
     nonsense = 0
+    splice_lof = 0
     synonymous = 0
     combined_transcript = None
     
@@ -148,20 +149,23 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         
         missense_rates = site_weights.get_missense_rates_for_gene()
         nonsense_rates = site_weights.get_nonsense_rates_for_gene()
+        splice_lof_rates = site_weights.get_splice_loss_of_function_rates_for_gene()
         synonymous_rates = site_weights.get_synonymous_rates_for_gene()
         
         # if any sites have been sampled in the transcript, then add the
         # cumulative probability from those sites to the approporiate
-        # mutation rate. Sometimes we won't have any sites for a trsncript, as
+        # mutation rate. Sometimes we won't have any sites for a transcript, as
         # all the sites will have been captured in previous transcripts.
         if len(missense_rates.choices) > 0:
             missense += missense_rates.cum_probs[-1]
         if len(nonsense_rates.choices) > 0:
             nonsense += nonsense_rates.cum_probs[-1]
+        if len(splice_lof_rates.choices) > 0:
+            splice_lof += splice_lof_rates.cum_probs[-1]
         if len(synonymous_rates.choices) > 0:
             synonymous += synonymous_rates.cum_probs[-1]
     
-    return (missense, nonsense, synonymous)
+    return (missense, nonsense, splice_lof, synonymous)
 
 def main():
     
@@ -177,18 +181,19 @@ def main():
         transcripts = load_genes(input_genes)
     
     output = open(output_file, "w")
-    output.write("transcript_id\tmissense_rate\tnonsense_rate\tsynonymous_rate\n")
+    output.write("transcript_id\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
     
     for gene_id in transcripts:
-        (missense, nonsense, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
+        (missense, nonsense, splice_lof, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
         
         # log transform the rates, to keep them consistent with the rates from
         # Daly et al.
         missense = math.log10(missense)
         nonsense = math.log10(nonsense)
+        splice_lof = math.log10(splice_lof)
         synonymous = math.log10(synonymous)
         
-        line = "{0}\t{1}\t{2}\t{3}\n".format(gene_id, missense, nonsense, synonymous)
+        line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, missense, nonsense, splice_lof, synonymous)
         output.write(line)
         
     output.close()
