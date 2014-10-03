@@ -194,8 +194,9 @@ def main():
     output = open(output_file, "w")
     output.write("transcript_id\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
     
-    for gene_id in transcripts:
+    for gene_id in sorted(transcripts):
         (missense, nonsense, splice_lof, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
+        
         
         # log transform the rates, to keep them consistent with the rates from
         # Daly et al.

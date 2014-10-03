@@ -60,7 +60,7 @@ def construct_gene_object(ensembl, transcript_id):
     """
     
     # get the sequence for the identified transcript
-    (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id)
+    (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id, expand=10)
     cds_sequence = ensembl.get_cds_seq_for_transcript(transcript_id)
     
     # get the locations of the exons and cds from ensembl
@@ -70,7 +70,7 @@ def construct_gene_object(ensembl, transcript_id):
     # start an interval object with the locations and sequence
     transcript = Interval(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
     transcript.add_cds_sequence(cds_sequence)
-    transcript.add_genomic_sequence(genomic_sequence)
+    transcript.add_genomic_sequence(genomic_sequence, offset=10)
     
     return transcript
 

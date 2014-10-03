@@ -77,7 +77,7 @@ class SequenceMethods(object):
         
         self.cds_sequence = cds_dna
     
-    def add_genomic_sequence(self, gdna):
+    def add_genomic_sequence(self, gdna, offset=0):
         """ add and process the genomic sequence into a CDS sequence
         """
         
@@ -86,31 +86,19 @@ class SequenceMethods(object):
         cds_seq = ""
         for start, end in self.cds:
             if self.strand == "+":
-                start_bp = abs(start - self.get_start())
-                end_bp = abs(end - self.get_start()) + 1
-                cds_seq += gdna[start_bp:end_bp]
+                start_bp = abs(start - self.get_start()) + offset
+                end_bp = abs(end - self.get_start()) + 1 + offset
+                cds_seq += self.genomic_sequence[start_bp:end_bp]
             else:
-                start_bp = abs(self.get_end() - end) - 1
-                end_bp = abs(self.get_end() - start)
-                cds_seq = gdna[start_bp:end_bp] + cds_seq
+                start_bp = abs(self.get_end() - end) - 1 + offset
+                end_bp = abs(self.get_end() - start) + offset
+                cds_seq = self.genomic_sequence[start_bp:end_bp] + cds_seq
         
         # do a sanity check to check that we've got the right cds sequence, this
         # fails for at least one gene (CCDC18), which begins with a N, and 
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
-            raise ValueError("haven't obtained the right CDS for {0}\n{1}".format(self.get_name, cds_seq))
-        
-        self.cds_sequence = cds_seq
-        
-        if self.strand == "+":
-            up_pos = abs(self.get_cds_start() - self.get_start())
-            down_pos = abs(self.get_cds_end() - self.get_start())
-        else:
-            up_pos = abs(self.get_cds_end() - self.get_end())
-            down_pos = abs(self.get_cds_start() - self.get_end())
-        
-        self.upstream_sequence = gdna[up_pos]
-        self.downstream_sequence = gdna[down_pos]
+            raise ValueError("haven't obtained the right CDS for {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
         
     def reverse_complement(self, seq):
         """ reverse complement a DNA or RNA sequence

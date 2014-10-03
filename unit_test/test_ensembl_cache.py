@@ -40,8 +40,8 @@ class TestEnsemblCachePy(unittest.TestCase):
         os.mkdir(self.temp_dir)
         
         # construct the cache object
-        self.cache = EnsemblCache(self.temp_dir)
-        self.cache.set_ensembl_api_version("1.6.0")
+        self.cache = EnsemblCache(self.temp_dir, "grch37")
+        self.cache.set_ensembl_api_version("3.0.0")
     
     def is_number(self, string):
         """ checks if a string can be converted to a number
@@ -90,6 +90,7 @@ class TestEnsemblCachePy(unittest.TestCase):
         
         # set up the data to go in the database
         current_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
+        genome_build = "grch37"
         url = "http://beta.rest.ensembl.org/feature/id/temp1?feature=exon"
         key = self.cache.get_key_from_url(url)
         api_version = self.cache.api_version
@@ -105,8 +106,8 @@ class TestEnsemblCachePy(unittest.TestCase):
         self.assertFalse(self.cache.check_if_data_in_cache(url))
         
         # insert the data in the database
-        values = (key, current_date, api_version, temp_data)
-        self.cache.c.execute("INSERT into ensembl VALUES (?, ?, ?, ?)", values)
+        values = (key, genome_build, current_date, api_version, temp_data)
+        self.cache.c.execute("INSERT into ensembl VALUES (?, ?, ?, ?, ?)", values)
         
         # check that the data in the database returns True
         self.assertTrue(self.cache.check_if_data_in_cache(url))
@@ -119,14 +120,14 @@ class TestEnsemblCachePy(unittest.TestCase):
         
         # check that obsolete data returns False
         old_date = datetime.strftime(datetime.today() - timedelta(days=181), "%Y-%m-%d")
-        values = (key, old_date, api_version, temp_data)
-        self.cache.c.execute("REPLACE into ensembl VALUES (?, ?, ?, ?)", values)
+        values = (key, genome_build, old_date, api_version, temp_data)
+        self.cache.c.execute("REPLACE into ensembl VALUES (?, ?, ?, ?, ?)", values)
         self.assertFalse(self.cache.check_if_data_in_cache(url))
         
         # check that data from an old API version returns False
         old_api_version = "1.0.0"
-        values = (key, current_date, old_api_version, temp_data)
-        self.cache.c.execute("REPLACE into ensembl VALUES (?, ?, ?, ?)", values)
+        values = (key, genome_build, current_date, old_api_version, temp_data)
+        self.cache.c.execute("REPLACE into ensembl VALUES (?, ?, ?, ?, ?)", values)
         self.assertFalse(self.cache.check_if_data_in_cache(url))
     
     def test_cache_url_data(self):

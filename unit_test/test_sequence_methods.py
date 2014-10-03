@@ -7,7 +7,7 @@ import unittest
 from src.interval_sequence_methods import SequenceMethods
 from src.interval import Interval
 
-class TestSequenceMthodsPy(unittest.TestCase):
+class TestSequenceMethodsPy(unittest.TestCase):
     """ unit test the SequenceMethods class
     """
     
@@ -85,8 +85,8 @@ class TestSequenceMthodsPy(unittest.TestCase):
         self.gene.end = 10
         self.gene.exons = [(0, 4), (6, 10)]
         self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_start = 2
-        self.gene.cds_end = 8
+        self.gene.cds_min = 2
+        self.gene.cds_max = 8
         
         gdna = "AAAGGCCTTT"
         self.gene.cds_sequence = "AGGCTT"
@@ -112,26 +112,24 @@ class TestSequenceMthodsPy(unittest.TestCase):
         self.gene.end = 10
         self.gene.exons = [(0, 4), (6, 10)]
         self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_start = 2
-        self.gene.cds_end = 8
-        self.gene.upstream_sequence = "A"
-        self.gene.cds_sequence = "AGGCTT"
-        self.gene.downstream_sequence = "T"
+        self.gene.cds_min = 2
+        self.gene.cds_max = 8
+        self.gene.genomic_sequence = "AAAGGCCTTT"
         
         # test CDS positions: start, end, and spanning the exon boundaries
-        self.assertEqual(self.gene.get_trinucleotide_around_cds_position(0), "AAG")
-        self.assertEqual(self.gene.get_trinucleotide_around_cds_position(1), "AGG")
-        self.assertEqual(self.gene.get_trinucleotide_around_cds_position(2), "GGC")
-        self.assertEqual(self.gene.get_trinucleotide_around_cds_position(3), "GCT")
-        self.assertEqual(self.gene.get_trinucleotide_around_cds_position(4), "CTT")
-        self.assertEqual(self.gene.get_trinucleotide_around_cds_position(5), "TTT")
+        self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
+        self.assertEqual(self.gene.get_trinucleotide(3), "AGG")
+        self.assertEqual(self.gene.get_trinucleotide(4), "GGC")
+        self.assertEqual(self.gene.get_trinucleotide(6), "CCT")
+        self.assertEqual(self.gene.get_trinucleotide(7), "CTT")
+        self.assertEqual(self.gene.get_trinucleotide(8), "TTT")
         
         # test that positions outside the CDS raise errors
         with self.assertRaises(AssertionError):
-            self.gene.get_trinucleotide_around_cds_position(-1)
+            self.gene.get_trinucleotide(-1)
             
         with self.assertRaises(AssertionError):
-            self.gene.get_trinucleotide_around_cds_position(8)
+            self.gene.get_trinucleotide(10)
     
     def test_get_codon_sequence(self):
         """ test that get_codon_sequence() works correctly
@@ -141,8 +139,8 @@ class TestSequenceMthodsPy(unittest.TestCase):
         self.gene.end = 10
         self.gene.exons = [(0, 4), (6, 10)]
         self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_start = 2
-        self.gene.cds_end = 8
+        self.gene.cds_min = 2
+        self.gene.cds_max = 8
         self.gene.upstream_sequence = "A"
         self.gene.cds_sequence = "AGGCTT"
         self.gene.downstream_sequence = "T"

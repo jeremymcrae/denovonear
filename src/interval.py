@@ -172,7 +172,7 @@ class Interval(SequenceMethods, ConservationMethods):
         elif self.strand == "-":
             return self.cds_max
         else:
-            raise ValueError("unknown strand type" + self.strand)
+            raise ValueError("unknown strand type {0}".format(self.strand))
     
     def get_cds_end(self):
         """ returns the cds end position for the interval
@@ -183,7 +183,7 @@ class Interval(SequenceMethods, ConservationMethods):
         elif self.strand == "-":
             return self.cds_min
         else:
-            raise ValueError("unknown strand type" + self.strand)
+            raise ValueError("unknown strand type {0}".format(self.strand))
     
     def __eq__(self, other):
         return self.get_chrom() == other.get_chrom() and \
@@ -464,17 +464,14 @@ class Interval(SequenceMethods, ConservationMethods):
             try:
                 self.get_coding_distance(cds_start, exon_pos)
             except AssertionError:
-                raise ValueError("Not near coding exon: " + str(pos) + " in " \
-                    + "transcript " + self.get_name())
+                raise ValueError("Not near coding exon: {0} in transcript {1}".format(pos, self.get_name()))
             
             # if the var is outside the exon, but might affect a splice site, 
             # swap it to using the splice site location
             if exon_dist < 10:
                 dist = self.get_coding_distance(cds_start, exon_pos)
             else:
-                raise ValueError("distance to exon (" + str(min(start_dist,\
-                    end_dist)) + ") > 10 bp for " + str(pos) + " in " + \
-                    "transcript " + self.get_name())
+                raise ValueError("distance to exon ({0}) > 10 bp for {1} in transcript {2}".format(min(start_dist, end_dist), pos, self.get_name()))
         
         return dist
 

@@ -192,14 +192,14 @@ class EnsemblRequest(object):
         
         return transcript_ids
     
-    def get_genomic_seq_for_transcript(self, transcript_id):
+    def get_genomic_seq_for_transcript(self, transcript_id, expand):
         """ obtain the sequence for a transcript from ensembl
         """
         
         headers = {"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/sequence/id/{0}?type=genomic".format(transcript_id)
+        ext = "/sequence/id/{0}?type=genomic;expand_3prime={1};expand_5prime={1}".format(transcript_id, expand)
         r = self.ensembl_request(ext, transcript_id, headers)
         
         gene = json.loads(r)
@@ -212,14 +212,13 @@ class EnsemblRequest(object):
         
         desc = gene["desc"].split(":")
         chrom = desc[2]
-        start = int(desc[3])
-        end = int(desc[4])
-        strand = desc[5]
+        start = int(desc[3]) + expand
+        end = int(desc[4]) - expand
+        strand_temp = int(desc[5])
         
-        if int(strand) == -1:
+        strand = "+"
+        if strand_temp == -1:
             strand = "-"
-        else:
-            strand = "+"
         
         return (chrom, start, end, strand, seq)
     
@@ -231,9 +230,8 @@ class EnsemblRequest(object):
         
         self.request_attempts = 0
         ext = "/sequence/id/{0}?type=cds".format(transcript_id)
-        r =  self.ensembl_request(ext, transcript_id, headers)
         
-        return r
+        return self.ensembl_request(ext, transcript_id, headers)
     
     def get_protein_seq_for_transcript(self, transcript_id):
         """ obtain the sequence for a transcript from ensembl
@@ -243,9 +241,8 @@ class EnsemblRequest(object):
         
         self.request_attempts = 0
         ext = "/sequence/id/{0}?type=protein".format(transcript_id)
-        r =  self.ensembl_request(ext, transcript_id, headers)
         
-        return r
+        return self.ensembl_request(ext, transcript_id, headers)
     
     def get_chrom_for_transcript(self, transcript_id, hgnc_id):
         """ obtain the sequence for a transcript from ensembl
