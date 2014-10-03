@@ -195,6 +195,7 @@ def main():
     output.write("transcript_id\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
     
     for gene_id in sorted(transcripts):
+        print(gene_id)
         (missense, nonsense, splice_lof, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
         
         

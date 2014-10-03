@@ -81,6 +81,7 @@ class SequenceMethods(object):
         """ add and process the genomic sequence into a CDS sequence
         """
         
+        self.gdna_offset = offset
         self.genomic_sequence = gdna
         
         cds_seq = ""
@@ -113,13 +114,13 @@ class SequenceMethods(object):
         """
         
         assert pos >= 0 
-        assert pos > self.get_start() and pos < self.get_end()
+        assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
         
         offset = self.get_start()
         if self.strand == "-":
-            self.get_end()
+            offset = self.get_end() - 1
         
-        sequence_pos = abs(pos - offset)
+        sequence_pos = abs(pos - offset) + self.gdna_offset
         tri = self.genomic_sequence[sequence_pos - 1:sequence_pos + 2]
         
         return tri
@@ -133,8 +134,7 @@ class SequenceMethods(object):
         
         start = codon_number * 3
         end = start + 3
-        # end = codon_number * 3
-        # start = end - 3
+        
         codon = self.cds_sequence[start:end]
         
         return codon
