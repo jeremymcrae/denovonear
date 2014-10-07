@@ -21,7 +21,7 @@ class DomainPlotter(object):
             self.plot_single_domain(domain, length)
             
         for de_novo in de_novos:
-            self.plot_single_denovo(length)
+            self.plot_single_denovo(de_novo, length)
     
     def plot_single_domain(self, domain, length):
         """ plots a single domain
@@ -36,7 +36,7 @@ class DomainPlotter(object):
         self.add_box(x_pos, width)
         self.add_text(x_center, domain["domain_type"], y_adjust=2, horizontalalignment="center")
     
-    def plot_single_de_novo(self, de_novo):
+    def plot_single_denovo(self, de_novo, length):
         """ plots a de novo on the domain plot
         """
         

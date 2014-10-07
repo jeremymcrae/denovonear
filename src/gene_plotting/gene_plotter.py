@@ -7,7 +7,7 @@ from __future__ import division
 class GenePlotter(object):
     
     def plot_gene(self, gene, min_pos, max_pos, de_novos=None):
-        """ adds a rectangle to the plot
+        """ 
         """
         
         # increment the y_offset position, so as to avoid overplotting between
@@ -31,9 +31,12 @@ class GenePlotter(object):
         self.add_text(x_pos, gene.get_name(), y_adjust=2)
         
         for (start, end) in gene.exons:
-            self.plot_single_exon(start, end, length, gene, cds_min, cds_max)
+            self.plot_single_exon(start, end, length, gene, cds_min, cds_max, min_pos)
         
-    def plot_single_exon(self, start, end, length, gene, cds_min, cds_max):
+    def plot_single_exon(self, start, end, length, gene, cds_min, cds_max, min_pos):
+        """ adds a rectangle to the plot
+        """
+        
         x_pos = (start - min_pos) / length
         width = (end - start) / length
         
