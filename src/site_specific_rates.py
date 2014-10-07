@@ -174,7 +174,7 @@ class SiteRates(object):
                 bp > max(self.gene.get_cds_start(), self.gene.get_cds_end()):
                 continue
             
-            # get the distances to the closest CDS exon boundaries
+            # get the distances to the closest exon boundaries
             exon_start, exon_end = self.gene.find_closest_exon(bp)
             self.boundary_dist = min(abs(exon_start - bp), abs(exon_end - bp))
             
