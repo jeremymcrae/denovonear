@@ -169,7 +169,12 @@ class SiteRates(object):
             if self.masked is not None and self.masked.in_coding_region(bp):
                 continue
             
-            # get the distances to the closest exon boundaries
+            # ignore sites outside the CDS region
+            if bp < min(self.gene.get_cds_start(), self.gene.get_cds_end()) or \
+                bp > max(self.gene.get_cds_start(), self.gene.get_cds_end()):
+                continue
+            
+            # get the distances to the closest CDS exon boundaries
             exon_start, exon_end = self.gene.find_closest_exon(bp)
             self.boundary_dist = min(abs(exon_start - bp), abs(exon_end - bp))
             

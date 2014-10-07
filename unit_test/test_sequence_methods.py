@@ -88,6 +88,10 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.cds_min = 2
         self.gene.cds_max = 8
         
+        # check that we get an error if we haven't got any reference CDS to check
+        with self.assertRaises(AttributeError):
+            self.gene.add_genomic_sequence("AAA")
+        
         gdna = "AAAGGCCTTT"
         self.gene.cds_sequence = "AGGCTT"
         
@@ -104,8 +108,26 @@ class TestSequenceMethodsPy(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.gene.add_genomic_sequence(gdna)
     
-    def test_get_trinucleotide_around_cds_position(self):
-        """ test that get_trinucleotide_around_cds_position() works correctly
+    def test_add_genomic_sequence_expanded(self):
+        """ test that add_genomic_sequence() works correctly with extra sequence
+        """
+        
+        # now check when the 5' and 3' sequence is extended beyond the gene
+        self.gene.start = 1
+        self.gene.end = 9
+        self.gene.exons = [(1, 4), (6, 9)]
+        self.gene.cds = [(2, 4), (6, 8)]
+        self.gene.cds_min = 2
+        self.gene.cds_max = 8
+        
+        gdna = "AAAGGCCTTT"
+        self.gene.cds_sequence = "AGGCTT"
+        
+        self.gene.add_genomic_sequence(gdna, offset=1)
+        self.assertEqual(self.gene.cds_sequence, "AGGCTT")
+    
+    def test_get_trinucleotide(self):
+        """ test that get_trinucleotide() works correctly
         """
         
         self.gene.start = 0
@@ -114,6 +136,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.cds = [(2, 4), (6, 8)]
         self.gene.cds_min = 2
         self.gene.cds_max = 8
+        self.gene.gdna_offset = 0
         self.gene.genomic_sequence = "AAAGGCCTTT"
         
         # test CDS positions: start, end, and spanning the exon boundaries
@@ -130,6 +153,15 @@ class TestSequenceMethodsPy(unittest.TestCase):
             
         with self.assertRaises(AssertionError):
             self.gene.get_trinucleotide(10)
+        
+        # test when we define the sequence by the add_genomic_sequence method
+        self.gene.start = 1
+        self.gene.end = 9
+        self.gene.exons = [(1, 4), (6, 9)]
+        self.gene.cds = [(2, 4), (6, 8)]
+        self.gene.cds_sequence = "AGGCTT"
+        self.gene.add_genomic_sequence("AAAGGCCTTT", offset=1)
+        self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
     
     def test_get_codon_sequence(self):
         """ test that get_codon_sequence() works correctly
