@@ -139,7 +139,13 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     
     for transcript_id in transcripts[gene_id]:
         
-        transcript = construct_gene_object(ensembl, transcript_id)
+        # get the gene coordinates, sequence etc, but if the transcript is 
+        # unusable (hence raises an error), simply move to the next transcript
+        try:
+            transcript = construct_gene_object(ensembl, transcript_id)
+        except ValueError:
+            continue
+        
         if combined_transcript is None:
             site_weights = SiteRates(transcript, mut_dict)
             combined_transcript = copy.deepcopy(transcript)
