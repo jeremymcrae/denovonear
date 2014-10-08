@@ -5,7 +5,8 @@ closer together within the coding sequence of a gene than expected by chance.
 We use mutation rates based on the local sequence context to determine the 
 expected likelyhood that specific regions of the gene contain mutations. 
 Currently, the local sequence context mutation rates are per-trinucleotide 
-mutation rates provided by Kaitlin Samocha of the Broad Institute.
+mutation rates provided by Kaitlin Samocha of the Broad Institute, see [Nature
+Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html).
 
 Obtain the code from the bitbucket repository with:
 
@@ -46,8 +47,27 @@ The cache folder defaults to making a folder named "cache" within the working
 directory. The genome build indicates which genome build the coordinates of the
 de novo variants are based on, and defaults to GRCh37.
 
-#### Transcript mutation rates
-You can generate mutation rates for an Ensembl transcript ID with the 
+#### Identify transcripts containing de novo events
+You can identify transcripts containing de novos events with the 
+`identify_transcripts.py` script. This either identifies all transcripts for a
+gene with one or more de novo events, or identifyies the minimal set of 
+transcripts to contain all de novos (where transcrips are prioritised on the 
+basis of number of de novo events, and length of coding sequence). Transcripts
+can be identified with:
+```sh
+python identify_transcripts.py \
+    --de-novos data/example_de_novos.txt \
+    --out output.txt \
+    --all-transcripts
+```
+Other options are:
+ * `--minimise-transcripts` in place of `--all-transcripts`, to find the minimal
+   set of transcripts
+ * `--genome-build "grch37" or "grch38" (default=grch37)`
+
+#### Gene or transcript based mutation rates
+You can generate mutation rates for either the union of alternative transcripts
+for a gene, or for a specific Ensembl transcript ID with the 
 `construct_mutation_rates.py` script. Lof and missense mutation rates can be 
 generated with:
 ```sh
@@ -56,7 +76,14 @@ python construct_mutation_rates.py \
     --rates data/forSanger_1KG_mutation_rate_table.txt \
     --out output.txt
 ```
+Other options are:
+ * `--genes` in place of `--transcripts`, to obtain a mutation rate from the
+   union of alternative transcripts for a gene. Requires a file listing HGNC 
+   symbols, with one or more transcript IDs per gene. The tab-separated input 
+   format is gene symbol followed by transcript ID. Alternative transcripts are 
+   listed on separate lines.
 
-The tab-separated output file will contain one row per transcript, with each
-line containing a transcript ID, a log10 transformed missense mutation rate, and
-a log10 transformed nonsense mutation rate. 
+The tab-separated output file will contain one row per gene/transcript, with 
+each line containing a transcript ID or gene symbol, a log10 transformed
+missense mutation rate, a log10 transformed nonsense mutation rate, and a log10
+transformed synonymous mutation rate.

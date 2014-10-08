@@ -88,6 +88,46 @@ class TestIntervalPy(unittest.TestCase):
         self.assertEqual(self.gene.convert_chrom_to_int("chrmt"), 25)
         self.assertRaises(KeyError, self.gene.convert_chrom_to_int, "Z")
     
+    def test___add__(self):
+        """ test that __add__() works correctly
+        """
+        
+        exons = [(10, 20), (50, 60), (90, 100)]
+        a = Interval("a", 10, 100, "+", "1", exons, [(55, 60), (90, 100)])
+        b = Interval("b", 10, 100, "+", "1", exons, [(50, 60), (90, 95)])
+        c = Interval("c", 10, 100, "+", "1", [(45, 65)], [(45, 65)])
+        d = Interval("d", 10, 100, "+", "1", [(30, 40)], [(30, 40)])
+        
+        # check that adding two Intervals gives the union of CDS regions
+        self.assertEqual((a + b).cds, [(50, 60), (90, 100)])
+        self.assertEqual((a + c).cds, [(45, 65), (90, 100)])
+        
+        # check that addition is reversible
+        self.assertEqual((c + a).cds, [(45, 65), (90, 100)])
+        
+        # check that adding previously unknown exons works
+        self.assertEqual((a + d).cds, [(30, 40), (55, 60), (90, 100)])
+    
+    def test_region_overlaps_cds(self):
+        """ check that region_overlaps_cds() works correctly
+        """
+        
+        # the cds regions are at [(1100, 1200), (1800, 1900)], so check regions
+        # that do and do not intersect with those
+        
+        self.assertTrue(self.gene.region_overlaps_cds((1050, 1150)))
+        
+        # check exons surrounding, and within the genes exons
+        self.assertTrue(self.gene.region_overlaps_cds((1050, 1250)))
+        self.assertTrue(self.gene.region_overlaps_cds((1150, 1160)))
+        
+        # check that non overlapping region fails
+        self.assertFalse(self.gene.region_overlaps_cds((1050, 1090)))
+        
+        # check the boundaries of the exons
+        self.assertTrue(self.gene.region_overlaps_cds((1050, 1100)))
+        self.assertFalse(self.gene.region_overlaps_cds((1050, 1099)))
+    
     def test_in_exons(self):
         """ test that in_exons() works correctly
         """
@@ -161,6 +201,8 @@ class TestIntervalPy(unittest.TestCase):
     def test_get_exon_containing_position(self):
         """ test that get_exon_containing_position() works correctly
         """
+        
+        
         
         exons = [(1000, 1200), (1800, 2000)]
         

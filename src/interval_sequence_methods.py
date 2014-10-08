@@ -81,39 +81,26 @@ class SequenceMethods(object):
         """ add and process the genomic sequence into a CDS sequence
         """
         
-        gdna = gdna[offset:]
+        self.gdna_offset = offset
         self.genomic_sequence = gdna
         
         cds_seq = ""
         for start, end in self.cds:
             if self.strand == "+":
-                start_bp = abs(start - self.get_start())
-                end_bp = abs(end - self.get_start())
-                cds_seq += gdna[start_bp:end_bp + 1]
+                start_bp = abs(start - self.get_start()) + offset
+                end_bp = abs(end - self.get_start()) + 1 + offset
+                cds_seq += self.genomic_sequence[start_bp:end_bp]
             else:
-                start_bp = abs(self.get_end() - end)
-                end_bp = abs(self.get_end() - start)
-                cds_seq = gdna[start_bp - 1:end_bp] + cds_seq
+                start_bp = abs(self.get_end() - end) - 1 + offset
+                end_bp = abs(self.get_end() - start) + offset
+                cds_seq = self.genomic_sequence[start_bp:end_bp] + cds_seq
         
         # do a sanity check to check that we've got the right cds sequence, this
         # fails for at least one gene (CCDC18), which begins with a N, and 
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
-            raise ValueError("haven't obtained the right CDS for " + \
-                self.get_name() + "\n" + cds_seq)
-        
-        self.cds_sequence = cds_seq
-        
-        if self.strand == "+":
-            up_pos = abs(self.get_cds_start() - self.get_start())
-            down_pos = abs(self.get_cds_end() - self.get_start())
-        else:
-            up_pos = abs(self.get_cds_end() - self.get_end())
-            down_pos = abs(self.get_cds_start() - self.get_end())
-        
-        self.upstream_sequence = gdna[up_pos]
-        self.downstream_sequence = gdna[down_pos]
-        
+            raise ValueError("Coding sequence from gene coordinates doesn't match coding sequence obtained from Ensembl.\nTranscript: {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
+    
     def reverse_complement(self, seq):
         """ reverse complement a DNA or RNA sequence
         """
@@ -122,19 +109,19 @@ class SequenceMethods(object):
         
         return seq.translate(transdict)[::-1]
     
-    def get_trinucleotide_around_cds_position(self, cds_position):
-        """ obtains the trinucleotide sequence around a cds position
+    def get_trinucleotide(self, pos):
+        """ obtains the trinucleotide sequence around a position
         """
         
-        assert cds_position >= 0 
-        assert cds_position < len(self.cds_sequence)
+        assert pos >= 0 
+        assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
         
-        if cds_position == 0:
-            tri = self.upstream_sequence + self.cds_sequence[:2]
-        elif cds_position == len(self.cds_sequence) - 1:
-            tri = self.cds_sequence[-2:] + self.downstream_sequence
-        else:
-            tri = self.cds_sequence[cds_position - 1:cds_position + 2]
+        offset = self.get_start()
+        if self.strand == "-":
+            offset = self.get_end() - 1
+        
+        sequence_pos = abs(pos - offset) + self.gdna_offset
+        tri = self.genomic_sequence[sequence_pos - 1:sequence_pos + 2]
         
         return tri
     
@@ -147,8 +134,7 @@ class SequenceMethods(object):
         
         start = codon_number * 3
         end = start + 3
-        # end = codon_number * 3
-        # start = end - 3
+        
         codon = self.cds_sequence[start:end]
         
         return codon

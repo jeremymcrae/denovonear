@@ -43,7 +43,7 @@ class EnsemblRequest(object):
             genome_build: string indicating the genome build ("grch37" or "grch38")
         """
         
-        self.cache = EnsemblCache(cache_folder)
+        self.cache = EnsemblCache(cache_folder, genome_build)
         
         self.prior_time = time.time() - 1
         self.rate_limit = 0.067
@@ -73,7 +73,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "3" or minor != "0":
+        if major != "3" or minor not in ["0", "1"]:
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
@@ -129,10 +129,10 @@ class EnsemblRequest(object):
             time.sleep(30)
             return self.ensembl_request(ext, sequence_id, headers)
         elif status_code != 200:
-            raise ValueError("Invalid Ensembl response: " + str(status_code)\
-                + " for " + str(sequence_id) + ".\nSubmitted URL was: " + \
-                self.server + ext + "\nheaders: " + str(requested_headers) + \
-                "\nresponse: " + response)
+            raise ValueError("Invalid Ensembl response: {0} for {1}.\n" + \
+                "Submitted URL was: {2}{3}\n" + \
+                "headers: {4}\nresponse: {5}".format(status_code, sequence_id, 
+                    self.server, ext, requested_headers, response))
         
         # sometimes ensembl returns odd data. I don't know what it is, but the 
         # json interpreter can't handle it. Rather than trying to catch it, 
@@ -214,12 +214,11 @@ class EnsemblRequest(object):
         chrom = desc[2]
         start = int(desc[3]) + expand
         end = int(desc[4]) - expand
-        strand = desc[5]
+        strand_temp = int(desc[5])
         
-        if int(strand) == -1:
+        strand = "+"
+        if strand_temp == -1:
             strand = "-"
-        else:
-            strand = "+"
         
         return (chrom, start, end, strand, seq)
     
@@ -230,10 +229,9 @@ class EnsemblRequest(object):
         headers = {"Content-Type": "text/plain"}
         
         self.request_attempts = 0
-        ext = "/sequence/id/" + transcript_id + "?type=cds"
-        r =  self.ensembl_request(ext, transcript_id, headers)
+        ext = "/sequence/id/{0}?type=cds".format(transcript_id)
         
-        return r
+        return self.ensembl_request(ext, transcript_id, headers)
     
     def get_protein_seq_for_transcript(self, transcript_id):
         """ obtain the sequence for a transcript from ensembl
@@ -242,10 +240,9 @@ class EnsemblRequest(object):
         headers = {"Content-Type": "text/plain"}
         
         self.request_attempts = 0
-        ext = "/sequence/id/" + transcript_id + "?type=protein"
-        r =  self.ensembl_request(ext, transcript_id, headers)
+        ext = "/sequence/id/{0}?type=protein".format(transcript_id)
         
-        return r
+        return self.ensembl_request(ext, transcript_id, headers)
     
     def get_chrom_for_transcript(self, transcript_id, hgnc_id):
         """ obtain the sequence for a transcript from ensembl
@@ -254,7 +251,7 @@ class EnsemblRequest(object):
         headers = {"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/overlap/id/" + transcript_id + "?feature=gene"
+        ext = "/overlap/id/{0}?feature=gene".format(transcript_id)
         r =  self.ensembl_request(ext, transcript_id, headers)
         
         for gene in json.loads(r):
@@ -270,7 +267,7 @@ class EnsemblRequest(object):
         headers={"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/overlap/id/" + transcript_id + "?feature=exon"
+        ext = "/overlap/id/{0}?feature=exon".format(transcript_id)
         r = self.ensembl_request(ext, transcript_id, headers)
         
         exon_ranges = []
@@ -292,7 +289,7 @@ class EnsemblRequest(object):
         headers={"Content-Type": "application/json"}
         
         self.request_attempts = 0
-        ext = "/overlap/id/" + transcript_id + "?feature=cds"
+        ext = "/overlap/id/{0}?feature=cds".format(transcript_id)
         r = self.ensembl_request(ext, transcript_id, headers)
         
         cds_ranges = []

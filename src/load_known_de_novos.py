@@ -32,9 +32,10 @@ def load_known_de_novos(filename):
         
         line = line.rstrip().split("\t")
         gene = line[0]
-        position = line[1]
-        consequence = line[2]
-        snp_or_indel = line[3]
+        chrom = line[1]
+        position = line[2]
+        consequence = line[3]
+        snp_or_indel = line[4]
         
         # ignore indels (some splice_acceptor_variants (in the
         # functional_consequences) are indels
