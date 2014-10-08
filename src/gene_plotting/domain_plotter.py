@@ -1,6 +1,7 @@
 """ class to plot protein domains.
 """
 
+from __future__ import division
 
 class DomainPlotter(object):
     
@@ -21,7 +22,9 @@ class DomainPlotter(object):
             self.plot_single_domain(domain, length)
             
         for de_novo in de_novos:
-            self.plot_single_denovo(de_novo, length)
+            x_pos = de_novo / length
+            width = 1
+            self.add_de_novo(x_pos, width)
     
     def plot_single_domain(self, domain, length):
         """ plots a single domain
@@ -35,14 +38,6 @@ class DomainPlotter(object):
         # below the box
         self.add_box(x_pos, width)
         self.add_text(x_center, domain["domain_type"], y_adjust=2, horizontalalignment="center")
-    
-    def plot_single_denovo(self, de_novo, length):
-        """ plots a de novo on the domain plot
-        """
-        
-        x_pos = de_novo / length
-        width = 1
-        
-        self.add_de_novo(x_pos, width)
+       
 
 

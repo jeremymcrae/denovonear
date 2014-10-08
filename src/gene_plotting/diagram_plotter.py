@@ -23,8 +23,8 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         """ start the class with a matplotlib plot
         """
         
-        figure = pyplot.figure()
-        self.plot = figure.add_subplot(1, 1, 1)
+        self.figure = pyplot.figure()
+        self.plot = self.figure.add_subplot(1, 1, 1)
         self.de_novo_positions = []
     
     def add_box(self, x_pos, width, color="green", alpha=0.5, height=None, y_adjust=0):
@@ -64,9 +64,25 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         self.de_novo_positions.append(x_pos)
         
         height = self.box_height / 2
-        y_adjust = -self.box_height
+        y_adjust = self.box_height / 2
         
         self.add_box(x_pos, width, color="red", height=height, y_adjust=y_adjust)
+    
+    def get_plot_size(self):
+        """ figure out what size the plotted figure will be
+        
+        Returns:
+            tuple of (width, height) in inches
+        """
+        
+        width_in_cm = 20
+        points_per_cm = 100 / width_in_cm
+        width = width_in_cm / 2.54
+        
+        height_in_cm = self.y_offset / points_per_cm
+        height = height_in_cm / 2.54
+        
+        return (width, height)
     
     def export_figure(self, path="test.pdf"):
         """ exports the plot as a pdf
@@ -75,9 +91,9 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         # scale the axes, then remove them from view
         pyplot.axis("off")
         self.plot.autoscale()
-        # self.plot.autoscale_view()
+        self.figure.set_size_inches(self.get_plot_size())
         
         # and save the plot to a file
-        pyplot.savefig(path, bbox_inches="tight")
+        pyplot.savefig(path, bbox_inches="tight", pad_inches=0)
         
 
