@@ -27,5 +27,10 @@ class TranscriptPlotter(object):
             
             self.add_box(x_pos, width)
         
+        # and plot the de novo positions
+        for de_novo in de_novos:
+            x_pos = de_novo / length
+            width = 1/length
+            self.add_de_novo(x_pos, width)
 
 

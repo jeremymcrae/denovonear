@@ -27,7 +27,7 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         self.plot = self.figure.add_subplot(1, 1, 1)
         self.de_novo_positions = []
     
-    def add_box(self, x_pos, width, color="green", alpha=0.5, height=None, y_adjust=0):
+    def add_box(self, x_pos, width, color="green", height=None, y_adjust=0):
         """ adds a rectangle to the plot
         """
         
@@ -37,7 +37,6 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         xy = (x_pos, self.y_offset + y_adjust)
         rect = matplotlib.patches.Rectangle(xy, width, height=height)
         rect.set_facecolor(color)
-        rect.set_alpha(alpha)
         
         self.plot.add_patch(rect)
     
@@ -64,7 +63,7 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         self.de_novo_positions.append(x_pos)
         
         height = self.box_height / 2
-        y_adjust = self.box_height / 2
+        y_adjust = self.box_height
         
         self.add_box(x_pos, width, color="red", height=height, y_adjust=y_adjust)
     
@@ -75,12 +74,14 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
             tuple of (width, height) in inches
         """
         
+        cm_per_inch = 2.54
+        
         width_in_cm = 20
         points_per_cm = 100 / width_in_cm
-        width = width_in_cm / 2.54
+        width = width_in_cm / cm_per_inch
         
         height_in_cm = self.y_offset / points_per_cm
-        height = height_in_cm / 2.54
+        height = height_in_cm / cm_per_inch
         
         return (width, height)
     

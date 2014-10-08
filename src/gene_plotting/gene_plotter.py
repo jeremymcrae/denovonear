@@ -25,7 +25,7 @@ class GenePlotter(object):
         width = (gene.get_end() - gene.get_start()) / length
         height = self.box_height/8
         y_adjust = self.box_height/2 - height/2
-        self.add_box(x_pos, width, height=height, y_adjust=y_adjust, alpha=1, color="black")
+        self.add_box(x_pos, width, height=height, y_adjust=y_adjust, color="black")
         
         # give a label for the gene
         self.add_text(x_pos, gene.get_name(), y_adjust=2)
@@ -34,8 +34,8 @@ class GenePlotter(object):
             self.plot_single_exon(start, end, length, gene, cds_min, cds_max, min_pos)
         
         for de_novo in de_novos:
-            x_pos = de_novo / length
-            width = 1
+            x_pos = (de_novo - min_pos) / length
+            width = 1/length
             self.add_de_novo(x_pos, width)
         
     def plot_single_exon(self, start, end, length, gene, cds_min, cds_max, min_pos):
