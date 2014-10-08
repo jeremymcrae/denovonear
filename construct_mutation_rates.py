@@ -146,6 +146,9 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         except ValueError:
             continue
         
+        if len(transcript.cds_sequence) % 3 != 0:
+            raise ValueError("anomalous_coding_sequence")
+        
         # ignore mitochondrial genes, since mitochondiral mutation rates differ
         # from autosomal and allosomal mutation rates
         if transcript.get_chrom() == "MT":
@@ -207,17 +210,19 @@ def main():
     
     for gene_id in sorted(transcripts):
         print(gene_id)
-        (missense, nonsense, splice_lof, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
+        try:
+            (missense, nonsense, splice_lof, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
+            
+            # log transform the rates, to keep them consistent with the rates from
+            # Daly et al.
+            missense = log_transform(missense)
+            nonsense = log_transform(nonsense)
+            splice_lof = log_transform(splice_lof)
+            synonymous = log_transform(synonymous)
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, missense, nonsense, splice_lof, synonymous)
+        except ValueError as error:
+            line = "{0}\t{1}\n".format(gene_id, error)
         
-        
-        # log transform the rates, to keep them consistent with the rates from
-        # Daly et al.
-        missense = log_transform(missense)
-        nonsense = log_transform(nonsense)
-        splice_lof = log_transform(splice_lof)
-        synonymous = log_transform(synonymous)
-        
-        line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, missense, nonsense, splice_lof, synonymous)
         output.write(line)
         
     output.close()
