@@ -146,6 +146,11 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         except ValueError:
             continue
         
+        # ignore mitochondrial genes, since mitochondiral mutation rates differ
+        # from autosomal and allosomal mutation rates
+        if transcript.get_chrom() == "MT":
+            continue
+        
         if combined_transcript is None:
             site_weights = SiteRates(transcript, mut_dict)
             combined_transcript = copy.deepcopy(transcript)
