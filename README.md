@@ -6,7 +6,7 @@ We use mutation rates based on the local sequence context to determine the
 expected likelyhood that specific regions of the gene contain mutations. 
 Currently, the local sequence context mutation rates are per-trinucleotide 
 mutation rates provided by Kaitlin Samocha of the Broad Institute, see [Nature
-Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html.
+Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html).
 
 Obtain the code from the bitbucket repository with:
 

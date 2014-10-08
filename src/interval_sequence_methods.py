@@ -100,7 +100,7 @@ class SequenceMethods(object):
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
             raise ValueError("Coding sequence from gene coordinates doesn't match coding sequence obtained from Ensembl.\nTranscript: {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
-        
+    
     def reverse_complement(self, seq):
         """ reverse complement a DNA or RNA sequence
         """
