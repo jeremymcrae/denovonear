@@ -27,7 +27,7 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         self.plot = self.figure.add_subplot(1, 1, 1)
         self.de_novo_positions = []
     
-    def add_box(self, x_pos, width, color="green", height=None, y_adjust=0):
+    def add_box(self, x_pos, width, y_adjust=0, height=None, **kwargs):
         """ adds a rectangle to the plot
         """
         
@@ -35,8 +35,7 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
             height = self.box_height
         
         xy = (x_pos, self.y_offset + y_adjust)
-        rect = matplotlib.patches.Rectangle(xy, width, height=height)
-        rect.set_facecolor(color)
+        rect = matplotlib.patches.Rectangle(xy, width, height=height, **kwargs)
         
         self.plot.add_patch(rect)
     

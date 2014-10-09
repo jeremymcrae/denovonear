@@ -16,14 +16,14 @@ class DomainPlotter(object):
         self.y_offset += self.box_height * 3
         
         # make sure the full protein is visible
-        self.add_box(x_pos=0, width=100, color="white")
+        self.add_box(x_pos=0, width=100, facecolor="white")
         
         for domain in domains:
             self.plot_single_domain(domain, length)
             
         for de_novo in de_novos:
             x_pos = de_novo / length
-            width = 1
+            width = 0.333 / length
             self.add_de_novo(x_pos, width)
     
     def plot_single_domain(self, domain, length):
@@ -36,8 +36,8 @@ class DomainPlotter(object):
         
         # add a box on the domain plot, as well as a text label centered 
         # below the box
-        self.add_box(x_pos, width)
-        self.add_text(x_center, domain["domain_type"], y_adjust=2, horizontalalignment="center")
+        self.add_box(x_pos, width, facecolor="green")
+        self.add_text(x_center, domain["domain_type"], y_adjust=self.box_height/1.5, horizontalalignment="center")
        
 
 

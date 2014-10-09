@@ -14,9 +14,6 @@ class GenePlotter(object):
         # gene, transcript and protein diagrams
         self.y_offset += self.box_height * 3
         
-        cds_min = min(gene.get_cds_start(), gene.get_cds_end())
-        cds_max = max(gene.get_cds_start(), gene.get_cds_end())
-        
         strand = gene.strand
         length = (max_pos - min_pos) / 100
         
@@ -28,17 +25,42 @@ class GenePlotter(object):
         self.add_box(x_pos, width, height=height, y_adjust=y_adjust, color="black")
         
         # give a label for the gene
-        self.add_text(x_pos, gene.get_name(), y_adjust=2)
+        self.add_text(x_pos, gene.get_name(), y_adjust=self.box_height/1.5)
         
         for (start, end) in gene.exons:
-            self.plot_single_exon(start, end, length, gene, cds_min, cds_max, min_pos)
+            self.plot_single_exon(start, end, length, gene, min_pos)
         
         for de_novo in de_novos:
             x_pos = (de_novo - min_pos) / length
             width = 1/length
             self.add_de_novo(x_pos, width)
+    
+    def mixed_coords(self, start, end, length, gene, min_pos):
+        """
+        """
         
-    def plot_single_exon(self, start, end, length, gene, cds_min, cds_max, min_pos):
+        cds_min = min(gene.get_cds_start(), gene.get_cds_end())
+        cds_max = max(gene.get_cds_start(), gene.get_cds_end())
+        strand = gene.strand
+        
+        x_pos_1 = (start - min_pos) / length
+        width_1 = (end - start) / length
+        
+        if start <= cds_min <= end:
+            midpoint = cds_min
+            color_1 = "white"
+            color_2 = "green"
+        else:
+            midpoint = cds_max
+            color_1 = "green"
+            color_2 = "white"
+        
+        x_pos_2 = (midpoint - min_pos) / length
+        width_2 = (end - midpoint) / length
+        
+        return (x_pos_1, width_1, color_1), (x_pos_2, width_2, color_2)
+        
+    def plot_single_exon(self, start, end, length, gene, min_pos):
         """ adds a rectangle to the plot
         
         NOTE: this currently doesn't allow for single exon genes where the
@@ -46,26 +68,20 @@ class GenePlotter(object):
         region within the exon.
         """
         
+        cds_min = min(gene.get_cds_start(), gene.get_cds_end())
+        cds_max = max(gene.get_cds_start(), gene.get_cds_end())
+        
         x_pos = (start - min_pos) / length
         width = (end - start) / length
         
         if gene.in_coding_region(start) and gene.in_coding_region(end):
-            self.add_box(x_pos, width)
+            self.add_box(x_pos, width, facecolor="green")
         elif not gene.in_coding_region(start) and not gene.in_coding_region(end):
-            self.add_box(x_pos, width, color="white")
+            self.add_box(x_pos, width, facecolor="white")
         else:
             # exons with coding and untranslated regions, either utr first, or
             # utr second
-            if not gene.in_coding_region(start):
-                utr_x_pos = x_pos
-                utr_width = (cds_min - start) / length
-                coding_x_pos = (cds_min - min_pos) / length
-                coding_width = (end - cds_min) / length
-            else:
-                utr_x_pos = (cds_max - min_pos) / length
-                utr_width = (end - cds_max) / length
-                coding_x_pos = x_pos
-                coding_width = (cds_max - start) / length
+            (x_pos_1, width_1, color_1), (x_pos_2, width_2, color_2) = self.mixed_coords(start, end, length, gene, min_pos)
             
-            self.add_box(utr_x_pos, utr_width, color="white")
-            self.add_box(coding_x_pos, coding_width)
+            self.add_box(x_pos_1, width_1, facecolor=color_1)
+            self.add_box(x_pos_2, width_2, facecolor=color_2)

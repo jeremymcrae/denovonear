@@ -14,18 +14,22 @@ class TranscriptPlotter(object):
         # gene, transcript and protein diagrams
         self.y_offset += self.box_height * 3
         
-        strand = gene.strand
+        # strand = gene.strand
         length = (gene.get_coding_distance(gene.get_cds_start(), gene.get_cds_end()) + 1) / 100
         
         # give a label for the gene
         x_pos = 0
-        self.add_text(x_pos, gene.get_name(), y_adjust=2)
+        self.add_text(x_pos, gene.get_name(), y_adjust=self.box_height/1.5)
         
         for start, end in gene.cds:
-            x_pos = gene.get_coding_distance(gene.get_cds_start(), start) / length
-            width = (gene.get_coding_distance(start, end) + 1) / length
+            if gene.strand == "+":
+                x_pos = gene.get_coding_distance(gene.get_cds_start(), start) / length
+                width = (gene.get_coding_distance(start, end) + 1) / length
+            else:
+                x_pos = gene.get_coding_distance(gene.get_cds_start(), end) / length
+                width = (gene.get_coding_distance(start, end) + 1) / length
             
-            self.add_box(x_pos, width)
+            self.add_box(x_pos, width, facecolor="green")
         
         # and plot the de novo positions
         for de_novo in de_novos:
