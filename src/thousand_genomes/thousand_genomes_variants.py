@@ -65,7 +65,7 @@ class Extract1000Genomes(SiteRates):
         """
         
         missense = []
-        nonsense = []
+        lof = []
         synonymous = []
         for var in self.vcf:
             # ignore indels, CNVs and variants with > 1 alt allele
@@ -109,15 +109,15 @@ class Extract1000Genomes(SiteRates):
             if pos < exon_start or pos + len(ref) > exon_end:
                 # print("out of exon")
                 if pos < exon_start and pos + len(ref) > exon_start:
-                    nonsense.append((var, ref, alt))
+                    lof.append((var, ref, alt))
                     continue
                 elif pos < exon_end and pos + len(ref) >  exon_end:
-                    nonsense.append((var, ref, alt))
+                    lof.append((var, ref, alt))
                     continue
                 # check for deletions that finish just short of an exon
                 elif pos < exon_start and pos + len(ref) < exon_start:
                     if abs((pos + len(ref)) - exon_start) < 3:
-                        nonsense.append((var, ref, alt))
+                        lof.append((var, ref, alt))
                         continue
                     elif abs((pos + len(ref)) - exon_start) < 9:
                         missense.append((var, ref, alt))
@@ -127,23 +127,23 @@ class Extract1000Genomes(SiteRates):
                     # print("past exon")
                     # print(pos, exon_end)
                     if abs(pos - (exon_end - 1)) < 3:
-                        nonsense.append((var, ref, alt))
+                        lof.append((var, ref, alt))
                         continue
                     elif abs(pos - (exon_end - 1)) < 9:
                         missense.append((var, ref, alt))
                         continue
             
-            # add frameshift indels to the nonsense list, and inframe indels to
+            # add frameshift indels to the lof list, and inframe indels to
             # the missense list
             if len(alt) > 1:
                 if len(alt) - 1 % 3 == 0:
-                    nonsense.append((var, ref, alt))
+                    lof.append((var, ref, alt))
                 else:
                     missense.append((var, ref, alt))
                 continue
             if len(ref) > 1:
                 if len(ref) - 1 % 3 == 0:
-                    nonsense.append((var, ref, alt))
+                    lof.append((var, ref, alt))
                 else:
                     missense.append((var, ref, alt))
                 continue
@@ -176,12 +176,12 @@ class Extract1000Genomes(SiteRates):
             
             if self.missense_check(initial_aa, mutated_aa, pos):
                 missense.append((var, ref, alt))
-            elif self.nonsense_check(initial_aa, mutated_aa, pos):
-                nonsense.append((var, ref, alt))
+            elif self.lof_check(initial_aa, mutated_aa, pos):
+                lof.append((var, ref, alt))
             else:
                 synonymous.append((var, ref, alt))
         
-        return (missense, nonsense, synonymous)
+        return (missense, lof, synonymous)
     
     def __set_mut_checks(self):
         """ use a bunch of functions from a different class (should I be 
@@ -191,8 +191,8 @@ class Extract1000Genomes(SiteRates):
         
         self.get_mutated_aa = SiteRates.get_mutated_aa
         self.functional_check = SiteRates.functional_check
-        self.nonsense_check = SiteRates.nonsense_check
-        self.missense_check = SiteRates.missense_check
+        self.lof_check = SiteRates.loss_of_function_check
+        self.missense_check = SiteRates.missense_and_splice_region_check
     
     def __get_variants_in_cds(self, vcf_tabix):
         """ gets the 1000 Genomes variants in the CDS regions of a gene 
