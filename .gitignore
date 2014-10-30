@@ -1,3 +1,6 @@
 *.pyc
+*.pdf
+*.log
 cache/
 build/
+data/
