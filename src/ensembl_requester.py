@@ -9,16 +9,12 @@ import json
 import time
 import logging
 
-IS_PYTHON2 = sys.version_info[0] == 2
 IS_PYTHON3 = sys.version_info[0] == 3
-
-# load python version specific url opener library
-if IS_PYTHON2:
-    import urllib2 as request
-elif IS_PYTHON3:
+ 
+if IS_PYTHON3:
     import urllib.request as request
 else:
-    raise ValueError("unknown python version")
+    import urllib2 as request
 
 from src.ensembl_cache import EnsemblCache
 
