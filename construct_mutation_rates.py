@@ -181,16 +181,19 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     
     return (missense, nonsense, splice_lof, synonymous)
 
-def log_transform(value):
+def log_transform(values):
     """ log transform a numeric value, unless it is zero, or negative
     """
     
-    try:
-        value = math.log10(value)
-    except ValueError:
-        value = "NA"
+    transformed = []
+    for value in values:
+        try:
+            value = math.log10(value)
+        except ValueError:
+            value = "NA"
+        transformed.append(value)
     
-    return value
+    return transformed
 
 def main():
     
@@ -211,17 +214,16 @@ def main():
     for gene_id in sorted(transcripts):
         print(gene_id)
         try:
-            (missense, nonsense, splice_lof, synonymous) = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
+            rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
             
             # log transform the rates, to keep them consistent with the rates from
             # Daly et al.
-            missense = log_transform(missense)
-            nonsense = log_transform(nonsense)
-            splice_lof = log_transform(splice_lof)
-            synonymous = log_transform(synonymous)
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, missense, nonsense, splice_lof, synonymous)
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, *log_transform(rates))
         except ValueError as error:
             line = "{0}\t{1}\n".format(gene_id, error)
+        except KeyError as error:
+            # ignore genes with odd genomic sequence eg ENST00000436041 in GRCh37
+            continue
         
         output.write(line)
         
