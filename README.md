@@ -37,6 +37,8 @@ Other options are:
  * `--deprecated-genes data/deprecated_ddg2p_hgnc_ids.txt`
  * `--cache-folder PATH_TO_CACHE_DIR`
  * `--genome-build "grch37" or "grch38" (default=grch37)`
+ * `--coverage-adjust`
+ * `--coverage-dir PATH_TO_COVERAGE_DIR`
 
 The deprecated gene ID file is a manually generated file for the genes where 
 the code failed to retrieve coordinates from Ensembl, so it's built from the 
@@ -46,6 +48,10 @@ additional genes with out of date gene symbols.
 The cache folder defaults to making a folder named "cache" within the working 
 directory. The genome build indicates which genome build the coordinates of the
 de novo variants are based on, and defaults to GRCh37.
+
+The coverage-adjust option indicates if you want to adjust the mutation rates
+for any differences in coverage. This uses the [ExAC](http://exac.broadinstitute.org/) coverage [datasets](ftp://ftp.broadinstitute.org/pub/ExAC_release/release0.1/coverage/), 
+which can be downloaded and used locally with the --coverage-dir option.
 
 #### Identify transcripts containing de novo events
 You can identify transcripts containing de novos events with the 
@@ -82,6 +88,8 @@ Other options are:
    symbols, with one or more transcript IDs per gene. The tab-separated input 
    format is gene symbol followed by transcript ID. Alternative transcripts are 
    listed on separate lines.
+ * `--coverage-adjust` and `--coverage-dir` to obtain mutation rates adjust for
+   sequencing coverage.
 
 The tab-separated output file will contain one row per gene/transcript, with 
 each line containing a transcript ID or gene symbol, a log10 transformed

@@ -40,17 +40,20 @@ def get_options():
     parser.add_argument("--cache-folder", dest="cache_folder", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory)")
+    parser.add_argument("--coverage-adjust", default=False, action="store_true", \
+        help="whether to adjust site mutation rates for sequencing coverage.")
+    parser.add_argument("--coverage-dir", help="location of ExAC coverage files")
     
     args = parser.parse_args()
     
     return args.input, args.output, args.mut_rates, args.deprecated_genes, \
-        args.cache_folder, args.genome_build.lower()
-
+        args.cache_folder, args.genome_build.lower(), args.coverage_adjust, \
+        args.coverage_dir
 
 def main():
     
     input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
-        genome_build = get_options()
+        genome_build, use_coverage, coverage_dir = get_options()
     
     # load all the data
     ensembl = EnsemblRequest(cache_dir, genome_build)
@@ -93,7 +96,9 @@ def main():
         except IndexError:
             continue
         
-        site_weights = SiteRates(transcript, mut_dict)
+        site_weights = SiteRates(transcript, mut_dict, use_coverage=use_coverage)
+        if coverage_dir is not None:
+            site_weights.set_coverage_dir(coverage_dir)
         
         print("simulating clustering")
         probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
