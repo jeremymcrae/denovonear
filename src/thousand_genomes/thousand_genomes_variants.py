@@ -79,7 +79,6 @@ class Extract1000Genomes(SiteRates):
             if self.gene.strand == "-":
                 pos -= 1
             
-            # print(var.id, var.contig, var.pos, var.ref, var.alt[0])
             self.counts = self.__get_geno_counts(var)
             # ignore extremely rare variants, or high-frequency variants.
             # TODO: also ignore singletons in 1000 genomes populations? i.e. 
@@ -91,97 +90,127 @@ class Extract1000Genomes(SiteRates):
             
             # get the distances to the closest exon boundaries
             exon_start, exon_end = self.gene.find_closest_exon(pos)
-            self.exon_start_dist = abs(exon_start - pos)
-            self.exon_end_dist = abs(exon_end - pos)
+            self.boundary_dist = min(abs(exon_start - pos), abs(exon_end - pos))
             (ref, alt) = self.__get_major_and_minor_allele_by_freq(var)
             
-            if self.gene.strand == "-":
-                ref = self.gene.reverse_complement(ref)
-                alt = self.gene.reverse_complement(alt)
-            
-            # check for deletions that span the exon boundaries
-            # I won't consider insertions, since insertions upstream of the exon
-            # probably wouldn't impact the transcript, whereas insertions that
-            # extend in distance past the exon end would simply extend the 
-            # transcript sequence, so it only matters if the insertion is in 
-            # frame or not. Obviously this will not always be true, eg
-            # insertions that introduce new intron/exon boundaries.
-            if pos < exon_start or pos + len(ref) > exon_end:
-                # print("out of exon")
-                if pos < exon_start and pos + len(ref) > exon_start:
-                    lof.append((var, ref, alt))
-                    continue
-                elif pos < exon_end and pos + len(ref) >  exon_end:
-                    lof.append((var, ref, alt))
-                    continue
-                # check for deletions that finish just short of an exon
-                elif pos < exon_start and pos + len(ref) < exon_start:
-                    if abs((pos + len(ref)) - exon_start) < 3:
-                        lof.append((var, ref, alt))
-                        continue
-                    elif abs((pos + len(ref)) - exon_start) < 9:
-                        missense.append((var, ref, alt))
-                        continue
-                # check for deletions that start just after an exon
-                elif pos > exon_end:
-                    # print("past exon")
-                    # print(pos, exon_end)
-                    if abs(pos - (exon_end - 1)) < 3:
-                        lof.append((var, ref, alt))
-                        continue
-                    elif abs(pos - (exon_end - 1)) < 9:
-                        missense.append((var, ref, alt))
-                        continue
+            (lof_check, missense_check) = self.check_exon_spanning_deletion(pos, ref, exon_start, exon_end)
+            if lof_check:
+                lof.append((var, ref, alt))
+                continue
+            elif missense_check:
+                missense.append((var, ref, alt))
+                continue
             
             # add frameshift indels to the lof list, and inframe indels to
             # the missense list
-            if len(alt) > 1:
-                if len(alt) - 1 % 3 == 0:
-                    lof.append((var, ref, alt))
-                else:
-                    missense.append((var, ref, alt))
+            if self.check_lof_indel(ref, alt):
+                lof.append((var, ref, alt))
                 continue
-            if len(ref) > 1:
-                if len(ref) - 1 % 3 == 0:
-                    lof.append((var, ref, alt))
-                else:
-                    missense.append((var, ref, alt))
+            elif self.check_missense_indel(ref, alt):
+                missense.append((var, ref, alt))
                 continue
             
-            # get the codon containing the variant, and the intra-codon position
-            cds_pos = self.gene.convert_chr_pos_to_cds_positions(pos)
-            codon_number = self.gene.get_codon_number_for_cds_position(cds_pos)
-            codon_pos = self.gene.get_position_within_codon(cds_pos)
-            codon = self.gene.get_codon_sequence(codon_number)
-            
-            # figure out if the variant impacts the amino acid.
-            # Occasionally the variant occurs in an incomplete transcript (eg 
-            # rs28394186 in ENST00000336769). Those may give odd length codons
-            # which we shall ignore (since they are so rare).
             try:
-                initial_aa = self.gene.translate_codon(codon)
+                (lof_check, missense_check) = self.check_snv(pos, ref, alt)
             except KeyError:
                 continue
             
-            if codon[codon_pos] == ref:
-                mutated_aa = self.get_mutated_aa(alt, codon, codon_pos)
-            else:
-                mutated_aa = self.get_mutated_aa(ref, codon, codon_pos)
-            
-            # print(var.id, codon, codon_pos, ref, alt, initial_aa, mutated_aa)
-            if self.gene.strand == "-":
-                ref = self.gene.reverse_complement(ref)
-                alt = self.gene.reverse_complement(alt)
-                pos += 1
-            
-            if self.missense_check(initial_aa, mutated_aa, pos):
-                missense.append((var, ref, alt))
-            elif self.lof_check(initial_aa, mutated_aa, pos):
+            if lof_check:
                 lof.append((var, ref, alt))
+            elif missense_check:
+                missense.append((var, ref, alt))
             else:
                 synonymous.append((var, ref, alt))
         
         return (missense, lof, synonymous)
+    
+    def check_lof_indel(self, ref, alt):
+        """ check if a variants is a frameshift indel
+        """
+        
+        lof = False
+        if len(alt) > 1 and (len(alt) - 1) % 3 != 0:
+            lof = True
+        if len(ref) > 1 and (len(ref) - 1) % 3 != 0:
+            lof = True
+        
+        return lof
+    
+    def check_missense_indel(self, ref, alt):
+        """ check if a variant is an in-frame indel
+        """
+        
+        missense = False
+        if len(alt) > 1 and (len(alt) - 1) % 3 == 0:
+            missense = True
+        if len(ref) > 1 and (len(ref) - 1) % 3 == 0:
+            missense = True
+        
+        return missense
+    
+    def check_exon_spanning_deletion(self, pos, ref, exon_start, exon_end):
+        """ check for deletions that span the exon boundaries
+        
+        I won't consider insertions, since insertions upstream of the exon
+        probably wouldn't impact the transcript, whereas insertions that
+        extend in distance past the exon end would simply extend the 
+        transcript sequence, so it only matters if the insertion is in 
+        frame or not. Obviously this will not always be true, eg
+        insertions that introduce new intron/exon boundaries.
+        """
+         
+        lof = False
+        missense = False
+        if pos < exon_start or pos + len(ref) > exon_end:
+            if pos < exon_start and pos + len(ref) > exon_start:
+                lof = True
+            elif pos < exon_end and pos + len(ref) > exon_end:
+                lof = True
+            # check for deletions that finish just short of an exon
+            elif pos < exon_start and pos + len(ref) < exon_start:
+                if abs((pos + len(ref)) - exon_start) < 3:
+                    lof = True
+                elif abs((pos + len(ref)) - exon_start) < 9:
+                    missense = True
+            # check for deletions that start just after an exon
+            elif pos > exon_end:
+                if abs(pos - (exon_end - 1)) < 3:
+                    lof = False
+                elif abs(pos - (exon_end - 1)) < 9:
+                    missense = True
+        
+        return (lof, missense)
+    
+    def check_snv(self, pos, ref, alt):
+        """ get the functional status of a SNV
+        """
+        
+        # get the codon containing the variant, and the intra-codon position
+        cds_pos = self.gene.convert_chr_pos_to_cds_positions(pos)
+        codon_number = self.gene.get_codon_number_for_cds_position(cds_pos)
+        codon_pos = self.gene.get_position_within_codon(cds_pos)
+        codon = self.gene.get_codon_sequence(codon_number)
+        
+        # figure out if the variant impacts the amino acid.
+        # Occasionally the variant occurs in an incomplete transcript (eg 
+        # rs28394186 in ENST00000336769). Those may give odd length codons
+        # which we shall ignore (since they are so rare).
+        initial_aa = self.gene.translate_codon(codon)
+        mutated_aa = self.get_mutated_aa(ref, codon, codon_pos)
+        if codon[codon_pos] == ref:
+            mutated_aa = self.get_mutated_aa(alt, codon, codon_pos)
+        
+        if self.gene.strand == "-":
+            pos += 1
+        
+        lof = False
+        missense = False
+        if self.missense_and_splice_region_check(initial_aa, mutated_aa, pos):
+            missense = True
+        elif self.loss_of_function_check(initial_aa, mutated_aa, pos):
+            lof = True
+        
+        return (lof, missense)
     
     def __set_mut_checks(self):
         """ use a bunch of functions from a different class (should I be 
@@ -202,12 +231,11 @@ class Extract1000Genomes(SiteRates):
         
         vcf_records = []
         for start, end in self.gene.cds:
-            # print(chrom, start, end)
             if start != self.gene.cds_min:
                 start -= 8
             if end != self.gene.cds_max:
                 end += 8
-            temp_records = list(vcf_tabix.fetch(str(chrom), start, end))
+            temp_records = vcf_tabix.fetch(str(chrom), start, end)
             
             # drop out any variants that already exist in vcf_records (mainly 
             # affects CNVs and indels, which can be picked up multiple times if 

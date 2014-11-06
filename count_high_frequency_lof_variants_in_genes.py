@@ -40,7 +40,7 @@ def get_options():
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
     parser.add_argument("--min-freq", dest="min_freq", default=0.05, help="Minimum accepted minor genotype frequency")
-    parser.add_argument("--max-freq", dest="max_freq", default=0.6, help="Minimum accepted minor genotype frequency")
+    parser.add_argument("--max-freq", dest="max_freq", default=0.6, help="Maximum accepted minor genotype frequency")
     parser.add_argument("--hgnc", dest="hgnc_filename", default="/nfs/users/nfs_j/jm33/gel_annotation_exercise/data/ensembl.gene_symbols_and_chrom_positions.txt", help="file listing genes to analyse")
     parser.add_argument("--cache-folder", dest="cache_folder", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
@@ -203,12 +203,12 @@ def main():
         #         consequence = ensembl.get_variant_by_pos(chrom, var.pos, ref_allele, alt_allele, gene, LOF_CONSEQUENCES)
         #     # print(var.id, consequence, chrom, var.pos, ref_allele, alt_allele)
         
-        for (var, ref, alt) in synonymous:
-            if var.id != "." and not var.id.startswith("esv") and gene.strand == "+":
-                consequence = ensembl.get_variant_by_id(var.id, transcript_id, SYNONYMOUS_CONSEQUENCES)
-            else:
-                consequence = ensembl.get_variant_by_pos(chrom, var.pos, ref, alt, gene, SYNONYMOUS_CONSEQUENCES)
-            print(hgnc, chrom, var.pos, consequence, var.id, ref, alt)
+        # for (var, ref, alt) in synonymous:
+        #     if var.id != "." and not var.id.startswith("esv") and gene.strand == "+":
+        #         consequence = ensembl.get_variant_by_id(var.id, transcript_id, SYNONYMOUS_CONSEQUENCES)
+        #     else:
+        #         consequence = ensembl.get_variant_by_pos(chrom, var.pos, ref, alt, gene, SYNONYMOUS_CONSEQUENCES)
+        #     print(hgnc, chrom, var.pos, consequence, var.id, ref, alt)
         
         output.write(hgnc + "\t" + str(len(nonsense)) + "\n")
         # break
