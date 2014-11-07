@@ -17,6 +17,8 @@ class Extract1000Genomes(SiteRates):
     """ obtains data from 1000 Genomes VCF files
     """
     
+    geno_dict = {0: "hom_ref", 1: "het", 2: "hom_alt"}
+    
     def __init__(self, vcf_folder="ftp://ftp.1000genomes.ebi.ac.uk/vol1/ftp/phase1/analysis_results/integrated_call_sets/", frequency="allele"):
         """ intialise the class with the VCF location
         
@@ -100,10 +102,7 @@ class Extract1000Genomes(SiteRates):
             elif missense_check:
                 missense.append((var, ref, alt))
                 continue
-            
-            # add frameshift indels to the lof list, and inframe indels to
-            # the missense list
-            if self.check_lof_indel(ref, alt):
+            elif self.check_lof_indel(ref, alt):
                 lof.append((var, ref, alt))
                 continue
             elif self.check_missense_indel(ref, alt):
@@ -122,7 +121,56 @@ class Extract1000Genomes(SiteRates):
             else:
                 synonymous.append((var, ref, alt))
         
+        for (var, ref, alt) in lof:
+            print(var.id)
+        
         return (missense, lof, synonymous)
+    
+    def find_samples_with_lof_in_gene(self):
+        
+        lof_samples = set([])
+        missense_samples = set([])
+        sample_n = 0
+        for var in self.vcf:
+            # ignore non-biallelic variants
+            if len(var.alt[0]) > 1:
+                continue
+            
+            pos = var.pos
+            if self.gene.strand == "-":
+                pos -= 1
+            
+            # get the distances to the closest exon boundaries
+            exon_start, exon_end = self.gene.find_closest_exon(pos)
+            self.boundary_dist = min(abs(exon_start - pos), abs(exon_end - pos))
+            (ref, alt) = self.__get_major_and_minor_allele_by_freq(var)
+            
+            (lof_check, missense_check) = self.check_exon_spanning_deletion(pos, ref, exon_start, exon_end)
+            if lof_check:
+                self.get_samples_with_allele(var, allele)
+                continue
+            elif missense_check:
+                pass
+                continue
+            elif self.check_lof_indel(ref, alt):
+                pass
+                continue
+            elif self.check_missense_indel(ref, alt):
+                pass
+                continue
+            
+            try:
+                (lof_check, missense_check) = self.check_snv(pos, ref, alt)
+            except KeyError:
+                continue
+            
+            if lof_check:
+                pass
+            elif missense_check:
+                pass
+            else:
+                pass
+        
     
     def check_lof_indel(self, ref, alt):
         """ check if a variants is a frameshift indel
@@ -162,21 +210,23 @@ class Extract1000Genomes(SiteRates):
         lof = False
         missense = False
         if pos < exon_start or pos + len(ref) > exon_end:
-            if pos < exon_start and pos + len(ref) > exon_start:
+            ref_end = pos + len(ref)
+            # check for deletions that surround an intron/exon boundary
+            if pos < exon_start and ref_end > exon_start:
                 lof = True
-            elif pos < exon_end and pos + len(ref) > exon_end:
+            elif pos < exon_end and ref_end > exon_end:
                 lof = True
             # check for deletions that finish just short of an exon
-            elif pos < exon_start and pos + len(ref) < exon_start:
-                if abs((pos + len(ref)) - exon_start) < 3:
+            elif pos < exon_start and ref_end < exon_start:
+                if abs(ref_end - exon_start) < 3:
                     lof = True
-                elif abs((pos + len(ref)) - exon_start) < 9:
+                elif abs(ref_end - exon_start) < 9:
                     missense = True
             # check for deletions that start just after an exon
             elif pos > exon_end:
-                if abs(pos - (exon_end - 1)) < 3:
+                if self.boundary_dist < 3:
                     lof = False
-                elif abs(pos - (exon_end - 1)) < 9:
+                elif self.boundary_dist < 9:
                     missense = True
         
         return (lof, missense)
@@ -191,14 +241,19 @@ class Extract1000Genomes(SiteRates):
         codon_pos = self.gene.get_position_within_codon(cds_pos)
         codon = self.gene.get_codon_sequence(codon_number)
         
+        # make sure the reference codon contains the reference allele (the
+        # alleles might have been swapped since I select the more frequent 
+        # allele as the reference, rather than directly from the reference
+        # sequence)
+        if codon[codon_pos] == alt:
+            codon[codon_pos] = ref
+        
         # figure out if the variant impacts the amino acid.
         # Occasionally the variant occurs in an incomplete transcript (eg 
         # rs28394186 in ENST00000336769). Those may give odd length codons
         # which we shall ignore (since they are so rare).
         initial_aa = self.gene.translate_codon(codon)
-        mutated_aa = self.get_mutated_aa(ref, codon, codon_pos)
-        if codon[codon_pos] == ref:
-            mutated_aa = self.get_mutated_aa(alt, codon, codon_pos)
+        mutated_aa = self.get_mutated_aa(alt, codon, codon_pos)
         
         if self.gene.strand == "-":
             pos += 1
@@ -212,16 +267,42 @@ class Extract1000Genomes(SiteRates):
         
         return (lof, missense)
     
-    def __set_mut_checks(self):
-        """ use a bunch of functions from a different class (should I be 
-        inheriting these, even though I don't want any of the rest of the to-be 
-        inherited class?).
+    def get_samples_with_allele(self, record, allele):
+        """ get a list of sample IDs that have 
+        
+        Args:
+            var: a VcfRecord for a variant
+            genotype: allele code that we wish to examine
         """
         
-        self.get_mutated_aa = SiteRates.get_mutated_aa
-        self.functional_check = SiteRates.functional_check
-        self.lof_check = SiteRates.loss_of_function_check
-        self.missense_check = SiteRates.missense_and_splice_region_check
+        match = set([1, 2])
+        if allele == record.ref:
+            match = set([0, 1])
+        
+        sample_n = 0
+        sample_ids = []
+        for data in record:
+            split_data = data.split(":")
+            
+            if len(split_data) > 1 and split_data[0] != "GT":
+                sample_id = record.samples[pos]
+                population = sample_pops[sample_id]
+                vcf_genotype = split_data[0]
+                
+                # females raise errors for variants on the Y-chromosome, just  
+                # skip past those individuals, since they can't contribute to a 
+                # genotype or population count
+                try:
+                    geno = self.__convert_genotype(vcf_genotype)
+                except ValueError:
+                    continue
+                
+                sample_n += 1
+                
+                if geno in match:
+                    sample_ids.append(sample_id)
+        
+        return (sample_ids, sample_n)
     
     def __get_variants_in_cds(self, vcf_tabix):
         """ gets the 1000 Genomes variants in the CDS regions of a gene 
@@ -399,7 +480,6 @@ class Extract1000Genomes(SiteRates):
         """
         
         counts = {}
-        self.geno_dict = {0: "hom_ref", 1: "het", 2: "hom_alt"}
         
         for population in populations:
             counts[population] = {"hom_ref": 0, "het": 0, "hom_alt": 0}
