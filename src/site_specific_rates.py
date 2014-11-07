@@ -180,8 +180,14 @@ class SiteRates(object):
             
             # ignore positions outside the exons that are too distant from an
             # intron/exon boundary
-            if not self.gene.in_coding_region(bp) and self.boundary_dist >= 9:
+            if self.boundary_dist >= 9 and not self.gene.in_coding_region(bp):
                 continue
+            
+            # sites within the coding region are actually one bp further away,
+            # since we are measuring the distance to the base inside the exon
+            # boundary
+            if self.gene.in_coding_region(bp):
+                self.boundary_dist += 1
             
             # use a default NA amino acid, which will be changed if the current
             # position lies within the coding sequence
