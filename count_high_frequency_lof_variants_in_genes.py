@@ -22,15 +22,13 @@ from src.thousand_genomes.thousand_genomes_variants import Extract1000Genomes
 
 logging.basicConfig(filename='high_freq_lof_variants.log',level=logging.WARNING)
 
-LOF_CONSEQUENCES = set(["transcript_ablation","splice_donor_variant", \
+CONSEQUENCES = {"lof": set(["transcript_ablation","splice_donor_variant", \
     "splice_acceptor_variant", "frameshift_variant", "stop_gained", \
-    "coding_sequence_variant"])
-
-MISSENSE_CONSEQUENCES = set(["initiator_codon_variant", "inframe_insertion", 
+    "coding_sequence_variant"]), \
+    "missense": set(["initiator_codon_variant", "inframe_insertion", 
     "inframe_deletion", "missense_variant", "transcript_amplification", 
-    "stop_lost"])
-
-SYNONYMOUS_CONSEQUENCES = set(["synonymous_variant"])
+    "stop_lost", "splice_region_variant"]), \
+    "synonymous": set(["synonymous_variant"])}
 
 def get_options():
     """
@@ -64,17 +62,17 @@ class EnsemblWithVariants(EnsemblRequest):
         
         return consequence
     
-    def get_variant_by_pos(self, chrom, pos, ref_allele, alt_allele, gene, expected_consequences):
+    def get_variant_by_pos(self, chrom, start_pos, ref_allele, alt_allele, gene):
         """ gets the consequence for a variant from a sequence location
         """
         
         transcript_id = gene.name
         if gene.strand == "-":
-            pos += 1
+            start_pos += 1
         
         # if the variant is a indel, figure out the end position, so we can get
         # the correct variant consequence
-        end_pos = pos
+        end_pos = start_pos
         if len(ref_allele) > 1:
             end_pos += len(ref_allele) - 1
         
@@ -82,37 +80,25 @@ class EnsemblWithVariants(EnsemblRequest):
         # is challenging for the REST API to return a value. Instead of trying
         # to request an overlay large variant's consequence, just return a
         # default value.
-        if pos < gene.start and end_pos > gene.end:
+        if start_pos < gene.start and end_pos > gene.end:
             return "transcript_ablated"
+        
+        ref_seq = self.get_genomic_seq_for_region(chrom, start_pos, end_pos)
+        if ref_seq != ref_allele and ref_seq == alt_allele:
+            alt_allele = ref_allele
+            ref_allele = ref_seq
         
         headers = {"content-type": "application/json"}
         
-        # http://beta.rest.ensembl.org/vep/human/9:22125503-22125502:1/C/consequences?content-type=application/json
-        
         self.request_attempts = 0
-        ext = "/vep/human/region/{0}:{1}-{2}:1/{3}".format(chrom, pos, end_pos, alt_allele)
-        try:
-            r = self.ensembl_request(ext, str(chrom) + ":" + str(pos), headers)
-        except ValueError:
-            # this catches the ValueErrors that arise when we request a variant
-            # using the reference allele
-            self.request_attempts = 0
-            ext = "/vep/human/region/{0}:{1}-{2}:1/{3}?".format(chrom, pos, end_pos, ref_allele)
-            r = self.ensembl_request(ext, str(chrom) + ":" + str(pos), headers)
+        ext = "/vep/human/region/{0}:{1}-{2}:1/{3}".format(chrom, start_pos, end_pos, alt_allele)
+        r = self.ensembl_request(ext, "{0}:{1}-{2}".format(chrom, start_pos, end_pos), headers)
         
         consequence = self.parse_consequence(transcript_id, r)
-        print(consequence)
-        
-        # if we come back with a unexpected consequence, try swapping to the 
-        # alternate allele
-        if consequence not in expected_consequences:
-            ext = "/vep/human/region/{0}:{1}-{2}:1/{3}".format(chrom, pos, end_pos, ref_allele)
-            r = self.ensembl_request(ext, str(chrom) + ":" + str(pos), headers)
-            consequence = self.parse_consequence(transcript_id, r)
         
         return consequence
     
-    def get_variant_by_id(self, var_id, transcript_id, expected_consequences):
+    def get_variant_by_id(self, var_id, transcript_id, chrom, pos, ref_allele, alt_allele, gene):
         """ gets the consequence for a variant based on a rsID
         """
         
@@ -120,7 +106,11 @@ class EnsemblWithVariants(EnsemblRequest):
         
         self.request_attempts = 0
         ext = "/vep/human/id/{0}/consequences?".format(var_id)
-        r = self.ensembl_request(ext, var_id, headers) 
+        try:
+            r = self.ensembl_request(ext, var_id, headers)
+        except ValueError:
+            return self.get_variant_by_pos(chrom, pos, ref_allele, alt_allele, gene)
+        
         consequence = self.parse_consequence(transcript_id, r)
         
         return consequence
@@ -191,27 +181,21 @@ def main():
             continue
         
         thousand_genomes.set_gene(gene)
-        (missense, nonsense, synonymous) = thousand_genomes.filter_variants(min_maf=min_freq, max_maf=max_freq, ignore_indels=False)
+        func = thousand_genomes.filter_variants(min_maf=min_freq, max_maf=max_freq, ignore_indels=False)
         chrom = gene.chrom
         transcript_id = gene.name
-        # for (var, ref_allele, alt_allele) in nonsense:
-        #     # print(var.id, ref_allele, alt_allele)
-        #     print(transcript_id, var.id, gene.strand)
-        #     if var.id != "." and not var.id.startswith("esv") and gene.strand == "+":
-        #         consequence = ensembl.get_variant_by_id(var.id, transcript_id, LOF_CONSEQUENCES)
-        #     else:
-        #         consequence = ensembl.get_variant_by_pos(chrom, var.pos, ref_allele, alt_allele, gene, LOF_CONSEQUENCES)
-        #     # print(var.id, consequence, chrom, var.pos, ref_allele, alt_allele)
+        # for category in func:
+        #     for (var, ref, alt) in func[category]:
+        #         if var.id != ".":
+        #             consequence = ensembl.get_variant_by_id(var.id, transcript_id, chrom, var.pos, ref, alt, gene)
+                
+        #         if consequence not in CONSEQUENCES[category]:
+        #             exon_start, exon_end = gene.find_closest_exon(var.pos)
+        #             boundary_dist = min(abs(exon_start - var.pos), abs(exon_end - var.pos))
+        #             print(var.id, var.pos, category, consequence, boundary_dist)
         
-        # for (var, ref, alt) in synonymous:
-        #     if var.id != "." and not var.id.startswith("esv") and gene.strand == "+":
-        #         consequence = ensembl.get_variant_by_id(var.id, transcript_id, SYNONYMOUS_CONSEQUENCES)
-        #     else:
-        #         consequence = ensembl.get_variant_by_pos(chrom, var.pos, ref, alt, gene, SYNONYMOUS_CONSEQUENCES)
-        #     print(hgnc, chrom, var.pos, consequence, var.id, ref, alt)
-        
-        output.write(hgnc + "\t" + str(len(nonsense)) + "\n")
         # break
+        output.write(hgnc + "\t" + str(len(func["lof"])) + "\n")
 
 if __name__ == "__main__":
     main()
