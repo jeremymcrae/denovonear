@@ -8,19 +8,14 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-import sys
 import os
-import json
-import logging
 import argparse
 
-from src.ensembl_requester import EnsemblRequest
 from src.load_gene import get_deprecated_gene_ids, get_transcript_lengths, \
     construct_gene_object, get_de_novos_in_transcript, load_gene
-from src.ensembl_requester import EnsemblRequest
-from src.thousand_genomes.thousand_genomes_variants import Extract1000Genomes
+from src.thousand_genomes.ensembl_consequences import EnsemblWithVariants
+from src.thousand_genomes.variants import Extract1000Genomes
 
-logging.basicConfig(filename='high_freq_lof_variants.log',level=logging.WARNING)
 
 CONSEQUENCES = {"lof": set(["transcript_ablation","splice_donor_variant", \
     "splice_acceptor_variant", "frameshift_variant", "stop_gained", \
@@ -51,69 +46,6 @@ def get_options():
     
     return args.output, float(args.min_freq), float(args.max_freq), args.hgnc_filename, args.cache_folder, args.genome_build
 
-class EnsemblWithVariants(EnsemblRequest):
-    
-    def parse_consequence(self, transcript_id, request_data):
-        """ parse json request data from ensembl for consequence in a transcript
-        """
-        
-        parsed_json = json.loads(request_data)[0]
-        consequence = parsed_json["most_severe_consequence"]
-        
-        return consequence
-    
-    def get_variant_by_pos(self, chrom, start_pos, ref_allele, alt_allele, gene):
-        """ gets the consequence for a variant from a sequence location
-        """
-        
-        transcript_id = gene.name
-        if gene.strand == "-":
-            start_pos += 1
-        
-        # if the variant is a indel, figure out the end position, so we can get
-        # the correct variant consequence
-        end_pos = start_pos
-        if len(ref_allele) > 1:
-            end_pos += len(ref_allele) - 1
-        
-        # some rare structural CNVs surround the entire gene, but their size
-        # is challenging for the REST API to return a value. Instead of trying
-        # to request an overlay large variant's consequence, just return a
-        # default value.
-        if start_pos < gene.start and end_pos > gene.end:
-            return "transcript_ablated"
-        
-        ref_seq = self.get_genomic_seq_for_region(chrom, start_pos, end_pos)
-        if ref_seq != ref_allele and ref_seq == alt_allele:
-            alt_allele = ref_allele
-            ref_allele = ref_seq
-        
-        headers = {"content-type": "application/json"}
-        
-        self.request_attempts = 0
-        ext = "/vep/human/region/{0}:{1}-{2}:1/{3}".format(chrom, start_pos, end_pos, alt_allele)
-        r = self.ensembl_request(ext, "{0}:{1}-{2}".format(chrom, start_pos, end_pos), headers)
-        
-        consequence = self.parse_consequence(transcript_id, r)
-        
-        return consequence
-    
-    def get_variant_by_id(self, var_id, transcript_id, chrom, pos, ref_allele, alt_allele, gene):
-        """ gets the consequence for a variant based on a rsID
-        """
-        
-        headers = {"content-type": "application/json"}
-        
-        self.request_attempts = 0
-        ext = "/vep/human/id/{0}/consequences?".format(var_id)
-        try:
-            r = self.ensembl_request(ext, var_id, headers)
-        except ValueError:
-            return self.get_variant_by_pos(chrom, pos, ref_allele, alt_allele, gene)
-        
-        consequence = self.parse_consequence(transcript_id, r)
-        
-        return consequence
 
 def load_hgnc_symbols(filename):
     """ load a file containing all the current HGNC symbols
@@ -164,8 +96,6 @@ def main():
     output = open(output_filename, "a")
     
     for hgnc in hgnc_symbols:
-        # hgnc = "GPR107"
-        logging.warning("loading: {0}".format(hgnc))
         if hgnc in prior_genes:
             continue
         prior_genes.add(hgnc)
@@ -177,7 +107,6 @@ def main():
         try:
             gene = load_gene(ensembl, hgnc)
         except (IndexError, ValueError) as e:
-            logging.warning("unable to load: {0}".format(hgnc))
             continue
         
         thousand_genomes.set_gene(gene)
