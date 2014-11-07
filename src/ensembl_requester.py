@@ -129,9 +129,7 @@ class EnsemblRequest(object):
             time.sleep(30)
             return self.ensembl_request(ext, sequence_id, headers)
         elif status_code != 200:
-            raise ValueError("Invalid Ensembl response: {0} for {1}.\n" + \
-                "Submitted URL was: {2}{3}\n" + \
-                "headers: {4}\nresponse: {5}".format(status_code, sequence_id, 
+            raise ValueError("Invalid Ensembl response: {0} for {1}.\nSubmitted URL was: {2}{3}\nheaders: {4}\nresponse: {5}".format(status_code, sequence_id, \
                     self.server, ext, requested_headers, response))
         
         # sometimes ensembl returns odd data. I don't know what it is, but the 
@@ -243,6 +241,17 @@ class EnsemblRequest(object):
         ext = "/sequence/id/{0}?type=protein".format(transcript_id)
         
         return self.ensembl_request(ext, transcript_id, headers)
+    
+    def get_genomic_seq_for_region(self, chrom, start_pos, end_pos):
+        """ obtain the sequence for a genomic region
+        """
+        
+        headers = {"Content-Type": "text/plain"}
+        
+        self.request_attempts = 0
+        ext = "/sequence/region/human/{0}:{1}..{2}:1".format(chrom, start_pos, end_pos)
+        
+        return self.ensembl_request(ext, "{0}:{1}-{2}".format(chrom, start_pos, end_pos), headers)
     
     def get_chrom_for_transcript(self, transcript_id, hgnc_id):
         """ obtain the sequence for a transcript from ensembl
