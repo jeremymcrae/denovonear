@@ -152,6 +152,9 @@ def load_gene(ensembl, gene_id, de_novos=[]):
             # transcript sequence obtained from ensembl for the transcript ID.
             pass
     
+    if "gene" not in locals():
+        raise IndexError("{0}: no suitable transcripts".format(gene_id))
+    
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
     # mutually exclusive transcripts

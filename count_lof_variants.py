@@ -41,10 +41,12 @@ def get_options():
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
         "that the de novo coordinates are based on (GrCh37 or GRCh38")
+    parser.add_argument("--sum-frequency", default=False, action="store_true")
     
     args = parser.parse_args()
     
-    return args.output, float(args.min_freq), float(args.max_freq), args.hgnc_filename, args.cache_folder, args.genome_build
+    return args.output, float(args.min_freq), float(args.max_freq), \
+        args.hgnc_filename, args.cache_folder, args.genome_build, args.sum_frequency
 
 
 def load_hgnc_symbols(filename):
@@ -83,7 +85,7 @@ def get_already_loaded_genes(filename):
 
 def main():
     
-    output_filename, min_freq, max_freq, hgnc_filename, cache_dir, genome_build = get_options()
+    output_filename, min_freq, max_freq, hgnc_filename, cache_dir, genome_build, check_frequency = get_options()
     
     thousand_genomes = Extract1000Genomes("/lustre/scratch113/teams/hurles/users/jm33/1000genomes/", frequency="genotype")
     ensembl = EnsemblWithVariants(cache_dir, genome_build)
@@ -110,9 +112,19 @@ def main():
             continue
         
         thousand_genomes.set_gene(gene)
-        func = thousand_genomes.filter_variants(min_maf=min_freq, max_maf=max_freq, ignore_indels=False)
-        chrom = gene.chrom
-        transcript_id = gene.name
+        if not check_frequency:
+            func = thousand_genomes.filter_variants(min_maf=min_freq, max_maf=max_freq, ignore_indels=False)
+            output.write("{0}\t{1}\n".format(hgnc, len(func["lof"])))
+        else:
+            (samples, n) = thousand_genomes.find_samples_with_disrupted_alleles_in_gene()
+            try:
+                lof_freq = len(samples["lof"])/n
+                missense_freq = len(samples["missense"])/n
+            except ZeroDivisionError:
+                lof_freq, missense_freq = "NA", "NA"
+            output.write("{0}\t{1}\t{2}\n".format(hgnc, lof_freq, missense_freq))
+        # chrom = gene.chrom
+        # transcript_id = gene.name
         # for category in func:
         #     for (var, ref, alt) in func[category]:
         #         if var.id != ".":
@@ -124,7 +136,7 @@ def main():
         #             print(var.id, var.pos, category, consequence, boundary_dist)
         
         # break
-        output.write(hgnc + "\t" + str(len(func["lof"])) + "\n")
+        
 
 if __name__ == "__main__":
     main()

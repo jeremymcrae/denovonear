@@ -24,17 +24,17 @@ class Alleles(object):
             allele: allele code that we wish to examine
         """
         
-        match = set([1, 2])
+        match = set(["het", "hom_alt"])
         if allele == record.ref:
-            match = set([0, 1])
+            match = set(["hom_ref", "het"])
         
         sample_n = 0
-        sample_ids = []
+        sample_ids = set([])
         for data in record:
             split_data = data.split(":")
             
             if len(split_data) > 1 and split_data[0] != "GT":
-                sample_id = record.samples[pos]
+                sample_id = record.samples[sample_n]
                 population = sample_pops[sample_id]
                 vcf_genotype = split_data[0]
                 
@@ -49,7 +49,7 @@ class Alleles(object):
                 sample_n += 1
                 
                 if geno in match:
-                    sample_ids.append(sample_id)
+                    sample_ids.add(sample_id)
         
         return (sample_ids, sample_n)
     

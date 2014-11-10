@@ -86,11 +86,11 @@ class Extract1000Genomes(SiteRates, Alleles, VCF, FunctionalChecks):
                 continue
             
             (ref, alt) = self._get_major_and_minor_allele_by_freq(var)
-            sample_ids, temp_n = self.get_samples_with_allele(var, allele)
+            (sample_ids, temp_n) = self._get_samples_with_allele(var, alt)
             samples[status] = samples[status] | sample_ids
             
             if temp_n > sample_n:
                 sample_n = temp_n
         
-        return samples, samples_n
+        return (samples, sample_n)
 
