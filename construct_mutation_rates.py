@@ -187,7 +187,9 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
         if len(synonymous_rates.choices) > 0:
             synonymous += synonymous_rates.cum_probs[-1]
     
-    return (missense, nonsense, splice_lof, synonymous)
+    length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
+    
+    return (length, missense, nonsense, splice_lof, synonymous)
 
 def log_transform(values):
     """ log transform a numeric value, unless it is zero, or negative
@@ -218,7 +220,7 @@ def main():
         transcripts = load_genes(input_genes)
     
     output = open(output_file, "w")
-    output.write("transcript_id\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
+    output.write("transcript_id\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
     
     for gene_id in sorted(transcripts):
         print(gene_id)
@@ -226,9 +228,11 @@ def main():
             rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, \
                 use_coverage, coverage_dir)
             
+            length = rates[0]
+            rates = rates[1:]
             # log transform the rates, to keep them consistent with the rates from
             # Daly et al.
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, *log_transform(rates))
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format(gene_id, length, *log_transform(rates))
         except ValueError as error:
             line = "{0}\t{1}\n".format(gene_id, error)
         except KeyError as error:
