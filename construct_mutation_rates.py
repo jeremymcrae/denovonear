@@ -43,10 +43,15 @@ def get_options():
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory).")
     
+    parser.add_argument("--coverage-adjust", default=False, action="store_true", \
+        help="whether to adjust site mutation rates for sequencing coverage.")
+    parser.add_argument("--coverage-dir", help="location of ExAC coverage files")
+    
     args = parser.parse_args()
     
     return args.transcript_input, args.gene_input, args.output, args.mut_rates, \
-        args.cache_folder, args.genome_build.lower()
+        args.cache_folder, args.genome_build.lower(), args.coverage_adjust, \
+        args.coverage_dir
 
 def load_transcripts(path):
     """ load a file listing transcript IDs per line
@@ -102,7 +107,7 @@ def load_genes(path):
             
     return transcripts
 
-def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
+def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir):
     """ determines missense, nonsense and synonymous mutation rates for a gene
     
     This can estimate a mutation rate from the union of transcripts for a gene.
@@ -155,11 +160,14 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
             continue
         
         if combined_transcript is None:
-            site_weights = SiteRates(transcript, mut_dict)
+            site_weights = SiteRates(transcript, mut_dict, use_coverage=use_cov)
             combined_transcript = copy.deepcopy(transcript)
         else:
-            site_weights = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
+            site_weights = SiteRates(transcript, mut_dict, masked_sites=combined_transcript, use_coverage=use_cov)
             combined_transcript += transcript
+        
+        if cov_dir is not None:
+            site_weights.set_coverage_dir(cov_dir)
         
         missense_rates = site_weights.get_missense_rates_for_gene()
         nonsense_rates = site_weights.get_nonsense_rates_for_gene()
@@ -179,7 +187,9 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         if len(synonymous_rates.choices) > 0:
             synonymous += synonymous_rates.cum_probs[-1]
     
-    return (missense, nonsense, splice_lof, synonymous)
+    length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
+    
+    return (length, missense, nonsense, splice_lof, synonymous)
 
 def log_transform(values):
     """ log transform a numeric value, unless it is zero, or negative
@@ -197,7 +207,8 @@ def log_transform(values):
 
 def main():
     
-    input_transcripts, input_genes, output_file, rates_file, cache_dir, genome_build = get_options()
+    input_transcripts, input_genes, output_file, rates_file, cache_dir, \
+        genome_build, use_coverage, coverage_dir = get_options()
     
     # load all the data
     ensembl = EnsemblRequest(cache_dir, genome_build)
@@ -209,16 +220,19 @@ def main():
         transcripts = load_genes(input_genes)
     
     output = open(output_file, "w")
-    output.write("transcript_id\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
+    output.write("transcript_id\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
     
     for gene_id in sorted(transcripts):
         print(gene_id)
         try:
-            rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
+            rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, \
+                use_coverage, coverage_dir)
             
+            length = rates[0]
+            rates = rates[1:]
             # log transform the rates, to keep them consistent with the rates from
             # Daly et al.
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, *log_transform(rates))
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format(gene_id, length, *log_transform(rates))
         except ValueError as error:
             line = "{0}\t{1}\n".format(gene_id, error)
         except KeyError as error:
