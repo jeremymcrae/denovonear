@@ -187,7 +187,9 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
         if len(synonymous_rates.choices) > 0:
             synonymous += synonymous_rates.cum_probs[-1]
     
-    length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
+    length = "NA"
+    if combined_transcript is not None:
+        length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
     
     return (length, missense, nonsense, splice_lof, synonymous)
 
