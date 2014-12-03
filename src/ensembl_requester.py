@@ -301,16 +301,18 @@ class EnsemblRequest(object):
         return cds_ranges
     
     def rate_limit_ensembl_requests(self):
-        """ limit ensembl requests to one per 0.335 s
+        """ limit ensembl requests to one per 0.067 s
         """
         
-        sleeping = True
-        while sleeping:
-            if (time.time() - self.prior_time) > self.rate_limit:
-                self.prior_time = time.time()
-                sleeping = False
-                
-            time.sleep(0.01)
+        current_time = time.time()
+        diff_time = current_time - self.prior_time
+        
+        # sleep until the current rate limit period is finished
+        if diff_time < self.rate_limit:
+            time.sleep(self.rate_limit - diff_time)
+        
+        # set the access time to now, for later checks
+        self.prior_time = time.time()
 
 
 
