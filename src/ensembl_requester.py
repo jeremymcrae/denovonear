@@ -69,7 +69,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "3" or minor not in ["0", "1"]:
+        if major != "4" or minor not in ["0"]:
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
@@ -125,9 +125,7 @@ class EnsemblRequest(object):
             time.sleep(30)
             return self.ensembl_request(ext, sequence_id, headers)
         elif status_code != 200:
-            raise ValueError("Invalid Ensembl response: {0} for {1}.\n" + \
-                "Submitted URL was: {2}{3}\n" + \
-                "headers: {4}\nresponse: {5}".format(status_code, sequence_id, 
+            raise ValueError("Invalid Ensembl response: {0} for {1}.\nSubmitted URL was: {2}{3}\nheaders: {4}\nresponse: {5}".format(status_code, sequence_id, \
                     self.server, ext, requested_headers, response))
         
         # sometimes ensembl returns odd data. I don't know what it is, but the 
@@ -144,8 +142,8 @@ class EnsemblRequest(object):
         
         return response
     
-    def get_genes_for_hgnc_id(self, hgnc_id):
-        """ obatin the sensembl gene IDs that correspond to a HGNC symbol
+    def get_genes_for_hgnc_id(self, hgnc_symbol):
+        """ obatin the ensembl gene IDs that correspond to a HGNC symbol
         """
         
         headers = {"Content-Type": "application/json"}
@@ -153,8 +151,8 @@ class EnsemblRequest(object):
         # http://beta.rest.ensembl.org/xrefs/symbol/homo_sapiens/KMT2A?content-type=application/json
         
         self.request_attempts = 0
-        ext = "/xrefs/symbol/homo_sapiens/{0}".format(hgnc_id)
-        r = self.ensembl_request(ext, hgnc_id, headers)
+        ext = "/xrefs/symbol/homo_sapiens/{0}".format(hgnc_symbol)
+        r = self.ensembl_request(ext, hgnc_symbol, headers)
         
         genes = []
         for item in json.loads(r):
@@ -162,8 +160,38 @@ class EnsemblRequest(object):
                 genes.append(item["id"])
         
         return genes
+    
+    def get_previous_symbol(self, hgnc_symbol):
+        """ sometimes we get HGNC symbols that do not match the ensembl rest version
+        that we are currentl using. We can look for earlier HGNC symbols for
+        the gene using the service at rest.genenames.org
+        """
         
-    def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids, hgnc_id):
+        ensembl_server = self.server
+        gene_names_server = "http://rest.genenames.org"
+        
+        self.server = gene_names_server
+        headers = {"accept": "application/json"}
+        ext = "/fetch/symbol/{0}".format(hgnc_symbol)
+        r = self.ensembl_request(ext, hgnc_symbol, headers)
+        
+        gene_json = json.loads(r)
+        
+        prev_gene = []
+        if "prev_symbol" in gene_json["response"]["docs"][0]:
+            prev_gene = gene_json["response"]["docs"][0]["prev_symbol"]
+        
+        self.server = ensembl_server
+        
+        return prev_gene
+        
+    def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids, hgnc_symbols):
+        """
+        
+        Args:
+            gene_ids: list of Ensembl gene IDs for the gene
+            hgnc_symbols: list of possible HGNC symbols for gene
+        """
     
         chroms = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", \
              "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", \
@@ -178,11 +206,16 @@ class EnsemblRequest(object):
             r = self.ensembl_request(ext, gene_id, headers)
             
             for item in json.loads(r):
+                # ignore non-coding transcripts
+                if item["biotype"] not in ["protein_coding", "polymorphic_pseudogene"]:
+                    continue
+                
                 # ignore transcripts not on the standard chromosomes 
                 # (non-default chroms fail to map the known de novo variants 
                 # to the gene location
                 if item["Parent"] != gene_id or item["seq_region_name"] not in \
-                        chroms or hgnc_id not in item["external_name"]:
+                        chroms or \
+                        all([symbol not in item["external_name"] for symbol in hgnc_symbols]):
                     continue
                 transcript_ids.append(item["id"])
         
@@ -239,6 +272,17 @@ class EnsemblRequest(object):
         ext = "/sequence/id/{0}?type=protein".format(transcript_id)
         
         return self.ensembl_request(ext, transcript_id, headers)
+    
+    def get_genomic_seq_for_region(self, chrom, start_pos, end_pos):
+        """ obtain the sequence for a genomic region
+        """
+        
+        headers = {"Content-Type": "text/plain"}
+        
+        self.request_attempts = 0
+        ext = "/sequence/region/human/{0}:{1}..{2}:1".format(chrom, start_pos, end_pos)
+        
+        return self.ensembl_request(ext, "{0}:{1}-{2}".format(chrom, start_pos, end_pos), headers)
     
     def get_chrom_for_transcript(self, transcript_id, hgnc_id):
         """ obtain the sequence for a transcript from ensembl

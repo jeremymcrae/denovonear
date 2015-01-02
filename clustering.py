@@ -93,7 +93,8 @@ def main():
         try:
             transcript = load_gene(ensembl, gene_id, func_events)
             # transcript = load_conservation(transcript, conservation_folder)
-        except IndexError:
+        except IndexError as e:
+            print(e)
             continue
         
         site_weights = SiteRates(transcript, mut_dict, use_coverage=use_coverage)

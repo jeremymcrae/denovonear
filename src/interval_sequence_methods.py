@@ -101,6 +101,40 @@ class SequenceMethods(object):
         if cds_seq != self.cds_sequence:
             raise ValueError("Coding sequence from gene coordinates doesn't match coding sequence obtained from Ensembl.\nTranscript: {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
     
+    def fix_coding_sequence_length(self):
+        """ correct the coding sequence of a transcript, if it misses bases.
+        
+        Some transcripts don't cover the full length of a gene, they terminate
+        in the middle of an amino acid. This is rare, and it is rarer that we
+        select these transcripts for analysis. TNS3 is an example, where the
+        de novos in the gene can only be contained within a transcript that is
+        incomplete at the 3' end. This causes problems when we try to translate
+        the final codon.
+        
+        We simply extend the coding sequence 1-2 bases to make a complete codon.
+        """
+        
+        diff = len(self.cds_sequence) % 3
+        end = self.get_cds_end()
+        
+        if diff != 0:
+            diff = 3 - diff
+            
+            if self.strand == "+":
+                self.cds[-1] = (self.cds[-1][0], self.cds[-1][-1] + diff)
+                
+                start_bp = abs(end - self.get_start()) + self.gdna_offset
+                end_bp = abs(end - self.get_start()) + diff + self.gdna_offset
+                self.cds_sequence += self.genomic_sequence[start_bp:end_bp]
+            elif self.strand == "-":
+                self.cds[0] = (self.cds[0][0] - diff, self.cds[0][1])
+                start_bp = abs(self.get_end() - end) + self.gdna_offset
+                end_bp = abs(self.get_end() - end) + diff + self.gdna_offset
+                self.cds_sequence += self.genomic_sequence[start_bp:end_bp]
+        
+        self.cds_min = int(self.cds[0][0])
+        self.cds_max = int(self.cds[-1][-1])
+    
     def reverse_complement(self, seq):
         """ reverse complement a DNA or RNA sequence
         """
@@ -134,6 +168,8 @@ class SequenceMethods(object):
         
         start = codon_number * 3
         end = start + 3
+        
+        # print(len(self.cds_sequence), start, end)
         
         codon = self.cds_sequence[start:end]
         

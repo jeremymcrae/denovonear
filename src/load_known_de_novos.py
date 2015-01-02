@@ -39,7 +39,7 @@ def load_known_de_novos(filename):
         
         # ignore indels (some splice_acceptor_variants (in the
         # functional_consequences) are indels
-        if "INDEL" in snp_or_indel:
+        if "INDEL" in snp_or_indel.upper():
             continue
         
         # trim out variants that are missing data
