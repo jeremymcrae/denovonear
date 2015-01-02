@@ -122,7 +122,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     
     func_events = set(de_novos["functional"])
     missense = set(de_novos["missense"])
-    nonsense = set(de_novos[["nonsense"])
+    nonsense = set(de_novos["nonsense"])
     synonymous = set(de_novos["synonymous"])
     
     # load the set of transcripts that are the  minimum set of transcripts 

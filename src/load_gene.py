@@ -149,7 +149,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
             the gene transcript
         
     Returns:
-        Interval object for gene, including genomic ranges and sequences
+        list of Interval objects for gene, including genomic ranges and sequences
     """
     
     transcripts = minimise_transcripts(ensembl, gene_id, de_novos)
