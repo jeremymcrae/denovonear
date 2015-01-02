@@ -86,10 +86,18 @@ def get_de_novos_in_transcript(transcript, de_novos):
         list of de novo positions found within the transcript
     """
     
-    in_transcript = []
+    in_transcript = set([])
     for de_novo in de_novos:
-        if transcript.in_coding_region(de_novo):
-            in_transcript.append(de_novo)
+        # we check if the de novo is within the transcript by converting the
+        # chromosomal position to a CDS-based position. Variants outside the CDS
+        # will raise an error, which we catch and pass on. It's better to do 
+        # this, rather than use the function in_coding_region(), since that 
+        # function does not allow for splice site variants.
+        try:
+            cds_pos = transcript.convert_chr_pos_to_cds_positions(de_novo)
+            in_transcript.add(de_novo)
+        except ValueError:
+            continue
     
     return in_transcript
     
@@ -144,39 +152,51 @@ def load_gene(ensembl, gene_id, de_novos=[]):
         Interval object for gene, including genomic ranges and sequences
     """
     
-    transcripts = get_transcript_ids_sorted_by_length(ensembl, gene_id)
+    transcripts = minimise_transcripts(ensembl, gene_id, de_novos)
     
-    # TODO: allow for genes without any coding sequence.
-    if len(transcripts) == 0:
-        raise ValueError("{0} lacks coding transcripts".format(gene_id))
+    genes = []
+    for (transcript_id, total, length) in transcripts:
+        gene = construct_gene_object(ensembl, transcript_id)
+        genes.append(gene)
     
-    # create a Interval object using the longest transcript, but if we cannot
-    # obtain a valid sequence or coordinates, or the transcript doesn't contain
-    # all the de novo positions, run through alternate transcripts in order of
-    # length (allows for CSMD2 variant chr1:34071484 and PHACTR1 chr6:12933929).
-    for (transcript_id, length) in transcripts:
-        try:
-            gene = construct_gene_object(ensembl, transcript_id)
-            if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
-                # halt the loop, since we've found a transcript with all the de
-                # novos
-                break
-        except ValueError:
-            # this error occurs when the transcript sequence from genomic  
-            # sequence according to the gene positions, doesn't match the 
-            # transcript sequence obtained from ensembl for the transcript ID.
-            pass
-    
-    if "gene" not in locals():
+    if len(genes) == 0:
         raise IndexError("{0}: no suitable transcripts".format(gene_id))
+    
+    return genes
+    
+    # transcripts = get_transcript_ids_sorted_by_length(ensembl, gene_id)
+    
+    # # TODO: allow for genes without any coding sequence.
+    # if len(transcripts) == 0:
+    #     raise ValueError("{0} lacks coding transcripts".format(gene_id))
+    
+    # # create a Interval object using the longest transcript, but if we cannot
+    # # obtain a valid sequence or coordinates, or the transcript doesn't contain
+    # # all the de novo positions, run through alternate transcripts in order of
+    # # length (allows for CSMD2 variant chr1:34071484 and PHACTR1 chr6:12933929).
+    # for (transcript_id, length) in transcripts:
+    #     try:
+    #         gene = construct_gene_object(ensembl, transcript_id)
+    #         if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
+    #             # halt the loop, since we've found a transcript with all the de
+    #             # novos
+    #             break
+    #     except ValueError:
+    #         # this error occurs when the transcript sequence from genomic  
+    #         # sequence according to the gene positions, doesn't match the 
+    #         # transcript sequence obtained from ensembl for the transcript ID.
+    #         pass
+    
+    # if "gene" not in locals():
+    #     raise IndexError("{0}: no suitable transcripts".format(gene_id))
     
     # raise an IndexError if we can't get a transcript that contains all de 
     # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
     # mutually exclusive transcripts
-    if len(get_de_novos_in_transcript(gene, de_novos)) != len(de_novos):
-        raise IndexError("{0}: de novos aren't in CDS sequence".format(gene_id))
+    # if len(get_de_novos_in_transcript(gene, de_novos)) != len(de_novos):
+    #     raise IndexError("{0}: de novos aren't in CDS sequence".format(gene_id))
     
-    return gene
+    # return gene
     
 def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
     """ sort out all the necessary sequences and positions for a gene
@@ -222,7 +242,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     Args:
         ensembl: EnsemblRequest object to request data from ensembl
         gene_id: HGNC symbol for gene
-        de_novos: list of de novo positions
+        de_novos: set of de novo positions
     
     Returns:
         list of [(transcript_id, de novo count, sequence length)] tuples for the
@@ -247,7 +267,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     denovos_in_gene = get_de_novos_in_transcript(gene, de_novos)
     
     # trim the de novos to the ones not in the current transcript
-    leftovers = list(set(de_novos) - set(denovos_in_gene))
+    leftovers = list(de_novos - denovos_in_gene)
     
     # and recursively return the transcripts in the current transcript, along 
     # with transcripts for the reminaing de novos

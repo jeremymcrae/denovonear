@@ -9,8 +9,12 @@ from __future__ import absolute_import
 import sys
 import os
 import argparse
+import math
 
-from src.load_gene import get_deprecated_gene_ids, load_gene, load_conservation
+import scipy.stats
+
+from src.load_gene import get_deprecated_gene_ids, load_gene, load_conservation, \
+    get_de_novos_in_transcript
 from src.ensembl_requester import EnsemblRequest
 from src.load_mutation_rates import load_trincleotide_mutation_rates
 from src.load_known_de_novos import load_known_de_novos
@@ -50,6 +54,130 @@ def get_options():
         args.cache_folder, args.genome_build.lower(), args.coverage_adjust, \
         args.coverage_dir
 
+def combine_p_values(probs):
+    """ Combine the P values from different transcripts.
+    
+    This returns P values for each mutation type for a gene. We occasionally
+    have multiple P values for a mutation type, obtained from different
+    transcripts for the gene. If we have only one P value for the gene for the
+    mutation type, we just use that value, if we don't have any data, we use
+    "NA", otherwise we combine the P values from different transcripts using
+    Fisher's combined test.
+    
+    Args:
+        probs: Dictionary of lists of P values from different transcripts,
+            indexed by functional type.
+    
+    Returns:
+        Dictionary of P values, indexed by the mutation type
+    """
+    
+    fixed_probs = {}
+    for key in probs:
+        values = probs[key]
+        
+        # drop out the NA values
+        values = [x for x in values if x != "NA"]
+        
+        if len(values) == 0:
+            fixed_probs[key] = "NA"
+        elif len(values) == 1:
+            fixed_probs[key] = values[0]
+        else:
+            # use Fisher's combined method to estimate the P value from multiple
+            # P values. The chi square statistic is -2*sum(ln(P values))
+            values = [math.log(x) for x in values]
+            chi_square = -2 * sum(values)
+            df = 2 * length(values)
+            
+            # estimate the P value using the chi square statistic and degrees of
+            # freedom
+            p_value = 1 - scipy.stats.chi2.cdf(chi_square, df)
+            fixed_probs[key] = p_value
+    
+    return fixed_probs
+
+def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict, use_coverage, coverage_dir):
+    """ run the analysis code for a single gene
+    
+    Args:
+        gene_id: HGNC symbol for a gene
+        iterations: number of simulations to run
+        ensembl: EnsemblRequest object, for obtaing info from ensembl
+        known_de_novos: dictionary of de novo positions for the HGNC gene, 
+            indexed by functional type
+        old_gene_ids: dictionary of updated HGNC symbols, indexed by their old ID
+        mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence
+        use_coverage: whether to compensate for the depth of sequence coverage
+        coverage_dir: path to folder containing coverage data, or None
+    
+    Returns:
+        a dictionary containing P values, and distances for missense, nonsense, 
+        and synonymous de novos events. Missing data is represented by "NA".
+    """
+    
+    # fix HGNC IDs that have been discontinued in favour of other gene IDs
+    if gene_id in old_gene_ids:
+        gene_id = old_gene_ids[gene_id]
+    
+    func_events = set(de_novos["functional"])
+    missense = set(de_novos["missense"])
+    nonsense = set(de_novos[["nonsense"])
+    synonymous = set(de_novos["synonymous"])
+    
+    # load the set of transcripts that are the  minimum set of transcripts 
+    # required to contain all the de novos, unless we can't find any coding
+    # transcripts that contain the de novos.
+    try:
+        transcripts = load_gene(ensembl, gene_id, func_events)
+    except IndexError as e:
+        print(e)
+        return None
+    
+    probs = {"miss_prob": [], "nons_prob": [], "syn_prob": []}
+    dists = {"miss_dist": [], "nons_dist": [], "syn_dist": []}
+    
+    for transcript in transcripts:
+        # run through the 
+        
+        missense_events = get_de_novos_in_transcript(transcript, missense)
+        nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
+        synonymous_events = get_de_novos_in_transcript(transcript, synonymous)
+        
+        site_weights = SiteRates(transcript, mut_dict, use_coverage=use_coverage)
+        if coverage_dir is not None:
+            site_weights.set_coverage_dir(coverage_dir)
+        
+        print("simulating clustering")
+        clust = AnalyseDeNovoClustering(transcript, site_weights, iterations)
+    
+        (miss_dist, miss_prob) = clust.analyse_missense_and_splice_region(missense_events)
+        (nons_dist, nons_prob) = clust.analyse_lof(nonsense_events)
+        (syn_dist, syn_prob) = clust.analyse_synonymous(synonymous_events)
+        
+        dists["miss_dist"].append(miss_dist)
+        dists["nons_dist"].append(nons_dist)
+        dists["syn_dist"].append(syn_dist)
+        probs["miss_prob"].append(miss_prob)
+        probs["nons_prob"].append(nons_prob)
+        probs["syn_prob"].append(syn_prob)
+        
+        # remove the de novos analysed in the current transcript, so that 
+        # analysis of subsequent transcripts uses independent events. NOTE THAT
+        # THIS MIGHT MISS SOME CLUSTERING ACROSS MUTUALLY EXCLUSIVE TRANSCRIPTS
+        # IF THE DE NOVO EVENTS ARE NEAR THE TRANSCRIPT DIVERGENCE.
+        missense = missense - missense_events
+        nonsense = nonsense - nonsense_events
+        synonymous = synonymous - synonymous_events
+        
+    for key in dists:
+        dists[key] = ",".join(dists[key])
+    
+    probs = combine_p_values(probs)
+    probs.update(dists)
+    
+    return probs  
+
 def main():
     
     input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
@@ -72,57 +200,19 @@ def main():
     
     initial_iterations = 1000000
     for gene_id in sorted(known_de_novos):
-        iterations = initial_iterations
-        # gene_id = "PACS1"
-        # print(gene_id)
         
-        func_events = known_de_novos[gene_id]["functional"]
-        missense_events = known_de_novos[gene_id]["missense"]
-        nonsense_events = known_de_novos[gene_id]["nonsense"]
-        synonymous_events = known_de_novos[gene_id]["synonymous"]
+        de_novos = known_de_novos[gene_id]
+        probs = analyse_gene(gene_id, initial_iterations, ensembl, de_novos, old_gene_ids, mut_dict, use_coverage, coverage_dir)
         
-        # don't analyse genes with only one de novo functional mutation, and 
-        # for now, exclude genes with numerous events
-        if len(synonymous_events) < 2 and len(missense_events) < 2 and len(nonsense_events) < 2:
+        if probs is None:
             continue
-        
-        # fix HGNC IDs that have been discontinued in favour of other gene IDs
-        if gene_id in old_gene_ids:
-            gene_id = old_gene_ids[gene_id]
-        
-        try:
-            transcript = load_gene(ensembl, gene_id, func_events)
-            # transcript = load_conservation(transcript, conservation_folder)
-        except IndexError as e:
-            print(e)
-            continue
-        
-        site_weights = SiteRates(transcript, mut_dict, use_coverage=use_coverage)
-        if coverage_dir is not None:
-            site_weights.set_coverage_dir(coverage_dir)
-        
-        print("simulating clustering")
-        probs = AnalyseDeNovoClustering(transcript, site_weights, iterations)
-        
-        (miss_dist, miss_prob) = probs.analyse_missense_and_splice_region(missense_events)
-        (nons_dist, nons_prob) = probs.analyse_lof(nonsense_events)
-        (syn_dist, syn_prob) = probs.analyse_synonymous(synonymous_events)
-        
-        # [cons_func, cons_func_p, cons_miss, cons_miss_p, cons_nons, \
-        #     cons_nons_p] = ["NA"] * 6
-        # if hasattr(transcript, "conservation_scores"):
-        #     probs = AnalyseDeNovoConservation(transcript, site_weights, iterations)
-            
-        #     # (cons_func, cons_func_p) = probs.analyse_functional(func_events)
-        #     (cons_miss, cons_miss_p) = probs.analyse_missense(missense_events)
-        #     (cons_nons, cons_nons_p) = probs.analyse_nonsense(nonsense_events)
         
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "missense", \
-            len(missense_events), miss_dist, miss_prob))
+            len(de_novos["missense"]), probs["miss_dist"], probs["miss_prob"]))
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "nonsense", \
-            len(nonsense_events), nons_dist, nons_prob))
+            len(de_novos["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "synonymous", \
-            len(synonymous_events), syn_dist, syn_prob))
+            len(de_novos["synonymous"]), probs["syn_dist"], probs["syn_prob"]))
         
         # sys.exit()
 
