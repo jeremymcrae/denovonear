@@ -71,6 +71,7 @@ def construct_gene_object(ensembl, transcript_id):
     transcript = Interval(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
+    transcript.fix_coding_sequence_length()
     
     return transcript
 
@@ -107,7 +108,21 @@ def get_transcript_ids_sorted_by_length(ensembl, gene_id):
     
     print("loading: {0}".format(gene_id))
     ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
-    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, gene_id)
+    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, [gene_id])
+    
+    # sometimes we get HGNC symbols that do not match the ensembl rest version
+    # that we are currentl using. We can look for earlier HGNC symbols for
+    # the gene using the service at rest.genenames.org
+    alt_symbols = []
+    if len(transcript_ids) == 0:
+        alt_symbols = ensembl.get_previous_symbol(gene_id)
+        genes = [ensembl.get_genes_for_hgnc_id(symbol) for symbol in alt_symbols]
+        genes = [item for sublist in genes for item in sublist]
+        ensembl_genes += genes
+        symbols = [gene_id] + alt_symbols
+        
+        transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, symbols)
+    
     transcript_lengths = get_transcript_lengths(ensembl, transcript_ids)
     
     # sort by transcript length
@@ -145,7 +160,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
             if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
                 # halt the loop, since we've found a transcript with all the de
                 # novos
-                break  
+                break
         except ValueError:
             # this error occurs when the transcript sequence from genomic  
             # sequence according to the gene positions, doesn't match the 

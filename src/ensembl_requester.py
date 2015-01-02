@@ -69,7 +69,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "3" or minor not in ["0", "1"]:
+        if major != "4" or minor not in ["0"]:
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
@@ -142,8 +142,8 @@ class EnsemblRequest(object):
         
         return response
     
-    def get_genes_for_hgnc_id(self, hgnc_id):
-        """ obatin the sensembl gene IDs that correspond to a HGNC symbol
+    def get_genes_for_hgnc_id(self, hgnc_symbol):
+        """ obatin the ensembl gene IDs that correspond to a HGNC symbol
         """
         
         headers = {"Content-Type": "application/json"}
@@ -151,8 +151,8 @@ class EnsemblRequest(object):
         # http://beta.rest.ensembl.org/xrefs/symbol/homo_sapiens/KMT2A?content-type=application/json
         
         self.request_attempts = 0
-        ext = "/xrefs/symbol/homo_sapiens/{0}".format(hgnc_id)
-        r = self.ensembl_request(ext, hgnc_id, headers)
+        ext = "/xrefs/symbol/homo_sapiens/{0}".format(hgnc_symbol)
+        r = self.ensembl_request(ext, hgnc_symbol, headers)
         
         genes = []
         for item in json.loads(r):
@@ -160,8 +160,38 @@ class EnsemblRequest(object):
                 genes.append(item["id"])
         
         return genes
+    
+    def get_previous_symbol(self, hgnc_symbol):
+        """ sometimes we get HGNC symbols that do not match the ensembl rest version
+        that we are currentl using. We can look for earlier HGNC symbols for
+        the gene using the service at rest.genenames.org
+        """
         
-    def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids, hgnc_id):
+        ensembl_server = self.server
+        gene_names_server = "http://rest.genenames.org"
+        
+        self.server = gene_names_server
+        headers = {"accept": "application/json"}
+        ext = "/fetch/symbol/{0}".format(hgnc_symbol)
+        r = self.ensembl_request(ext, hgnc_symbol, headers)
+        
+        gene_json = json.loads(r)
+        
+        prev_gene = []
+        if "prev_symbol" in gene_json["response"]["docs"][0]:
+            prev_gene = gene_json["response"]["docs"][0]["prev_symbol"]
+        
+        self.server = ensembl_server
+        
+        return prev_gene
+        
+    def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids, hgnc_symbols):
+        """
+        
+        Args:
+            gene_ids: list of Ensembl gene IDs for the gene
+            hgnc_symbols: list of possible HGNC symbols for gene
+        """
     
         chroms = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", \
              "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", \
@@ -176,11 +206,16 @@ class EnsemblRequest(object):
             r = self.ensembl_request(ext, gene_id, headers)
             
             for item in json.loads(r):
+                # ignore non-coding transcripts
+                if item["biotype"] not in ["protein_coding", "polymorphic_pseudogene"]:
+                    continue
+                
                 # ignore transcripts not on the standard chromosomes 
                 # (non-default chroms fail to map the known de novo variants 
                 # to the gene location
                 if item["Parent"] != gene_id or item["seq_region_name"] not in \
-                        chroms or hgnc_id not in item["external_name"]:
+                        chroms or \
+                        all([symbol not in item["external_name"] for symbol in hgnc_symbols]):
                     continue
                 transcript_ids.append(item["id"])
         
