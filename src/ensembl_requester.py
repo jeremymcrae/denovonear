@@ -143,12 +143,12 @@ class EnsemblRequest(object):
         return response
     
     def get_genes_for_hgnc_id(self, hgnc_symbol):
-        """ obatin the ensembl gene IDs that correspond to a HGNC symbol
+        """ obtain the ensembl gene IDs that correspond to a HGNC symbol
         """
         
         headers = {"Content-Type": "application/json"}
         
-        # http://beta.rest.ensembl.org/xrefs/symbol/homo_sapiens/KMT2A?content-type=application/json
+        # http://grch37.rest.ensembl.org/xrefs/symbol/homo_sapiens/KMT2A?content-type=application/json
         
         self.request_attempts = 0
         ext = "/xrefs/symbol/homo_sapiens/{0}".format(hgnc_symbol)
@@ -163,8 +163,14 @@ class EnsemblRequest(object):
     
     def get_previous_symbol(self, hgnc_symbol):
         """ sometimes we get HGNC symbols that do not match the ensembl rest version
-        that we are currentl using. We can look for earlier HGNC symbols for
+        that we are currently using. We can look for earlier HGNC symbols for
         the gene using the service at rest.genenames.org
+        
+        Args:
+            hgnc_symbol: HGNC symbol for the gene (eg "MLL2")
+        
+        Returns:
+            list of deprecated gene symbols (eg ["KMT2A"])
         """
         
         ensembl_server = self.server
@@ -173,20 +179,27 @@ class EnsemblRequest(object):
         self.server = gene_names_server
         headers = {"accept": "application/json"}
         ext = "/fetch/symbol/{0}".format(hgnc_symbol)
-        r = self.ensembl_request(ext, hgnc_symbol, headers)
+        try:
+            r = self.ensembl_request(ext, hgnc_symbol, headers)
+        finally:
+            self.server = ensembl_server
         
         gene_json = json.loads(r)
         
         prev_gene = []
-        if "prev_symbol" in gene_json["response"]["docs"][0]:
-            prev_gene = gene_json["response"]["docs"][0]["prev_symbol"]
+        docs = gene_json["response"]["docs"]
         
-        self.server = ensembl_server
+        if len(docs) == 0:
+            pass
+        elif len(docs) > 1:
+            raise ValueError("{0} has more than one alternate symbol, which I haven't accounted for.".format(hgnc_symbol))
+        elif "prev_symbol" in docs[0]:
+            prev_gene = docs[0]["prev_symbol"]
         
         return prev_gene
         
     def get_transcript_ids_for_ensembl_gene_ids(self, gene_ids, hgnc_symbols):
-        """
+        """ fetch the ensembl transcript IDs for a given ensembl gene ID.
         
         Args:
             gene_ids: list of Ensembl gene IDs for the gene

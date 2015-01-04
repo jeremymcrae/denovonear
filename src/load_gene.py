@@ -86,7 +86,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
         list of de novo positions found within the transcript
     """
     
-    in_transcript = set([])
+    in_transcript = []
     for de_novo in de_novos:
         # we check if the de novo is within the transcript by converting the
         # chromosomal position to a CDS-based position. Variants outside the CDS
@@ -95,7 +95,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
         # function does not allow for splice site variants.
         try:
             cds_pos = transcript.convert_chr_pos_to_cds_positions(de_novo)
-            in_transcript.add(de_novo)
+            in_transcript.append(de_novo)
         except ValueError:
             continue
     
@@ -216,7 +216,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
     
     # TODO: allow for genes without any coding sequence.
     if len(transcripts) == 0:
-        raise ValueError("{0} lacks coding transcripts".format(gene_id))
+        raise IndexError("{0} lacks coding transcripts".format(gene_id))
     
     # count the de novos observed in all transcripts
     counts = []
@@ -254,6 +254,9 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     
     counts = count_de_novos_per_transcript(ensembl, gene_id, de_novos)
     
+    if len(counts) == 0:
+        return []
+    
     # find the transcripts with the most de novos
     max_count = max(item[1] for item in counts)
     transcripts = [item for item in counts if item[1] == max_count]
@@ -267,7 +270,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     denovos_in_gene = get_de_novos_in_transcript(gene, de_novos)
     
     # trim the de novos to the ones not in the current transcript
-    leftovers = list(de_novos - denovos_in_gene)
+    leftovers = [x for x in de_novos if x not in denovos_in_gene]
     
     # and recursively return the transcripts in the current transcript, along 
     # with transcripts for the reminaing de novos

@@ -33,7 +33,7 @@ def load_known_de_novos(filename):
         line = line.rstrip().split("\t")
         gene = line[0]
         chrom = line[1]
-        position = line[2]
+        position = int(line[2]) - 1
         consequence = line[3]
         snp_or_indel = line[4]
         
@@ -50,13 +50,13 @@ def load_known_de_novos(filename):
             genes_dict[gene] = {"functional": [], "missense": [], \
                 "nonsense": [], "synonymous": []}
         
-        genes_dict[gene]["functional"].append(int(position))
+        genes_dict[gene]["functional"].append(position)
         if consequence in missense_consequences:
-            genes_dict[gene]["missense"].append(int(position))
+            genes_dict[gene]["missense"].append(position)
         elif consequence in nonsense_consequences:
-            genes_dict[gene]["nonsense"].append(int(position))
+            genes_dict[gene]["nonsense"].append(position)
         elif consequence in synonymous_consequences:
-            genes_dict[gene]["synonymous"].append(int(position))
+            genes_dict[gene]["synonymous"].append(position)
         
     return genes_dict
         

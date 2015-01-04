@@ -88,7 +88,7 @@ def combine_p_values(probs):
             # P values. The chi square statistic is -2*sum(ln(P values))
             values = [math.log(x) for x in values]
             chi_square = -2 * sum(values)
-            df = 2 * length(values)
+            df = 2 * len(values)
             
             # estimate the P value using the chi square statistic and degrees of
             # freedom
@@ -120,10 +120,10 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     if gene_id in old_gene_ids:
         gene_id = old_gene_ids[gene_id]
     
-    func_events = set(de_novos["functional"])
-    missense = set(de_novos["missense"])
-    nonsense = set(de_novos["nonsense"])
-    synonymous = set(de_novos["synonymous"])
+    func_events = de_novos["functional"]
+    missense = de_novos["missense"]
+    nonsense = de_novos["nonsense"]
+    synonymous = de_novos["synonymous"]
     
     # load the set of transcripts that are the  minimum set of transcripts 
     # required to contain all the de novos, unless we can't find any coding
@@ -166,9 +166,9 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         # analysis of subsequent transcripts uses independent events. NOTE THAT
         # THIS MIGHT MISS SOME CLUSTERING ACROSS MUTUALLY EXCLUSIVE TRANSCRIPTS
         # IF THE DE NOVO EVENTS ARE NEAR THE TRANSCRIPT DIVERGENCE.
-        missense = missense - missense_events
-        nonsense = nonsense - nonsense_events
-        synonymous = synonymous - synonymous_events
+        missense = [x for x in missense if x not in missense_events]
+        nonsense = [x for x in nonsense if x not in  nonsense_events]
+        synonymous = [x for x in synonymous if x not in  synonymous_events]
         
     for key in dists:
         dists[key] = ",".join(dists[key])
