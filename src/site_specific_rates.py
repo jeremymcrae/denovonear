@@ -8,7 +8,7 @@ from src.coverage_stats import CoverageStats
 
 
 class SiteRates(CoverageStats):
-    """ class to build weighted choice random samplers for nonsense, missense, 
+    """ class to build weighted choice random samplers for nonsense, missense,
     and functional classes of variants, using site specific mutation rates
     
     Only include the site specific probability if it mutates to a different
@@ -93,7 +93,7 @@ class SiteRates(CoverageStats):
         """ check for missense, or splice_region_variant (but not lof)
         """
         
-        # trim out nonsense mutations such as stop_gained mutations, and splice 
+        # trim out nonsense mutations such as stop_gained mutations, and splice
         # site mutations
         if self.loss_of_function_check(initial_aa, mutated_aa, position):
             return False
@@ -105,20 +105,24 @@ class SiteRates(CoverageStats):
         """ checks if two amino acids are a missense mutation (but not nonsense)
         """
         
-        # trim out nonsense mutations such as stop_gained mutations, and splice 
+        # trim out nonsense mutations such as stop_gained mutations, and splice
         # site mutations
         if self.loss_of_function_check(initial_aa, mutated_aa, position):
             return False
         
         # include the site if it mutates to a different amino acid.
-        return initial_aa != mutated_aa 
+        return initial_aa != mutated_aa
     
     def splice_region_check(self, initial_aa, mutated_aa, position):
-        """ checks if a variant has a splice_donor or splice_acceptor consequence
+        """ checks if a variant has a splice_region consequence, but not
+        splice_donor or splice_acceptor
         """
         
-        # catch splice region variants within the exon, and in the appropriate 
-        # region of the intron (note that loss of function splice_donor and 
+        if self.splice_lof_check(initial_aa, mutated_aa, position):
+            return False
+        
+        # catch splice region variants within the exon, and in the appropriate
+        # region of the intron (note that loss of function splice_donor and
         # splice_acceptor variants have been excluded when we trimmed nonsense).
         if self.gene.in_coding_region(position):
             # check for splice_region_variant inside exon
@@ -151,14 +155,14 @@ class SiteRates(CoverageStats):
         return (start, end)
     
     def build_weighted_site_rates_for_gene(self, mut_type):
-        """ build a list of sites in a gene that can give missense mutations,  
+        """ build a list of sites in a gene that can give missense mutations,
         along with their weighted probability of the mutation occuring.
         
         Args:
             mut_type: function to check if a site matches the mutation type
         
         Returns:
-            WeightedChoice object, for random sampling by the weight of the 
+            WeightedChoice object, for random sampling by the weight of the
             probabilities
         """
         
@@ -226,5 +230,3 @@ class SiteRates(CoverageStats):
                     probs.append([cds_pos, rate])
         
         return WeightedChoice(probs)
-
-

@@ -140,6 +140,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
     missense = 0
     nonsense = 0
     splice_lof = 0
+    splice_region = 0
     synonymous = 0
     combined_transcript = None
     
@@ -173,6 +174,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
         missense_rates = site_weights.get_missense_rates_for_gene()
         nonsense_rates = site_weights.get_nonsense_rates_for_gene()
         splice_lof_rates = site_weights.get_splice_loss_of_function_rates_for_gene()
+        splice_region_rates = site_weights.get_splice_region_rates_for_gene()
         synonymous_rates = site_weights.get_synonymous_rates_for_gene()
         
         # if any sites have been sampled in the transcript, then add the
@@ -185,6 +187,8 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
             nonsense += nonsense_rates.cum_probs[-1]
         if len(splice_lof_rates.choices) > 0:
             splice_lof += splice_lof_rates.cum_probs[-1]
+        if len(splice_region_rates.choices) > 0:
+            splice_region += splice_region_rates.cum_probs[-1]
         if len(synonymous_rates.choices) > 0:
             synonymous += synonymous_rates.cum_probs[-1]
     
@@ -192,7 +196,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
     if combined_transcript is not None:
         length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
     
-    return (length, missense, nonsense, splice_lof, synonymous)
+    return (length, missense, nonsense, splice_lof, splice_region, synonymous)
 
 def log_transform(values):
     """ log transform a numeric value, unless it is zero, or negative
@@ -280,7 +284,7 @@ def main():
         transcripts = load_genes(input_genes)
     
     output = open(output_file, "w")
-    output.write("transcript_id\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsynonymous_rate\n")
+    output.write("transcript_id\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n")
     
     for gene_id in sorted(transcripts):
         print(gene_id)
@@ -292,7 +296,7 @@ def main():
             rates = rates[1:]
             # log transform the rates, to keep them consistent with the rates from
             # Daly et al.
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\n".format(gene_id, length, *log_transform(rates))
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n".format(gene_id, length, *log_transform(rates))
         except ValueError as error:
             line = "{0}\t{1}\n".format(gene_id, error)
         except KeyError as error:

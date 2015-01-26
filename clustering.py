@@ -138,7 +138,6 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     dists = {"miss_dist": [], "nons_dist": [], "syn_dist": []}
     
     for transcript in transcripts:
-        # run through the 
         
         missense_events = get_de_novos_in_transcript(transcript, missense)
         nonsense_events = get_de_novos_in_transcript(transcript, nonsense)

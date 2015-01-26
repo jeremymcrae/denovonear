@@ -137,6 +137,7 @@ class InterproRequest(InterProParser):
         while job_status != "FINISHED":
             self.request_attempts = 0
             job_status = self.check_job_status(job_id)
+            print(job_status)
             time.sleep(30)
             
             # quit out on various errors described at:
