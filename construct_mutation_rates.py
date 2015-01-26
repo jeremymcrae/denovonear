@@ -11,6 +11,7 @@ import os
 import copy
 import math
 import argparse
+import tempfile
 
 from src.load_gene import construct_gene_object
 from src.ensembl_requester import EnsemblRequest
@@ -144,7 +145,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
     
     for transcript_id in transcripts[gene_id]:
         
-        # get the gene coordinates, sequence etc, but if the transcript is 
+        # get the gene coordinates, sequence etc, but if the transcript is
         # unusable (hence raises an error), simply move to the next transcript
         try:
             transcript = construct_gene_object(ensembl, transcript_id)
@@ -207,6 +208,63 @@ def log_transform(values):
     
     return transformed
 
+def include_indel_rates(path):
+    """ add per-gene indel mutation rates to the output file
+    
+    We estimate the indel mutation rate as per Nature Genetics 46:944-950
+    (2014) doi:10.1038/ng.3050, in which the overall (ie summed across all
+    genes) indel mutation rate is estimated as 1.25 x the overall nonsense
+    rate. Given this, the indel mutation rate is portioned out to each gene,
+    according to the proportion of each gene's CDS length to the length of all
+    CDS regions from all genes.
+    
+    Note that this is an approximation, and doesn't allow for divergence due to
+    the base compostion of the CDS.
+    
+    Args:
+        path: path to the output mutation rates (for the nonsense, missense etc)
+    """
+    
+    # we copy the rates file to a temporary file, so that we can stream through
+    # it later while writing amended lines to the correct rates path
+    temp = tempfile.TemporaryFile()
+    
+    # run through the file of rates to find the overall nonsense mutation rate,
+    # and the total length of CDS regions in the file.
+    nonsense_sum = 0
+    length_sum = 0
+    with open(path) as handle:
+        for line in handle:
+            temp.write(line)
+            if line.startswith("transcript_id"):
+                continue
+            
+            line = line.strip().split("\t")
+            nonsense_sum += 10**float(line[3])
+            length_sum += int(line[1])
+    
+    handle.close()
+    temp.seek(0)
+    
+    # add the frameshift rates to each line in turn, while writing the output
+    # back to the output path
+    frameshift_sum = nonsense_sum * 1.25
+    with open(path, "w") as handle:
+        for line in temp:
+            line = line.strip().split("\t")
+            if line[0] == "transcript_id":
+                line.append("frameshift_rate")
+            else:
+                # estimate the frameshift rate for the gene
+                frameshift_rate = (float(line[1])/length_sum) * frameshift_sum
+                frameshift_rate = math.log10(frameshift_rate)
+                line.append(str(frameshift_rate))
+            
+            line = "\t".join(line) +"\n"
+            handle.write(line)
+    
+    temp.close()
+
 def main():
     
     input_transcripts, input_genes, output_file, rates_file, cache_dir, \
@@ -242,9 +300,10 @@ def main():
             continue
         
         output.write(line)
-        
+    
     output.close()
+    
+    include_indel_rates(output_file)
 
 if __name__ == '__main__':
     main()
-
