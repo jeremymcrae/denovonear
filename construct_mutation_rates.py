@@ -192,11 +192,12 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
         if len(synonymous_rates.choices) > 0:
             synonymous += synonymous_rates.cum_probs[-1]
     
+    chrom = combined_transcript.get_chrom()
     length = "NA"
     if combined_transcript is not None:
         length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
     
-    return (length, missense, nonsense, splice_lof, splice_region, synonymous)
+    return (chrom, length, missense, nonsense, splice_lof, splice_region, synonymous)
 
 def log_transform(values):
     """ log transform a numeric value, unless it is zero, or negative
@@ -245,7 +246,7 @@ def include_indel_rates(path):
             
             line = line.strip().split("\t")
             nonsense_sum += 10**float(line[3])
-            length_sum += int(line[1])
+            length_sum += int(line[2])
     
     handle.close()
     temp.seek(0)
@@ -260,7 +261,7 @@ def include_indel_rates(path):
                 line.append("frameshift_rate")
             else:
                 # estimate the frameshift rate for the gene
-                frameshift_rate = (float(line[1])/length_sum) * frameshift_sum
+                frameshift_rate = (float(line[2])/length_sum) * frameshift_sum
                 frameshift_rate = math.log10(frameshift_rate)
                 line.append(str(frameshift_rate))
             
@@ -284,7 +285,7 @@ def main():
         transcripts = load_genes(input_genes)
     
     output = open(output_file, "w")
-    output.write("transcript_id\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n")
+    output.write("transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n")
     
     for gene_id in sorted(transcripts):
         print(gene_id)
@@ -292,11 +293,12 @@ def main():
             rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, \
                 use_coverage, coverage_dir)
             
-            length = rates[0]
-            rates = rates[1:]
+            chrom = rates[0]
+            length = rates[1]
+            rates = rates[2:]
             # log transform the rates, to keep them consistent with the rates from
             # Daly et al.
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\n".format(gene_id, length, *log_transform(rates))
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, chrom, length, *log_transform(rates))
         except ValueError as error:
             line = "{0}\t{1}\n".format(gene_id, error)
         except KeyError as error:
