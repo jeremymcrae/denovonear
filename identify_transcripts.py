@@ -62,7 +62,7 @@ def main():
     if old_gene_id_file is not None:
         old_gene_ids = get_deprecated_gene_ids(old_gene_id_file)
     
-    known_de_novos = load_known_de_novos(input_file)
+    known_de_novos = load_known_de_novos(input_file, exclude_indels=False)
     
     output = open(output_file, "w")
     output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")

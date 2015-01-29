@@ -17,7 +17,7 @@ nonsense_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
     
 synonymous_consequences = ["synonymous_variant"]
 
-def load_known_de_novos(filename):
+def load_known_de_novos(filename, exclude_indels=True):
     """ load known mutations into dict indexed by HGNC ID.
     """
     
@@ -39,7 +39,7 @@ def load_known_de_novos(filename):
         
         # ignore indels (some splice_acceptor_variants (in the
         # functional_consequences) are indels
-        if "INDEL" in snp_or_indel.upper():
+        if exclude_indels and "INDEL" in snp_or_indel.upper():
             continue
         
         # trim out variants that are missing data
