@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-def load_trincleotide_mutation_rates(filename):
+def load_trincleotide_mutation_rates(filename, indel_only=False):
     """ load mutation rates provided by Kaitlin Samocha (Broad Institute).
     """
     
@@ -18,10 +18,12 @@ def load_trincleotide_mutation_rates(filename):
             changed = line[1]
             rate = float(line[2])
             
+            if indel_only:
+                rate = 1e-8
+            
             if initial not in mut_dict:
                 mut_dict[initial] = {}
             
             mut_dict[initial][changed] = rate
     
     return mut_dict
-

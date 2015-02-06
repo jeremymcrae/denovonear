@@ -4,20 +4,15 @@
 from __future__ import print_function
 from __future__ import division
 
-# functional consequences, minus any indel consequences
-functional_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
-    "initiator_codon_variant", "missense_variant", "transcript_amplification", \
-    "stop_gained", "stop_lost", "coding_sequence_variant"]
-
 missense_consequences = ["initiator_codon_variant", "missense_variant",\
-    "stop_lost"]
+    "stop_lost", "inframe_deletion", "inframe_insertion"]
 
 nonsense_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
-    "stop_gained"]
+    "stop_gained", "frameshift_variant"]
     
 synonymous_consequences = ["synonymous_variant"]
 
-def load_known_de_novos(filename, exclude_indels=True):
+def load_known_de_novos(filename, exclude_indels=True, exclude_snvs=False):
     """ load known mutations into dict indexed by HGNC ID.
     """
     
@@ -40,6 +35,8 @@ def load_known_de_novos(filename, exclude_indels=True):
         # ignore indels (some splice_acceptor_variants (in the
         # functional_consequences) are indels
         if exclude_indels and "INDEL" in snp_or_indel.upper():
+            continue
+        if exclude_snvs and "SNV" in snp_or_indel.upper():
             continue
         
         # trim out variants that are missing data

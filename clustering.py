@@ -1,4 +1,4 @@
-""" Script to investigate the probability of multiple mutations clustering 
+""" Script to investigate the probability of multiple mutations clustering
 within a single gene.
 """
 
@@ -34,25 +34,28 @@ def get_options():
         for format.")
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
-    parser.add_argument("--rates", dest="mut_rates", required=True, \
+    parser.add_argument("--rates", dest="rates_path", required=True, \
         help="Path to file containing trinucleotide mutation rates.")
-    parser.add_argument("--deprecated-genes", dest="deprecated_genes", \
+    parser.add_argument("--indel-only", default=False, action="store_true",\
+        help="whether to analyse indel sites.")
+    parser.add_argument("--deprecated-genes", dest="deprecated_genes_path", \
         help="deprecated gene IDs filename")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
         "that the de novo coordinates are based on (GrCh37 or GRCh38")
-    parser.add_argument("--cache-folder", dest="cache_folder", \
+    parser.add_argument("--cache-folder", dest="cache_dir", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory)")
-    parser.add_argument("--coverage-adjust", default=False, action="store_true", \
+    parser.add_argument("--coverage-adjust", dest="use_coverage", default=False, \
+        action="store_true", \
         help="whether to adjust site mutation rates for sequencing coverage.")
     parser.add_argument("--coverage-dir", help="location of ExAC coverage files")
     
     args = parser.parse_args()
     
-    return args.input, args.output, args.mut_rates, args.deprecated_genes, \
-        args.cache_folder, args.genome_build.lower(), args.coverage_adjust, \
-        args.coverage_dir
+    args.genome_build = args.genome_build.lower()
+    
+    return args
 
 def combine_p_values(probs):
     """ Combine the P values from different transcripts.
@@ -104,7 +107,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         gene_id: HGNC symbol for a gene
         iterations: number of simulations to run
         ensembl: EnsemblRequest object, for obtaing info from ensembl
-        known_de_novos: dictionary of de novo positions for the HGNC gene, 
+        known_de_novos: dictionary of de novo positions for the HGNC gene,
             indexed by functional type
         old_gene_ids: dictionary of updated HGNC symbols, indexed by their old ID
         mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence
@@ -112,7 +115,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         coverage_dir: path to folder containing coverage data, or None
     
     Returns:
-        a dictionary containing P values, and distances for missense, nonsense, 
+        a dictionary containing P values, and distances for missense, nonsense,
         and synonymous de novos events. Missing data is represented by "NA".
     """
     
@@ -125,7 +128,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     nonsense = de_novos["nonsense"]
     synonymous = de_novos["synonymous"]
     
-    # load the set of transcripts that are the  minimum set of transcripts 
+    # load the set of transcripts that are the  minimum set of transcripts
     # required to contain all the de novos, unless we can't find any coding
     # transcripts that contain the de novos.
     try:
@@ -161,7 +164,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         probs["nons_prob"].append(nons_prob)
         probs["syn_prob"].append(syn_prob)
         
-        # remove the de novos analysed in the current transcript, so that 
+        # remove the de novos analysed in the current transcript, so that
         # analysis of subsequent transcripts uses independent events. NOTE THAT
         # THIS MIGHT MISS SOME CLUSTERING ACROSS MUTUALLY EXCLUSIVE TRANSCRIPTS
         # IF THE DE NOVO EVENTS ARE NEAR THE TRANSCRIPT DIVERGENCE.
@@ -175,25 +178,31 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     probs = combine_p_values(probs)
     probs.update(dists)
     
-    return probs  
+    return probs
 
 def main():
     
-    input_file, output_file, rates_file, old_gene_id_file, cache_dir, \
-        genome_build, use_coverage, coverage_dir = get_options()
+    args = get_options()
     
     # load all the data
-    ensembl = EnsemblRequest(cache_dir, genome_build)
-    mut_dict = load_trincleotide_mutation_rates(rates_file)
+    ensembl = EnsemblRequest(args.cache_dir, args.genome_build)
+    mut_dict = load_trincleotide_mutation_rates(args.rates_path)
     
     old_gene_ids = {}
     # only load the old gene ID converter if we have specified the file
-    if old_gene_id_file is not None:
-        old_gene_ids = get_deprecated_gene_ids(old_gene_id_file)
+    if args.deprecated_genes_path is not None:
+        old_gene_ids = get_deprecated_gene_ids(args.deprecated_genes_path, args.indel_only)
     
-    known_de_novos = load_known_de_novos(input_file)
+    # We typically only test SNVs, but we can also check clustering in indels.
+    # Indel clustering currently assumes a uniform mutationm rate across sites,
+    # which is not the best model, but is .
+    if not args.indel_only:
+        known_de_novos = load_known_de_novos(args.input)
+    else:
+        known_de_novos = load_known_de_novos(args.input, \
+            exclude_indels=False, exclude_snvs=True)
     
-    output = open(output_file, "w")
+    output = open(args.output, "w")
     output.write("\t".join(["gene_id", "mutation_category", "events_n", \
         "dist", "probability"]) + "\n")
     
@@ -201,7 +210,12 @@ def main():
     for gene_id in sorted(known_de_novos):
         
         de_novos = known_de_novos[gene_id]
-        probs = analyse_gene(gene_id, initial_iterations, ensembl, de_novos, old_gene_ids, mut_dict, use_coverage, coverage_dir)
+        
+        if len(de_novos["functional"]) < 2:
+            continue
+        
+        probs = analyse_gene(gene_id, initial_iterations, ensembl, de_novos, \
+            old_gene_ids, mut_dict, args.use_coverage, args.coverage_dir)
         
         if probs is None:
             continue
@@ -217,8 +231,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-
-
-
