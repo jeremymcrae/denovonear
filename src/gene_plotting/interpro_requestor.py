@@ -133,12 +133,14 @@ class InterproRequest(InterProParser):
         """ given a submitted job, periodically query until the job has finished
         """
         
+        print("server is analysing: {0}".format(job_id))
+        
         job_status = "PENDING"
         while job_status != "FINISHED":
             self.request_attempts = 0
+            time.sleep(30)
             job_status = self.check_job_status(job_id)
             print(job_status)
-            time.sleep(30)
             
             # quit out on various errors described at:
             # http://www.ebi.ac.uk/Tools/webservices/services/pfa/iprscan5_rest
@@ -207,4 +209,3 @@ class InterproRequest(InterProParser):
         domains = self.standardise_names(domains)
         
         return domains
-

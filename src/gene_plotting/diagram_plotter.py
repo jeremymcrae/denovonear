@@ -19,10 +19,14 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
     y_offset = 0
     box_height = 5
     
-    def __init__(self):
+    def __init__(self, hgnc_symbol):
         """ start the class with a matplotlib plot
+        
+        Args:
+            hgnc_symbol: hgnc_symbol for the gene
         """
         
+        self.hgnc_symbol = hgnc_symbol
         self.figure = pyplot.figure()
         self.plot = self.figure.add_subplot(1, 1, 1)
         self.de_novo_positions = []
@@ -46,7 +50,7 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
             x_pos: horizontal position at which to plot the text
             text: string of text to be plotted
             y_adjust: how far away to plot the text from the current y_offset
-            kwargs: additional arguments, mainly to add arguments like 
+            kwargs: additional arguments, mainly to add arguments like
                 horizontalalignment="center" to pyplot.text
         """
         
@@ -84,9 +88,11 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         
         return (width, height)
     
-    def export_figure(self, path="test.pdf"):
+    def export_figure(self):
         """ exports the plot as a pdf
         """
+        
+        path = "gene_plot.{0}.pdf".format(self.hgnc_symbol)
         
         # scale the axes, then remove them from view
         pyplot.axis("off")
@@ -96,4 +102,3 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         # and save the plot to a file
         pyplot.savefig(path, bbox_inches="tight", pad_inches=0)
         
-
