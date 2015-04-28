@@ -239,14 +239,18 @@ def include_indel_rates(path):
     nonsense_sum = 0
     length_sum = 0
     with open(path) as handle:
+        nonsense_pos = None
+        length_pos = None
         for line in handle:
             temp.write(line)
             if line.startswith("transcript_id"):
+                nonsense_pos = line.split("\t").index("nonsense_rate")
+                length_pos = line.split("\t").index("length")
                 continue
             
             line = line.strip().split("\t")
-            nonsense_sum += 10**float(line[3])
-            length_sum += int(line[2])
+            nonsense_sum += 10**float(line[nonsense_pos])
+            length_sum += int(line[length_pos])
     
     handle.close()
     temp.seek(0)
