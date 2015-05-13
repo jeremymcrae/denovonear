@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/jeremymcrae/denovonear.svg?branch=master)]
+(https://travis-ci.org/jeremymcrae/denovonear)
+
 ## Denovonear
 
 This code assesses whether recurrent de novo single-nucleotide variants lie
