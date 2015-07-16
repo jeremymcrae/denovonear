@@ -144,7 +144,6 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         
         missense_events = get_de_novos_in_transcript(transcript, missense)
         nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
-        synonymous_events = get_de_novos_in_transcript(transcript, synonymous)
         
         site_weights = SiteRates(transcript, mut_dict, use_coverage=use_coverage)
         if coverage_dir is not None:
@@ -155,14 +154,11 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     
         (miss_dist, miss_prob) = clust.analyse_missense_and_splice_region(missense_events)
         (nons_dist, nons_prob) = clust.analyse_lof(nonsense_events)
-        (syn_dist, syn_prob) = clust.analyse_synonymous(synonymous_events)
         
         dists["miss_dist"].append(miss_dist)
         dists["nons_dist"].append(nons_dist)
-        dists["syn_dist"].append(syn_dist)
         probs["miss_prob"].append(miss_prob)
         probs["nons_prob"].append(nons_prob)
-        probs["syn_prob"].append(syn_prob)
         
         # remove the de novos analysed in the current transcript, so that
         # analysis of subsequent transcripts uses independent events. NOTE THAT
@@ -170,7 +166,6 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         # IF THE DE NOVO EVENTS ARE NEAR THE TRANSCRIPT DIVERGENCE.
         missense = [x for x in missense if x not in missense_events]
         nonsense = [x for x in nonsense if x not in  nonsense_events]
-        synonymous = [x for x in synonymous if x not in  synonymous_events]
         
     for key in dists:
         dists[key] = ",".join(dists[key])
@@ -224,8 +219,6 @@ def main():
             len(de_novos["missense"]), probs["miss_dist"], probs["miss_prob"]))
         output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "nonsense", \
             len(de_novos["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
-        output.write("{0}\t{1}\t{2}\t{3}\t{4}\n".format(gene_id, "synonymous", \
-            len(de_novos["synonymous"]), probs["syn_dist"], probs["syn_prob"]))
         
         # sys.exit()
 
