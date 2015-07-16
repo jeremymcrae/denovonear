@@ -69,7 +69,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "4" or minor not in ["0", "1"]:
+        if major != "4" or minor not in ["0", "1", "2"]:
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
@@ -110,8 +110,8 @@ class EnsemblRequest(object):
         response, status_code, requested_headers = self.open_url(self.server + ext, headers=headers)
         logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext))
         
-        # we might end up passing too many simultaneous requests, or too many 
-        # requests per hour, just wait until the period is finished before 
+        # we might end up passing too many simultaneous requests, or too many
+        # requests per hour, just wait until the period is finished before
         # retrying
         if status_code == 429:
             if "retry-after" in requested_headers:
@@ -128,8 +128,8 @@ class EnsemblRequest(object):
             raise ValueError("Invalid Ensembl response: {0} for {1}.\nSubmitted URL was: {2}{3}\nheaders: {4}\nresponse: {5}".format(status_code, sequence_id, \
                     self.server, ext, requested_headers, response))
         
-        # sometimes ensembl returns odd data. I don't know what it is, but the 
-        # json interpreter can't handle it. Rather than trying to catch it, 
+        # sometimes ensembl returns odd data. I don't know what it is, but the
+        # json interpreter can't handle it. Rather than trying to catch it,
         # simply re-request the data
         if requested_headers["content-type"] == "application/json":
             try:
@@ -223,8 +223,8 @@ class EnsemblRequest(object):
                 if item["biotype"] not in ["protein_coding", "polymorphic_pseudogene"]:
                     continue
                 
-                # ignore transcripts not on the standard chromosomes 
-                # (non-default chroms fail to map the known de novo variants 
+                # ignore transcripts not on the standard chromosomes
+                # (non-default chroms fail to map the known de novo variants
                 # to the gene location
                 if item["Parent"] != gene_id or item["seq_region_name"] not in \
                         chroms or \
