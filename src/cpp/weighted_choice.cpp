@@ -12,7 +12,7 @@
 // g++ -std=c++0x -c -fPIC weighted_choice.cpp -o weighted_choice.o
 // g++ -shared -Wl,-soname,libweightedchoice.so -o libweightedchoice.so weighted_choice.o
 
-class WeightedChoice 
+class WeightedChoice
 {
     int * sites;
     double * probs;
@@ -43,8 +43,7 @@ WeightedChoice::WeightedChoice(int pos[], double p[], int len)
     length = len;
     
     // start the random sampler
-    int random_seed;
-    random_seed = std::chrono::system_clock::now().time_since_epoch().count();
+    long long random_seed = std::chrono::system_clock::now().time_since_epoch().count();
     generator.seed(random_seed);
     cumulative = make_cumulative_sums();
 }

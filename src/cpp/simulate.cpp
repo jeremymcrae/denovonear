@@ -29,7 +29,7 @@ std::vector<double> get_distances(int sites[], short len)
             {
                 double distance = abs(sites[i] - sites[j]);
                 distances.push_back(distance);
-            }            
+            }
         }
     }
     
@@ -45,13 +45,13 @@ bool has_zero(std::vector<double> distances)
         @return true/false for containing zero
     */
         
-    unsigned sz = distances.size();
+    unsigned long sz = distances.size();
     bool zero_val = false;
     
     // find if any of the elements are zero
     for (unsigned i=0; i<sz; i++)
     {
-        if (distances[i] == 0.0) 
+        if (distances[i] == 0.0)
         {
             zero_val = true;
             break;
@@ -69,16 +69,16 @@ double get_geomean(std::vector<double> distances)
         @sites array of positions
         @return geometric mean
     */
-    unsigned sz = distances.size();
+    unsigned long sz = distances.size();
     bool zero_val = has_zero(distances);
     
-    if (zero_val) 
+    if (zero_val)
     {
-        // if some values are zero, adjust all of the values upwards, and get 
+        // if some values are zero, adjust all of the values upwards, and get
         // the log10 value
         for (unsigned i=0; i<sz; i++) distances[i] = log10(distances[i] + 1);
     }
-    else 
+    else
     {
         // get the log10 value when we lack zero values
         for (unsigned i=0; i<sz; i++) distances[i] = log10(distances[i]);
@@ -99,7 +99,7 @@ double get_geomean(std::vector<double> distances)
 }
 
 std::vector<double> simulate_distribution(int sites[], double probs[], int len,
-    int iterations, int de_novo_count)
+    long iterations, int de_novo_count)
 {
     /**
         simulates de novos weighted by mutation rate
@@ -128,7 +128,7 @@ std::vector<double> simulate_distribution(int sites[], double probs[], int len,
     {
         // randomly select de novo sites for the iteration
         int positions[de_novo_count];
-        for (int i=0; i < de_novo_count; i++) 
+        for (int i=0; i < de_novo_count; i++)
         {
             int choice = weights.choice();
             positions[i] = choice;
@@ -153,11 +153,11 @@ bool halt_permutation(double p_val, int iterations, double z, double alpha)
     /**
         halt permutations if the P value could never be significant
     
-        assess whether the P-value could never fall below 0.1, and cut 
-        out after a smaller number of iterations, in order to minimise 
+        assess whether the P-value could never fall below 0.1, and cut
+        out after a smaller number of iterations, in order to minimise
         run time. Figure out the lower bound of the confidence interval
         for the current simulated P value.
-        TODO: figure out whether this is legit, perhaps a Sequential 
+        TODO: figure out whether this is legit, perhaps a Sequential
         TODO: Probability Ratio Test (SPRT) would be more appropriate.
         
         @p_val current simulated P value
@@ -197,7 +197,7 @@ double analyse_de_novos(int sites[], double probs[], int len,
     
     while (iterations < 100000000 and sim_prob == minimum_prob)
     {
-        int iters_to_run = iterations - dist.size();
+        unsigned long iters_to_run = iterations - dist.size();
         
         minimum_prob = 1.0/(1.0 + (double) iterations);
         
@@ -233,9 +233,8 @@ extern "C" {
     WeightedChoice* WeightedChoice_new(int pos[], double p[], int len) { return new WeightedChoice(pos, p, len); }
     int WeightedChoice_choice(WeightedChoice* chooser) { return  chooser->choice(); }
     double c_analyse_de_novos(int sites[], double probs[], int len,
-        int iterations, int de_novo_count, double observed_value) 
-    { 
+        int iterations, int de_novo_count, double observed_value)
+    {
         return analyse_de_novos(sites, probs, len, iterations, de_novo_count, observed_value);
     }
 }
-
