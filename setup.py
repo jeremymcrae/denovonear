@@ -5,7 +5,7 @@ from distutils.core import setup, Extension
 EXTRA_COMPILE_ARGS = ["-std=c++0x"]
 
 if sys.platform == "darwin":
-    EXTRA_COMPILE_ARGS.extend(["-stdlib=libc++"])
+    EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
 
 module1 = Extension("libsimulatedenovo",
         extra_compile_args = EXTRA_COMPILE_ARGS,
