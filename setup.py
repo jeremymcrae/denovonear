@@ -19,7 +19,9 @@ setup (name = "denovonear",
         author_email = "jeremy.mcrae@sanger.ac.uk",
         license="MIT",
         packages=["denovonear"],
-        install_requires=['scipy >= 0.9.0'],
+        install_requires=['numpy >= 1.6.1',
+                          'scipy >= 0.9.0'
+        ],
         classifiers=[
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
