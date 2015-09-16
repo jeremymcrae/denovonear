@@ -6,3 +6,7 @@ install:
  - python setup.py install
 script:
  - python setup.py test
+ - "python scripts/clustering.py \
+     --in data/example_de_novos.txt \
+     --rates data/forSanger_1KG_mutation_rate_table.txt \
+     --out output.txt"
