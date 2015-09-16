@@ -14,11 +14,12 @@ module1 = Extension("libsimulatedenovo",
 
 setup (name = "denovonear",
         description = 'Package to examine de novo clustering',
-        version = "0.1",
+        version = "0.1.1",
         author = "Jeremy McRae",
         author_email = "jeremy.mcrae@sanger.ac.uk",
         license="MIT",
         packages=["denovonear"],
+        install_requires=['scipy >= 0.9.0'],
         classifiers=[
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
