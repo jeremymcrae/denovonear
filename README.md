@@ -24,7 +24,7 @@ python setup.py install --user
 ### Analysis
 Analyse your de novos with:
 ```sh
-python clustering.py \
+python scripts/clustering.py \
    --in data/example_de_novos.txt \
    --rates data/forSanger_1KG_mutation_rate_table.txt \
    --out output.txt
@@ -72,7 +72,7 @@ transcripts to contain all de novos (where transcrips are prioritised on the
 basis of number of de novo events, and length of coding sequence). Transcripts
 can be identified with:
 ```sh
-python identify_transcripts.py \
+python scripts/identify_transcripts.py \
     --de-novos data/example_de_novos.txt \
     --out output.txt \
     --all-transcripts
@@ -88,7 +88,7 @@ for a gene, or for a specific Ensembl transcript ID with the
 `construct_mutation_rates.py` script. Lof and missense mutation rates can be
 generated with:
 ```sh
-python construct_mutation_rates.py \
+python scripts/construct_mutation_rates.py \
     --transcripts data/example_transcript_ids.txt \
     --rates data/forSanger_1KG_mutation_rate_table.txt \
     --out output.txt
