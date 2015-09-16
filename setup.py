@@ -19,7 +19,7 @@ setup (name = "denovonear",
         author_email = "jeremy.mcrae@sanger.ac.uk",
         license="MIT",
         packages=["denovonear"],
-        install_requires=['numpy >= 1.6.1',
+        install_requires=['pysam >= 0.8.2',
                           'scipy >= 0.9.0'
         ],
         classifiers=[
