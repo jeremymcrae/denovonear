@@ -1,6 +1,7 @@
 *.pyc
 *.pdf
 *.log
+*__pycache__/
 cache/
 build/
 data/
