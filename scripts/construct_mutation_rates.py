@@ -230,19 +230,16 @@ def include_indel_rates(path):
         path: path to the output mutation rates (for the nonsense, missense etc)
     """
     
-    # we copy the rates file to a temporary file, so that we can stream through
-    # it later while writing amended lines to the correct rates path
-    temp = tempfile.TemporaryFile(mode="w+b")
-    
     # run through the file of rates to find the overall nonsense mutation rate,
     # and the total length of CDS regions in the file.
     nonsense_sum = 0
     length_sum = 0
+    lines = []
     with open(path) as handle:
         nonsense_pos = None
         length_pos = None
         for line in handle:
-            temp.write(line)
+            lines.append(line)
             if line.startswith("transcript_id"):
                 nonsense_pos = line.split("\t").index("nonsense_rate")
                 length_pos = line.split("\t").index("length")
@@ -252,14 +249,11 @@ def include_indel_rates(path):
             nonsense_sum += 10**float(line[nonsense_pos])
             length_sum += int(line[length_pos])
     
-    handle.close()
-    temp.seek(0)
-    
     # add the frameshift rates to each line in turn, while writing the output
     # back to the output path
     frameshift_sum = nonsense_sum * 1.25
     with open(path, "w") as handle:
-        for line in temp:
+        for line in lines:
             line = line.strip().split("\t")
             if line[0] == "transcript_id":
                 line.append("frameshift_rate")
@@ -271,8 +265,6 @@ def include_indel_rates(path):
             
             line = "\t".join(line) +"\n"
             handle.write(line)
-    
-    temp.close()
 
 def main():
     
