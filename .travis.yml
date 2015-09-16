@@ -1,6 +1,8 @@
 language: python
 python:
-  - "3.3"
-  - "2.7"
+  - 3.3
+  - 2.7
+install:
+ - python setup.py install
 script:
- - "python -m unittest discover"
+ - python setup.py test

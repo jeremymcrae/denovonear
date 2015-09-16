@@ -3,8 +3,8 @@
 
 import copy
 
-from src.interval_sequence_methods import SequenceMethods
-from src.interval_conservation_methods import ConservationMethods
+from denovonear.interval_sequence_methods import SequenceMethods
+from denovonear.interval_conservation_methods import ConservationMethods
 
 class Interval(SequenceMethods, ConservationMethods):
     """ Class to define transcript regions.
@@ -68,8 +68,8 @@ class Interval(SequenceMethods, ConservationMethods):
         self.cds_min = int(cds[0][0])
         self.cds_max = int(cds[-1][-1])
         
-        # sometimes the cds start and end lie outside the exons. We find the 
-        # offset to the closest exon boundary, and use that to place the 
+        # sometimes the cds start and end lie outside the exons. We find the
+        # offset to the closest exon boundary, and use that to place the
         # position within the up or downstream exon, and correct the initial
         # cds boundaries
         if not self.in_exons(self.cds_min):
@@ -111,19 +111,19 @@ class Interval(SequenceMethods, ConservationMethods):
         if start_dist < end_dist:
             before = self.get_exon_containing_position(start, self.exons) - 1
             end = self.exons[before][1]
-            start = end - start_dist 
+            start = end - start_dist
         # if we are closer to the end, then we go forward an exon
         elif start_dist > end_dist:
             after = self.get_exon_containing_position(end, self.exons) + 1
             start = self.exons[after][0]
-            end = start + end_dist 
+            end = start + end_dist
         
         return (start, end)
         
     def convert_chrom_to_int(self, chrom):
         """ converts a chromosome string to an int (if possible) for sorting.
         
-        Args: 
+        Args:
             chrom: string (eg "1", "2", "3" ... "22", "X", "Y")
         
         Returns:
@@ -214,10 +214,10 @@ class Interval(SequenceMethods, ConservationMethods):
     def __add__(self, other):
         """ combine the coding sequences of two interval objects
         
-        When we determine the sites for sampling, occasioally we want to 
+        When we determine the sites for sampling, occasioally we want to
         use sites from multiple alternative transcripts. We determine the sites
         for each transcript in turn, but mask the sites that have been collected
-        in the preceeding transcripts. In order to be able to mask all previous 
+        in the preceeding transcripts. In order to be able to mask all previous
         trabnscripts, we need to combine the coding sequence of the transcripts
         as we move through them. This function performs the union of coding
         sequence regions between different transcripts.
@@ -227,7 +227,7 @@ class Interval(SequenceMethods, ConservationMethods):
         
         Returns:
             an altered instance of the class, where the coding sequence regions
-            are the union of the coding regions of two Interval objects. This 
+            are the union of the coding regions of two Interval objects. This
             disrupts the ability to get meaningingful sequence from the object,
             so don't try to extract sequence from the returned object.
         """
@@ -261,7 +261,7 @@ class Interval(SequenceMethods, ConservationMethods):
             if other.in_coding_region(start) and not other.in_coding_region(end):
                 end = cds_max
             
-            # if the CDS region is already in the current object,we don't need 
+            # if the CDS region is already in the current object,we don't need
             # to extend the current objects coordinates
             if altered.in_coding_region(start) and altered.in_coding_region(end):
                 continue
@@ -271,7 +271,7 @@ class Interval(SequenceMethods, ConservationMethods):
             if not altered.region_overlaps_cds((start, end)):
                 altered.cds.append((start, end))
             else:
-                # if the transcripts overlap, find the overlapping exon and 
+                # if the transcripts overlap, find the overlapping exon and
                 # extend its coordinates
                 closest = altered.find_closest_exon(start, exons=altered.cds)
                 exon_num = altered.get_exon_containing_position(closest[0], altered.cds)
@@ -332,7 +332,7 @@ class Interval(SequenceMethods, ConservationMethods):
     def find_closest_exon(self, position, exons=None):
         """ finds the positions of the exon closest to a position
         
-        Can optionally specify a different set of exon ranges to check from, 
+        Can optionally specify a different set of exon ranges to check from,
         such as the CDS positions.
         """
         
@@ -466,7 +466,7 @@ class Interval(SequenceMethods, ConservationMethods):
             except AssertionError:
                 raise ValueError("Not near coding exon: {0} in transcript {1}".format(pos, self.get_name()))
             
-            # if the var is outside the exon, but might affect a splice site, 
+            # if the var is outside the exon, but might affect a splice site,
             # swap it to using the splice site location
             if exon_dist < 10:
                 dist = self.get_coding_distance(cds_start, exon_pos)
@@ -474,5 +474,3 @@ class Interval(SequenceMethods, ConservationMethods):
                 raise ValueError("distance to exon ({0}) > 10 bp for {1} in transcript {2}".format(min(start_dist, end_dist), pos, self.get_name()))
         
         return dist
-
-

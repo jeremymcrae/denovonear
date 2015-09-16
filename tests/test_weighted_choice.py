@@ -4,7 +4,7 @@ from __future__ import division
 
 import unittest
 
-from src.weighted_choice import WeightedChoice
+from denovonear.weighted_choice import WeightedChoice
 
 class TestWeightedChoicePy(unittest.TestCase):
     """ unit test the WeightedChoice class
@@ -29,25 +29,25 @@ class TestWeightedChoicePy(unittest.TestCase):
         
         # check for two values
         choices = WeightedChoice([("a", 1), ("b", 5)])
-        self.assertEqual(choices.cum_probs, [1, 6])   
+        self.assertEqual(choices.cum_probs, [1, 6])
          
          # check for three values
         choices = WeightedChoice([("a", 1), ("b", 5), ("c", 10)])
-        self.assertEqual(choices.cum_probs, [1, 6, 16])   
+        self.assertEqual(choices.cum_probs, [1, 6, 16])
         
         # check that it works for unsorted probabilities
         choices = WeightedChoice([("a", 1), ("b", 10), ("c", 5)])
-        self.assertEqual(choices.cum_probs, [1, 11, 16])  
+        self.assertEqual(choices.cum_probs, [1, 11, 16])
         
-        # check for very low values, with very high precision (but not 
+        # check for very low values, with very high precision (but not
         # necessarily exactly equal)
         choices = WeightedChoice([("a", 5e-9), ("b", 1e-8), ("c", 1.000000000000005e-10)])
         self.assertAlmostEqual(choices.cum_probs[0], 5e-9, places=23)
         self.assertAlmostEqual(choices.cum_probs[1], 1.5e-8, places=23)
-        self.assertAlmostEqual(choices.cum_probs[2], 1.51000000000000005e-8, places=23) 
+        self.assertAlmostEqual(choices.cum_probs[2], 1.51000000000000005e-8, places=23)
     
     def test_choice(self):
-        """ test that choice() works correctly. 
+        """ test that choice() works correctly.
         
         Since WeightedChoice is a weighted random sampler, we can't rely on
         getting exact values out, so repeated samples are expected to obtain
@@ -88,4 +88,3 @@ class TestWeightedChoicePy(unittest.TestCase):
 
 # if __name__ == '__main__':
 #     unittest.main()
-

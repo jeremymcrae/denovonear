@@ -3,7 +3,7 @@
 
 import unittest
 
-from src.interval import Interval
+from denovonear.interval import Interval
 
 class TestIntervalPy(unittest.TestCase):
     """ unit test the Interval class
@@ -255,14 +255,14 @@ class TestIntervalPy(unittest.TestCase):
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1100), 1)
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1199), 100)
         
-        # check that outside exon boundaries gets the closest exon position, if 
+        # check that outside exon boundaries gets the closest exon position, if
         # the variant is close enough
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1200), 100)
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1201), 100)
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1798), 101)
         self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1799), 101)
         
-        # check that sites sufficiently distant from an exon raise an error, or 
+        # check that sites sufficiently distant from an exon raise an error, or
         # sites upstream of a gene, just outside the CDS, but within an exon
         with self.assertRaises(ValueError):
             self.gene.convert_chr_pos_to_cds_positions(1215)
@@ -288,4 +288,3 @@ class TestIntervalPy(unittest.TestCase):
 
 # if __name__ == '__main__':
 #     unittest.main()
-

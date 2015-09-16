@@ -1,6 +1,6 @@
 """ counts high-frequency LOF variants in genes in human genome.
 
-Uses 1000 Genomes variation data to find variants in genes, and estimate the 
+Uses 1000 Genomes variation data to find variants in genes, and estimate the
 minor allele frequency in continental populations.
 """
 
@@ -11,17 +11,17 @@ from __future__ import absolute_import
 import os
 import argparse
 
-from src.load_gene import get_deprecated_gene_ids, get_transcript_lengths, \
+from denovonear.load_gene import get_deprecated_gene_ids, get_transcript_lengths, \
     construct_gene_object, get_de_novos_in_transcript, load_gene
-from src.thousand_genomes.ensembl_consequences import EnsemblWithVariants
-from src.thousand_genomes.variants import Extract1000Genomes
+from denovonear.thousand_genomes.ensembl_consequences import EnsemblWithVariants
+from denovonear.thousand_genomes.variants import Extract1000Genomes
 
 
 CONSEQUENCES = {"lof": set(["transcript_ablation","splice_donor_variant", \
     "splice_acceptor_variant", "frameshift_variant", "stop_gained", \
     "coding_sequence_variant"]), \
-    "missense": set(["initiator_codon_variant", "inframe_insertion", 
-    "inframe_deletion", "missense_variant", "transcript_amplification", 
+    "missense": set(["initiator_codon_variant", "inframe_insertion",
+    "inframe_deletion", "missense_variant", "transcript_amplification",
     "stop_lost", "splice_region_variant"]), \
     "synonymous": set(["synonymous_variant"])}
 
@@ -68,7 +68,7 @@ def load_hgnc_symbols(filename):
     return sorted(genes)
 
 def get_already_loaded_genes(filename):
-    """find the genes which have already been assessed, so we can resume from 
+    """find the genes which have already been assessed, so we can resume from
     where we left off (if the code or system breaks)
     """
     
@@ -91,7 +91,7 @@ def main():
     ensembl = EnsemblWithVariants(cache_dir, genome_build)
     hgnc_symbols = load_hgnc_symbols(hgnc_filename)
     
-    # find the genes which have already been assessed, so we can resume from 
+    # find the genes which have already been assessed, so we can resume from
     # where we left off (if the code or system breaks)
     prior_genes = get_already_loaded_genes(output_filename)
     
@@ -104,7 +104,7 @@ def main():
         
         # load the transcript ID, exon positions and sequence. If we raise an
         # error, just move to the next gene (eg ABO, which tries to load a
-        # transcript without protein coding sequence, rather than a transcript 
+        # transcript without protein coding sequence, rather than a transcript
         # on a patch contig).
         try:
             gene = load_gene(ensembl, hgnc)
@@ -140,8 +140,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
-
-
-

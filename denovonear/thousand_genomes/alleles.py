@@ -5,7 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from src.thousand_genomes.sample_populations import sample_pops, populations
+from denovonear.thousand_genomes.sample_populations import sample_pops, populations
 
 class Alleles(object):
     """ this class is intended to be a subclass of Extract1000Genomes, and
@@ -17,7 +17,7 @@ class Alleles(object):
     counts = None
     
     def _get_samples_with_allele(self, record, allele):
-        """ get a list of sample IDs that have 
+        """ get a list of sample IDs that have
         
         Args:
             var: a VcfRecord for a variant
@@ -38,8 +38,8 @@ class Alleles(object):
                 population = sample_pops[sample_id]
                 vcf_genotype = split_data[0]
                 
-                # females raise errors for variants on the Y-chromosome, just  
-                # skip past those individuals, since they can't contribute to a 
+                # females raise errors for variants on the Y-chromosome, just
+                # skip past those individuals, since they can't contribute to a
                 # genotype or population count
                 try:
                     geno = self._convert_genotype(vcf_genotype)
@@ -93,14 +93,14 @@ class Alleles(object):
         return major_allele, minor_allele
     
     def _get_max_maf(self, record):
-        """ gets the highest 1000 genomes continental population minor allele 
+        """ gets the highest 1000 genomes continental population minor allele
         frequency for a single variant.
         
         Args:
             record: VcfRecord object
         
         Returns:
-            the maximum minor allele frequency found amongst the 1000 genomes 
+            the maximum minor allele frequency found amongst the 1000 genomes
             continental populations.
         """
         
@@ -129,14 +129,14 @@ class Alleles(object):
         return max(mafs)
     
     def _get_max_minor_genotype_frequency(self, record):
-        """ gets the highest 1000 genomes continental population minor  
+        """ gets the highest 1000 genomes continental population minor
         genotype frequency for a single variant.
         
         Args:
             record: VcfRecord object
         
         Returns:
-            the maximum minor genotype frequency found amongst the 1000 genomes 
+            the maximum minor genotype frequency found amongst the 1000 genomes
             continental populations.
         """
         
@@ -183,8 +183,8 @@ class Alleles(object):
         alt_freq = 1 - ref_freq
         
         # the minor frequency will be the smaller of the alt and ref
-        # frequencies (since the ref allele is merely the allele in the 
-        # reference genome, not necessarily the most common allele in human 
+        # frequencies (since the ref allele is merely the allele in the
+        # reference genome, not necessarily the most common allele in human
         # populations)
         minor = min(ref_freq, alt_freq)
         
@@ -223,8 +223,8 @@ class Alleles(object):
                 population = sample_pops[sample_id]
                 vcf_genotype = split_data[0]
                 
-                # females raise errors for variants on the Y-chromosome, just  
-                # skip past those individuals, since they can't contribute to a 
+                # females raise errors for variants on the Y-chromosome, just
+                # skip past those individuals, since they can't contribute to a
                 # genotype or population count
                 try:
                     geno = self._convert_genotype(vcf_genotype)
@@ -240,12 +240,12 @@ class Alleles(object):
         """ converts a VcfRecord SNP genotype to genotype string
         
         Args:
-            vcf_genotype: SNP genotype string e.g. "0|0", "1|0", or single 
+            vcf_genotype: SNP genotype string e.g. "0|0", "1|0", or single
                 character genotype eg "0" or "1" for hemizygous individuals
         
         Returns:
-            string value indicating the type of genotype ("hom_ref", "het", 
-            "hom_alt)  
+            string value indicating the type of genotype ("hom_ref", "het",
+            "hom_alt)
         """
         
         nonref_count = int(vcf_genotype[0]) + int(vcf_genotype[-1])

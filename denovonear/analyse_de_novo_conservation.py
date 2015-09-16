@@ -1,5 +1,5 @@
-""" class to analyse clustering of known de novos in genes according to their 
-distances apart within the gene, and compare that to simulated de novo events 
+""" class to analyse clustering of known de novos in genes according to their
+distances apart within the gene, and compare that to simulated de novo events
 within the same gene.
 """
 
@@ -13,10 +13,10 @@ import operator
 import random
 
 
-from src.analyse_de_novos import AnalyseDeNovos
+from denovonear.analyse_de_novos import AnalyseDeNovos
 
 class AnalyseDeNovoConservation(AnalyseDeNovos):
-    """ class to analyse conservation of de novo events via site specific 
+    """ class to analyse conservation of de novo events via site specific
     mutation rates
     """
     
@@ -58,9 +58,9 @@ class AnalyseDeNovoConservation(AnalyseDeNovos):
         
         observed_value = self.get_score(cds_positions)
         
-        # if the p-value that we obtain is right at the minimum edge of the 
+        # if the p-value that we obtain is right at the minimum edge of the
         # simulated distribution, increase the number of iterations until the
-        # p-value is no longer at the very edge (or we reach 100 million 
+        # p-value is no longer at the very edge (or we reach 100 million
         # iterations).
         while iterations < 100000000 and sim_prob == minimum_prob:
             minimum_prob = 1/(1 + iterations)
@@ -122,8 +122,8 @@ class AnalyseDeNovoConservation(AnalyseDeNovos):
             allowed = self.find_positions(positions, len(de_novos), observed_value, cds_start, cds_end)
             allowed = allowed & weighted_sites
             
-            # sometimes we cannot find suitable sites (because we ignore ranges 
-            # where both end points are unsuitable, and sometimes the end points 
+            # sometimes we cannot find suitable sites (because we ignore ranges
+            # where both end points are unsuitable, and sometimes the end points
             # are unsuitable, but some middle points are suitable).
             # The quickest fix is to resample from the beginning
             while len(allowed) == 0:
@@ -131,7 +131,7 @@ class AnalyseDeNovoConservation(AnalyseDeNovos):
             
             if len(allowed) > 1:
                 sample = weights.choose_amongst_positions(allowed)
-            else:  
+            else:
                 sample = list(allowed)[0]
             positions.append(sample)
         
@@ -231,9 +231,9 @@ class AnalyseDeNovoConservation(AnalyseDeNovos):
             
             ranges = ranges | set(subrange)
         
-        # if we are selecting the final position, we want to find the exact site 
-        # that will take us to the correct average distance, so look through the 
-        # suitable range positions for sites that give the exact average (or at 
+        # if we are selecting the final position, we want to find the exact site
+        # that will take us to the correct average distance, so look through the
+        # suitable range positions for sites that give the exact average (or at
         # least as close as we will tolerate)
         if de_novos - current_n == 1:
             single_positions = set([])

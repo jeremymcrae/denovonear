@@ -14,7 +14,7 @@ import shutil
 import zlib
 from datetime import datetime, timedelta
 
-from src.ensembl_cache import EnsemblCache
+from denovonear.ensembl_cache import EnsemblCache
 
 IS_PYTHON2 = sys.version_info[0] == 2
 IS_PYTHON3 = sys.version_info[0] == 3
@@ -148,11 +148,9 @@ class TestEnsemblCachePy(unittest.TestCase):
         self.cache.cache_url_data(url, temp_data)
         self.assertTrue(self.cache.check_if_data_in_cache(url))
         
-        # check that we can't cache the ensembl version string (so we have to 
+        # check that we can't cache the ensembl version string (so we have to
         # check this each time the script runs, rather than pulling from the
         # cache)
         url = "http://beta.rest.ensembl.org/info/rest"
         self.cache.cache_url_data(url, temp_data)
         self.assertFalse(self.cache.check_if_data_in_cache(url))
-
-

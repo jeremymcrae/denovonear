@@ -13,10 +13,10 @@ import math
 import argparse
 import tempfile
 
-from src.load_gene import construct_gene_object
-from src.ensembl_requester import EnsemblRequest
-from src.load_mutation_rates import load_trincleotide_mutation_rates
-from src.site_specific_rates import SiteRates
+from denovonear.load_gene import construct_gene_object
+from denovonear.ensembl_requester import EnsemblRequest
+from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
+from denovonear.site_specific_rates import SiteRates
 
 def get_options():
     """ get the command line switches

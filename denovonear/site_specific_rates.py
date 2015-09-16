@@ -3,8 +3,8 @@
 
 from __future__ import print_function
 
-from src.weighted_choice import WeightedChoice
-from src.coverage_stats import CoverageStats
+from denovonear.weighted_choice import WeightedChoice
+from denovonear.coverage_stats import CoverageStats
 
 
 class SiteRates(CoverageStats):

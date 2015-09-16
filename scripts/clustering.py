@@ -13,15 +13,15 @@ import math
 
 import scipy.stats
 
-from src.load_gene import get_deprecated_gene_ids, load_gene, load_conservation, \
+from denovonear.load_gene import get_deprecated_gene_ids, load_gene, load_conservation, \
     get_de_novos_in_transcript
-from src.ensembl_requester import EnsemblRequest
-from src.load_mutation_rates import load_trincleotide_mutation_rates
-from src.load_known_de_novos import load_known_de_novos
-from src.load_conservation_scores import load_conservation_scores
-from src.site_specific_rates import SiteRates
-from src.analyse_de_novo_clustering import AnalyseDeNovoClustering
-from src.analyse_de_novo_conservation import AnalyseDeNovoConservation
+from denovonear.ensembl_requester import EnsemblRequest
+from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
+from denovonear.load_known_de_novos import load_known_de_novos
+from denovonear.load_conservation_scores import load_conservation_scores
+from denovonear.site_specific_rates import SiteRates
+from denovonear.analyse_de_novo_clustering import AnalyseDeNovoClustering
+from denovonear.analyse_de_novo_conservation import AnalyseDeNovoConservation
 
 def get_options():
     """ get the command line switches

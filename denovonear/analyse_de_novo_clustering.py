@@ -1,5 +1,5 @@
-""" class to analyse clustering of known de novos in genes according to their 
-distances apart within the gene, and compare that to simulated de novo events 
+""" class to analyse clustering of known de novos in genes according to their
+distances apart within the gene, and compare that to simulated de novo events
 within the same gene.
 """
 
@@ -11,10 +11,10 @@ import itertools
 import math
 import operator
 
-from src.analyse_de_novos import AnalyseDeNovos
+from denovonear.analyse_de_novos import AnalyseDeNovos
 
 class AnalyseDeNovoClustering(AnalyseDeNovos):
-    """ class to analyse clustering of de novo events via site specific 
+    """ class to analyse clustering of de novo events via site specific
     mutation rates
     """
     
@@ -84,8 +84,8 @@ class AnalyseDeNovoClustering(AnalyseDeNovos):
                     min_distance = distance
                     pair = tuple(sorted([pos_1, pos_2]))
             
-            # only include the distance if the pair has not been included  
-            # previously (this avoids duplicates of variants that match to each 
+            # only include the distance if the pair has not been included
+            # previously (this avoids duplicates of variants that match to each
             # other)
             if pair not in run_pairs:
                 distances.append(distance)
@@ -93,4 +93,3 @@ class AnalyseDeNovoClustering(AnalyseDeNovos):
         
         return self.geomean(distances)
     
-

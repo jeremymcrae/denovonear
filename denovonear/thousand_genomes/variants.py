@@ -7,10 +7,10 @@ from __future__ import absolute_import
 
 import pysam
 
-from src.thousand_genomes.alleles import Alleles
-from src.thousand_genomes.vcf import VCF
-from src.thousand_genomes.functional_checks import FunctionalChecks
-from src.site_specific_rates import SiteRates
+from denovonear.thousand_genomes.alleles import Alleles
+from denovonear.thousand_genomes.vcf import VCF
+from denovonear.thousand_genomes.functional_checks import FunctionalChecks
+from denovonear.site_specific_rates import SiteRates
 
 class Extract1000Genomes(SiteRates, Alleles, VCF, FunctionalChecks):
     """ obtains data from 1000 Genomes VCF files
@@ -49,8 +49,8 @@ class Extract1000Genomes(SiteRates, Alleles, VCF, FunctionalChecks):
                 continue
             
             # ignore extremely rare variants, or high-frequency variants.
-            # TODO: also ignore singletons in 1000 genomes populations? i.e. 
-            # TODO: a population might have one het individual, which takes the 
+            # TODO: also ignore singletons in 1000 genomes populations? i.e.
+            # TODO: a population might have one het individual, which takes the
             # TODO: MAF between 0.01 and 0.1, which we would include, but
             if min_maf > self._max_frequency(var) or \
                     self._max_frequency(var) > max_maf:
@@ -93,4 +93,3 @@ class Extract1000Genomes(SiteRates, Alleles, VCF, FunctionalChecks):
                 sample_n = temp_n
         
         return (samples, sample_n)
-

@@ -5,3 +5,5 @@ cache/
 build/
 data/
 results/
+*.egg-info/
+*.so

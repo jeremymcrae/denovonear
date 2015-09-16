@@ -10,9 +10,9 @@ import matplotlib
 matplotlib.use("pdf")
 from matplotlib import pyplot
 
-from src.gene_plotting.domain_plotter import DomainPlotter
-from src.gene_plotting.transcript_plotter import TranscriptPlotter
-from src.gene_plotting.gene_plotter import GenePlotter
+from denovonear.gene_plotting.domain_plotter import DomainPlotter
+from denovonear.gene_plotting.transcript_plotter import TranscriptPlotter
+from denovonear.gene_plotting.gene_plotter import GenePlotter
 
 class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
     

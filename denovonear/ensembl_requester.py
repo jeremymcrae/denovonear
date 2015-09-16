@@ -16,7 +16,7 @@ if IS_PYTHON3:
 else:
     import urllib2 as request
 
-from src.ensembl_cache import EnsemblCache
+from denovonear.ensembl_cache import EnsemblCache
 
 logging.basicConfig(filename='ensembl_requests.log',level=logging.WARNING)
 

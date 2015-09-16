@@ -13,18 +13,18 @@ try:
 except ImportError:
     import xml.etree.ElementTree as et
 
-LOF = {"STOP-GAIN": "stop_gained", 
-       "Splice Site": "splice_donor_variant", 
-       "exon_loss": "transcript_ablation", 
-       "splice-3": "splice_acceptor_variant", 
-       "splice-5": "splice_donor_variant", 
-       "splice_acceptor_variant": "splice_acceptor_variant", 
-       "splice_donor_variant": "splice_donor_variant", 
+LOF = {"STOP-GAIN": "stop_gained",
+       "Splice Site": "splice_donor_variant",
+       "exon_loss": "transcript_ablation",
+       "splice-3": "splice_acceptor_variant",
+       "splice-5": "splice_donor_variant",
+       "splice_acceptor_variant": "splice_acceptor_variant",
+       "splice_donor_variant": "splice_donor_variant",
        "stop_gained": "stop_gained"}
 
-missense = {"missense": "missense_variant", 
-            "STOP-LOSS": "stop_lost", 
-            "missense_variant": "missense_variant", 
+missense = {"missense": "missense_variant",
+            "STOP-LOSS": "stop_lost",
+            "missense_variant": "missense_variant",
             "stop_lost": "stop_lost"}
 
 functional = copy.deepcopy(LOF)
@@ -75,7 +75,7 @@ class ParseClinVar():
     """ parses ClinVar XML data source
     """
     
-    def __init__(self, ddg2p, filename="/nfs/users/nfs_j/jm33/apps/de_novo_clustering/data/benchmarking/ClinVarFullRelease_2014-04.xml.gz"):
+    def __init__(self, ddg2p, filename="/nfs/users/nfs_j/jm33/apps/denovonear/data/benchmarking/ClinVarFullRelease_2014-04.xml.gz"):
         """ opens a file object for the clinvar file
         """
         
@@ -189,6 +189,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-
-

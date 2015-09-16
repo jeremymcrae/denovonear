@@ -4,8 +4,8 @@
 from __future__ import division
 import unittest
 
-from src.interval_sequence_methods import SequenceMethods
-from src.interval import Interval
+from denovonear.interval_sequence_methods import SequenceMethods
+from denovonear.interval import Interval
 
 class TestSequenceMethodsPy(unittest.TestCase):
     """ unit test the SequenceMethods class
@@ -183,7 +183,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         # check that codon positions outside the CDS region raise errors
         with self.assertRaises(AssertionError):
             self.gene.get_codon_sequence(-1)
-        with self.assertRaises(AssertionError):  
+        with self.assertRaises(AssertionError):
             self.gene.get_codon_sequence(3)
     
     def test_translate_codon(self):
@@ -203,4 +203,3 @@ class TestSequenceMethodsPy(unittest.TestCase):
 
 # if __name__ == '__main__':
 #     unittest.main()
-

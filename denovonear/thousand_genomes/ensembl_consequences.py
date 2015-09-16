@@ -1,14 +1,14 @@
-""" class to extract variant consequences from the Ensembl REST API 
+""" class to extract variant consequences from the Ensembl REST API
 """
 
 from __future__ import division
 from __future__ import print_function
 from __future__ import absolute_import
 
-from src.ensembl_requester import EnsemblRequest
+from denovonear.ensembl_requester import EnsemblRequest
 
 class EnsemblWithVariants(EnsemblRequest):
-    """ class to extract variant consequences from the Ensembl REST API 
+    """ class to extract variant consequences from the Ensembl REST API
     """
     
     def parse_consequence(self, transcript_id, request_data):
