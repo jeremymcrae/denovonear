@@ -232,7 +232,8 @@ def include_indel_rates(path):
     
     # we copy the rates file to a temporary file, so that we can stream through
     # it later while writing amended lines to the correct rates path
-    temp = tempfile.TemporaryFile()
+    temp = tempfile.TemporaryFile(mode="w")
+    print(temp)
     
     # run through the file of rates to find the overall nonsense mutation rate,
     # and the total length of CDS regions in the file.
