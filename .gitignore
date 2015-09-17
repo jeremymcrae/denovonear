@@ -4,7 +4,6 @@
 *__pycache__/
 cache/
 build/
-data/
 results/
 *.egg-info/
 *.so
