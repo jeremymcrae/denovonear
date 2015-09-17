@@ -186,7 +186,7 @@ def main():
     old_gene_ids = {}
     # only load the old gene ID converter if we have specified the file
     if args.deprecated_genes_path is not None:
-        old_gene_ids = get_deprecated_gene_ids(args.deprecated_genes_path, args.indel_only)
+        old_gene_ids = get_deprecated_gene_ids(args.deprecated_genes_path)
     
     # We typically only test SNVs, but we can also check clustering in indels.
     # Indel clustering currently assumes a uniform mutationm rate across sites,
