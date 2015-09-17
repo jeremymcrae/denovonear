@@ -30,7 +30,7 @@ class SequenceMethods(object):
             self.exon_to_cds = {}
             
             for start, end in self.cds:
-                # get the positions of the exon boundaries in CDS distance from 
+                # get the positions of the exon boundaries in CDS distance from
                 # the start site
                 end_pos = end
                 start_pos = start
@@ -96,7 +96,7 @@ class SequenceMethods(object):
                 cds_seq = self.genomic_sequence[start_bp:end_bp] + cds_seq
         
         # do a sanity check to check that we've got the right cds sequence, this
-        # fails for at least one gene (CCDC18), which begins with a N, and 
+        # fails for at least one gene (CCDC18), which begins with a N, and
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
             raise ValueError("Coding sequence from gene coordinates doesn't match coding sequence obtained from Ensembl.\nTranscript: {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
@@ -147,7 +147,7 @@ class SequenceMethods(object):
         """ obtains the trinucleotide sequence around a position
         """
         
-        assert pos >= 0 
+        assert pos >= 0
         assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
         
         offset = self.get_start()
@@ -168,8 +168,6 @@ class SequenceMethods(object):
         
         start = codon_number * 3
         end = start + 3
-        
-        # print(len(self.cds_sequence), start, end)
         
         codon = self.cds_sequence[start:end]
         
