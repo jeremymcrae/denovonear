@@ -164,40 +164,6 @@ def load_gene(ensembl, gene_id, de_novos=[]):
     
     return genes
     
-    # transcripts = get_transcript_ids_sorted_by_length(ensembl, gene_id)
-    
-    # # TODO: allow for genes without any coding sequence.
-    # if len(transcripts) == 0:
-    #     raise ValueError("{0} lacks coding transcripts".format(gene_id))
-    
-    # # create a Interval object using the longest transcript, but if we cannot
-    # # obtain a valid sequence or coordinates, or the transcript doesn't contain
-    # # all the de novo positions, run through alternate transcripts in order of
-    # # length (allows for CSMD2 variant chr1:34071484 and PHACTR1 chr6:12933929).
-    # for (transcript_id, length) in transcripts:
-    #     try:
-    #         gene = construct_gene_object(ensembl, transcript_id)
-    #         if len(get_de_novos_in_transcript(gene, de_novos)) == len(de_novos):
-    #             # halt the loop, since we've found a transcript with all the de
-    #             # novos
-    #             break
-    #     except ValueError:
-    #         # this error occurs when the transcript sequence from genomic
-    #         # sequence according to the gene positions, doesn't match the
-    #         # transcript sequence obtained from ensembl for the transcript ID.
-    #         pass
-    
-    # if "gene" not in locals():
-    #     raise IndexError("{0}: no suitable transcripts".format(gene_id))
-    
-    # raise an IndexError if we can't get a transcript that contains all de
-    # novos. eg ZFN467 with chr7:149462931 and chr7:149461727 which are on
-    # mutually exclusive transcripts
-    # if len(get_de_novos_in_transcript(gene, de_novos)) != len(de_novos):
-    #     raise IndexError("{0}: de novos aren't in CDS sequence".format(gene_id))
-    
-    # return gene
-    
 def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
     """ sort out all the necessary sequences and positions for a gene
     
