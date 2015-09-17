@@ -51,10 +51,14 @@ class Interval(SequenceMethods, ConservationMethods):
         # region, then if the CDS region fits within the gene range, make a
         # single exon, using the transcript start and end. This prevents issues
         # when adding the CDS coordinates for the transcript.
-        if exon_ranges == [] and len(cds) == 1:
-            cds = cds[0]
-            if min(cds) > self.start and max(cds) < self.end:
+        if exon_ranges == []:
+            if len(cds) == 1 and min(cds[0]) > self.start and max(cds[0]) < self.end:
                 exon_ranges = [(self.start, self.end)]
+            else:
+                # We can figure out the exon coordinates given a single CDS
+                # region, but we can't do that given multiple CDS regions. I
+                # haven't hit this yet, deal with it when it happens.
+                raise ValueError("{} lacks exon coordinates".format(self.name))
         
         # adjust the positions back one base pair if the transcript is on the
         # reverse strand

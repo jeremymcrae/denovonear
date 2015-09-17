@@ -28,10 +28,23 @@ class TestIntervalPy(unittest.TestCase):
         """
         
         exons = [(0, 200), (800, 1000)]
-        self.assertEqual(self.gene.__add_exons__(exons), [(0, 200), (800, 1000)])
+        cds = [(1100, 1200), (1800, 1900)]
+        self.assertEqual(self.gene.__add_exons__(exons, cds), [(0, 200), (800, 1000)])
         
         self.gene.strand = "-"
-        self.assertEqual(self.gene.__add_exons__(exons), [(-1, 199), (799, 999)])
+        self.assertEqual(self.gene.__add_exons__(exons, cds), [(-1, 199), (799, 999)])
+        
+        # also test that we can determine the exons when we don't have any given
+        # for a transcript with a single CDS region
+        self.gene.strand = "+"
+        exons = []
+        cds = [(1100, 1200)]
+        self.assertEqual(self.gene.__add_exons__(exons, cds), [(1000, 2000)])
+        
+        # check that missing exons, but 2+ CDS regions raises an error.
+        cds = [(1100, 1200), (1300, 1400)]
+        with self.assertRaises(ValueError):
+            self.gene.__add_exons__(exons, cds)
     
     def test___add_cds__(self):
         """ test that __add_cds__() works correctly
