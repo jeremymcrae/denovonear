@@ -58,8 +58,8 @@ class TestWeightedChoicePy(unittest.TestCase):
         """
         
         choices = WeightedChoice([("a", 1), ("b", 5)])
-        s = self.sample(choices, 2000000)
-        self.assertAlmostEqual(s.count("a")/len(s), 0.1667, places=3)
+        s = self.sample(choices, 100000)
+        self.assertAlmostEqual(s.count("a")/len(s), 0.1667, places=2)
         
         choices = WeightedChoice([("a", 1), ("b", 5), ("c", 4)])
         s = self.sample(choices, 100000)
