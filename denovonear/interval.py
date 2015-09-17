@@ -38,14 +38,23 @@ class Interval(SequenceMethods, ConservationMethods):
         self.cds_min = ""
         self.cds_max = ""
         
-        self.exons = self.__add_exons__(exon_ranges)
+        self.exons = self.__add_exons__(exon_ranges, cds_ranges)
         self.cds = self.__add_cds__(cds_ranges)
         
-    def __add_exons__(self, exon_ranges):
+    def __add_exons__(self, exon_ranges, cds):
         """ add exon positions
         """
         
         exon_ranges = sorted(exon_ranges)
+        
+        # If the transcript lacks exon coordinates and only has a single CDS
+        # region, then if the CDS region fits within the gene range, make a
+        # single exon, using the transcript start and end. This prevents issues
+        # when adding the CDS coordinates for the transcript.
+        if exon_ranges == [] and len(cds) == 1:
+            cds = cds[0]
+            if min(cds) > self.start and max(cds) < self.end:
+                exon_ranges = [(self.start, self.end)]
         
         # adjust the positions back one base pair if the transcript is on the
         # reverse strand
