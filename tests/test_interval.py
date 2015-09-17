@@ -34,6 +34,11 @@ class TestIntervalPy(unittest.TestCase):
         self.gene.strand = "-"
         self.assertEqual(self.gene.__add_exons__(exons, cds), [(-1, 199), (799, 999)])
         
+    
+    def test___add_exons___missing_exon(self):
+        """ test that __add_exons__() works correctly when we lack coordinates
+        """
+        
         # also test that we can determine the exons when we don't have any given
         # for a transcript with a single CDS region
         self.gene.strand = "+"
@@ -45,6 +50,20 @@ class TestIntervalPy(unittest.TestCase):
         cds = [(1100, 1200), (1300, 1400)]
         with self.assertRaises(ValueError):
             self.gene.__add_exons__(exons, cds)
+        
+        # if the CDS start matches the gene start, check that the gene is
+        # extended by 1 bp
+        self.gene.start = 1000
+        self.gene.end = 2000
+        cds = [(1000, 1200)]
+        self.assertEqual(self.gene.__add_exons__(exons, cds), [(999, 2000)])
+        
+        # if the CDS end matches the gene end, check that the gene is 
+        # extended by 1 bp
+        self.gene.start = 1000
+        self.gene.end = 2000
+        cds = [(1100, 2000)]
+        self.assertEqual(self.gene.__add_exons__(exons, cds), [(1000, 2001)])
     
     def test___add_cds__(self):
         """ test that __add_cds__() works correctly
