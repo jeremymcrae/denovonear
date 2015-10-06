@@ -17,7 +17,7 @@ from denovonear.load_gene import get_deprecated_gene_ids, load_gene, load_conser
     get_de_novos_in_transcript
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
-from denovonear.load_known_de_novos import load_known_de_novos
+from denovonear.load_de_novos import load_de_novos
 from denovonear.load_conservation_scores import load_conservation_scores
 from denovonear.site_specific_rates import SiteRates
 from denovonear.analyse_de_novo_clustering import AnalyseDeNovoClustering
@@ -192,9 +192,9 @@ def main():
     # Indel clustering currently assumes a uniform mutationm rate across sites,
     # which is not the best model, but is .
     if not args.indel_only:
-        known_de_novos = load_known_de_novos(args.input)
+        known_de_novos = load_de_novos(args.input)
     else:
-        known_de_novos = load_known_de_novos(args.input, \
+        known_de_novos = load_de_novos(args.input, \
             exclude_indels=False, exclude_snvs=True)
     
     output = open(args.output, "w")

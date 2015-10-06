@@ -15,7 +15,7 @@ from denovonear.load_gene import construct_gene_object, get_deprecated_gene_ids,
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
 from denovonear.site_specific_rates import SiteRates
-from denovonear.load_known_de_novos import load_known_de_novos
+from denovonear.load_de_novos import load_de_novos
 
 def get_options():
     """ get the command line switches
@@ -62,7 +62,7 @@ def main():
     if old_gene_id_file is not None:
         old_gene_ids = get_deprecated_gene_ids(old_gene_id_file)
     
-    known_de_novos = load_known_de_novos(input_file, exclude_indels=False)
+    known_de_novos = load_de_novos(input_file, exclude_indels=False)
     
     output = open(output_file, "w")
     output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")

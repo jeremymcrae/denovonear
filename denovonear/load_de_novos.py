@@ -12,8 +12,8 @@ nonsense_consequences = ["splice_donor_variant", "splice_acceptor_variant",\
     
 synonymous_consequences = ["synonymous_variant"]
 
-def load_known_de_novos(filename, exclude_indels=True, exclude_snvs=False):
-    """ load known mutations into dict indexed by HGNC ID.
+def load_de_novos(filename, exclude_indels=True, exclude_snvs=False):
+    """ load mutations into dict indexed by HGNC ID.
     """
     
     f = open(filename, "r")
