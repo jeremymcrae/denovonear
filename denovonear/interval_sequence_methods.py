@@ -95,11 +95,32 @@ class SequenceMethods(object):
                 end_bp = abs(self.get_end() - start) + offset
                 cds_seq = self.genomic_sequence[start_bp:end_bp] + cds_seq
         
+        if cds_seq[0:50] == self.cds_sequence[1:51]:
+            self.fix_transcript_off_by_one_bp()
+            self.add_genomic_sequence(gdna, offset)
+            cds_seq = self.cds_sequence
+        
         # do a sanity check to check that we've got the right cds sequence, this
         # fails for at least one gene (CCDC18), which begins with a N, and
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
             raise ValueError("Coding sequence from gene coordinates doesn't match coding sequence obtained from Ensembl.\nTranscript: {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
+    
+    def fix_transcript_off_by_one_bp(self):
+        """ This fixes ACTL7A, which has  the CDS start and end off by a bp.
+        """
+        
+        offset = 1
+        if self.strand == "+":
+            self.cds[0] = (self.cds[0][0] - offset, self.cds[0][-1])
+            self.cds[-1] = (self.cds[-1][0], self.cds[-1][-1] - offset)
+            self.exons[0] = (self.exons[0][0] - offset, self.exons[0][-1])
+            self.exons[-1] = (self.exons[-1][0], self.exons[-1][-1] - offset)
+        else:
+            self.cds[0] = (self.cds[0][0] + offset, self.cds[0][-1])
+            self.cds[-1] = (self.cds[-1][0], self.cds[-1][-1] + offset)
+            self.exons[0] = (self.exons[0][0] + offset, self.exons[0][-1])
+            self.exons[-1] = (self.exons[-1][0], self.exons[-1][-1] + offset)
     
     def fix_coding_sequence_length(self):
         """ correct the coding sequence of a transcript, if it misses bases.

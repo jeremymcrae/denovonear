@@ -108,6 +108,40 @@ class TestSequenceMethodsPy(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.gene.add_genomic_sequence(gdna)
     
+    def test_add_genomic_sequence_off_by_one(self):
+        """ test that add_genomic_sequence() works when the seq is off by one
+        """
+        
+        self.gene.start = 0
+        self.gene.end = 70
+        self.gene.exons = [(5, 60)]
+        self.gene.cds = [(5, 60)]
+        self.gene.cds_min = 6
+        self.gene.cds_max = 61
+        
+        self.gene.cds_sequence =           "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAA"
+        self.gene.add_genomic_sequence("GGGGATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAACCAGGCCCC")
+        self.assertEqual(self.gene.cds_sequence, "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAA")
+    
+    def test_fix_transcript_off_by_one_bp(self):
+        """ test that fix_transcript_off_by_one_bp is correct
+        """
+        
+        self.gene.start = 0
+        self.gene.end = 70
+        self.gene.exons = [(5, 60)]
+        self.gene.cds = [(5, 60)]
+        self.gene.cds_min = 6
+        self.gene.cds_max = 61
+        
+        self.gene.fix_transcript_off_by_one_bp()
+        self.assertEqual(self.gene.cds, [(4, 59)])
+        
+        self.gene.strand = "-"
+        self.gene.fix_transcript_off_by_one_bp()
+        self.assertEqual(self.gene.cds, [(5, 60)])
+        
+    
     def test_add_genomic_sequence_expanded(self):
         """ test that add_genomic_sequence() works correctly with extra sequence
         """
