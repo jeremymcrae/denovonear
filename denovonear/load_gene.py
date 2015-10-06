@@ -1,7 +1,7 @@
 """ functions to load genes, and identify transcripts containing de novos.
 """
 
-from denovonear.interval import Interval
+from denovonear.transcript import Transcript
 
 
 def get_deprecated_gene_ids(filename):
@@ -44,14 +44,14 @@ def get_transcript_lengths(ensembl, transcript_ids):
     return transcripts
 
 def construct_gene_object(ensembl, transcript_id):
-    """ creates an Interval object for a gene from ensembl databases
+    """ creates an Transcript object for a gene from ensembl databases
     
     Args:
         ensembl: EnsemblRequest object to request data from ensembl
         transcript_id: string for an Ensembl transcript ID
     
     Returns:
-        an Interval object, containing transcript coordinates and gene and
+        a Transcript object, containing transcript coordinates and gene and
         transcript sequence.
     
     Raises:
@@ -67,8 +67,8 @@ def construct_gene_object(ensembl, transcript_id):
     cds_ranges = ensembl.get_cds_ranges_for_transcript(transcript_id)
     exon_ranges = ensembl.get_exon_ranges_for_transcript(transcript_id)
     
-    # start an interval object with the locations and sequence
-    transcript = Interval(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
+    # start a Transcript object with the locations and sequence
+    transcript = Transcript(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
     transcript.fix_coding_sequence_length()
@@ -79,7 +79,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
     """ get the de novos within the coding sequence of a transcript
     
     Args:
-        transcript: Interval object, which defines the transcript coordinates
+        transcript: Transcript object, which defines the transcript coordinates
         de_novos: list of chromosome sequence positions for de novo events
     
     Returns:
@@ -149,7 +149,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
             the gene transcript
         
     Returns:
-        list of Interval objects for gene, including genomic ranges and sequences
+        list of Transcript objects for gene, including genomic ranges and sequences
     """
     
     transcripts = minimise_transcripts(ensembl, gene_id, de_novos)

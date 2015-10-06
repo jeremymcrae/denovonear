@@ -4,15 +4,15 @@
 from __future__ import division
 import unittest
 
-from denovonear.interval_sequence_methods import SequenceMethods
-from denovonear.interval import Interval
+from denovonear.transcript_sequence_methods import SequenceMethods
+from denovonear.transcript import Transcript
 
 class TestSequenceMethodsPy(unittest.TestCase):
     """ unit test the SequenceMethods class
     """
     
     def setUp(self):
-        """ construct an interval object to add sequence to
+        """ construct a Transcript object to add sequence to
         """
         
         chrom = "1"
@@ -23,7 +23,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         exons = [(100, 120), (180, 200)]
         cds = [(110, 120), (180, 190)]
         
-        self.gene = Interval(name, start, end, strand, chrom, exons, cds)
+        self.gene = Transcript(name, start, end, strand, chrom, exons, cds)
     
     def test_get_position_in_cds(self):
         """ test get_position_in_cds() works correctly

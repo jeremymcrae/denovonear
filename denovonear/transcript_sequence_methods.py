@@ -218,7 +218,3 @@ class SequenceMethods(object):
         codon_sequence = codon_sequence.upper()
         
         return t[codon_sequence]
-    
-        
-        
-    

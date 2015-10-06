@@ -1,16 +1,16 @@
-""" class to test the Interval class
+""" class to test the Transcript class
 """
 
 import unittest
 
-from denovonear.interval import Interval
+from denovonear.transcript import Transcript
 
-class TestIntervalPy(unittest.TestCase):
-    """ unit test the Interval class
+class TestTranscriptlPy(unittest.TestCase):
+    """ unit test the Transcript class
     """
     
     def setUp(self):
-        """ construct an interval object for unit tests
+        """ construct a Transcript object for unit tests
         """
         
         chrom = 1
@@ -21,7 +21,7 @@ class TestIntervalPy(unittest.TestCase):
         exons = [(1000, 1200), (1800, 2000)]
         cds = [(1100, 1200), (1800, 1900)]
         
-        self.gene = Interval(name, start, end, strand, chrom, exons, cds)
+        self.gene = Transcript(name, start, end, strand, chrom, exons, cds)
     
     def test___add_exons__(self):
         """ test that __add_exons__() works correctly
@@ -58,7 +58,7 @@ class TestIntervalPy(unittest.TestCase):
         cds = [(1000, 1200)]
         self.assertEqual(self.gene.__add_exons__(exons, cds), [(999, 2000)])
         
-        # if the CDS end matches the gene end, check that the gene is 
+        # if the CDS end matches the gene end, check that the gene is
         # extended by 1 bp
         self.gene.start = 1000
         self.gene.end = 2000
@@ -125,12 +125,12 @@ class TestIntervalPy(unittest.TestCase):
         """
         
         exons = [(10, 20), (50, 60), (90, 100)]
-        a = Interval("a", 10, 100, "+", "1", exons, [(55, 60), (90, 100)])
-        b = Interval("b", 10, 100, "+", "1", exons, [(50, 60), (90, 95)])
-        c = Interval("c", 10, 100, "+", "1", [(45, 65)], [(45, 65)])
-        d = Interval("d", 10, 100, "+", "1", [(30, 40)], [(30, 40)])
+        a = Transcript("a", 10, 100, "+", "1", exons, [(55, 60), (90, 100)])
+        b = Transcript("b", 10, 100, "+", "1", exons, [(50, 60), (90, 95)])
+        c = Transcript("c", 10, 100, "+", "1", [(45, 65)], [(45, 65)])
+        d = Transcript("d", 10, 100, "+", "1", [(30, 40)], [(30, 40)])
         
-        # check that adding two Intervals gives the union of CDS regions
+        # check that adding two Transcripts gives the union of CDS regions
         self.assertEqual((a + b).cds, [(50, 60), (90, 100)])
         self.assertEqual((a + c).cds, [(45, 65), (90, 100)])
         

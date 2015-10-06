@@ -18,7 +18,7 @@ class VCF(object):
         """ set a gene for analysis - pull out CDS variants from the VCF
         
         Args:
-            gene: Interval object, containing gene coordinates and sequence
+            gene: Transcript object, containing gene coordinates and sequence
         """
         
         self.gene = gene
@@ -30,7 +30,7 @@ class VCF(object):
             chrom_file = "ALL.chr" + str(chrom) + ".integrated_phase1_v3.20101123.snps_indels_svs.genotypes.vcf.gz"
         tabix_filename = self.vcf_folder + chrom_file
         
-        # set up a tabix connection to the vcf file, so we can efficiently 
+        # set up a tabix connection to the vcf file, so we can efficiently
         # extract variants in a given region
         vcf_tabix = pysam.VCF()
         vcf_tabix.connect(tabix_filename)
@@ -39,7 +39,7 @@ class VCF(object):
         self.vcf = self._get_variants_in_cds(vcf_tabix)
     
     def _get_variants_in_cds(self, vcf_tabix):
-        """ gets the 1000 Genomes variants in the CDS regions of a gene 
+        """ gets the 1000 Genomes variants in the CDS regions of a gene
         """
         
         chrom = self.gene.get_chrom()
@@ -52,12 +52,12 @@ class VCF(object):
                 end += 8
             temp_records = vcf_tabix.fetch(str(chrom), start, end)
             
-            # drop out any variants that already exist in vcf_records (mainly 
-            # affects CNVs and indels, which can be picked up multiple times if 
+            # drop out any variants that already exist in vcf_records (mainly
+            # affects CNVs and indels, which can be picked up multiple times if
             # they span more than one exon)
             duplicates_removed = []
             for var in temp_records:
-                # check each var from the current exon against all the 
+                # check each var from the current exon against all the
                 # previously added variants
                 not_dup = True
                 for previous in vcf_records:
@@ -72,4 +72,3 @@ class VCF(object):
         return vcf_records
     
     
-

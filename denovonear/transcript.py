@@ -1,15 +1,15 @@
-""" class to hold interval objects (such as genes, transcript regions etc)
+""" class to hold transcript objects (such as genes, transcript regions etc)
 """
 
 import copy
 
-from denovonear.interval_sequence_methods import SequenceMethods
+from denovonear.transcript_sequence_methods import SequenceMethods
 
-class Interval(SequenceMethods):
+class Transcript(SequenceMethods):
     """ Class to define transcript regions.
     
     Uses gene and exon coordinates to define positions, and check whether
-    submitted positions lie within the interval, or inside the coding sequence.
+    submitted positions lie within the transcript, or inside the coding sequence.
     Also can determine distance between two positions in coding distance between
     two positions in the CDS.
     """
@@ -162,7 +162,7 @@ class Interval(SequenceMethods):
         return chrom
     
     def get_chrom(self):
-        """ returns the chrom name for the interval
+        """ returns the chrom name for the transcript
         """
         return self.chrom
     
@@ -172,19 +172,19 @@ class Interval(SequenceMethods):
         return self.name
     
     def get_start(self):
-        """ returns the start position for the interval (note not the CDS start)
+        """ returns the start position for the transcript (note not the CDS start)
         """
         
         return self.start
     
     def get_end(self):
-        """ returns the end position for the interval (note not the CDS end)
+        """ returns the end position for the transcript (note not the CDS end)
         """
         
         return self.end
     
     def get_cds_start(self):
-        """ returns the cds start position for the interval
+        """ returns the cds start position for the transcript
         """
         
         if self.strand == "+":
@@ -195,7 +195,7 @@ class Interval(SequenceMethods):
             raise ValueError("unknown strand type {0}".format(self.strand))
     
     def get_cds_end(self):
-        """ returns the cds end position for the interval
+        """ returns the cds end position for the transcript
         """
         
         if self.strand == "+":
@@ -232,7 +232,7 @@ class Interval(SequenceMethods):
         return hash((self.get_chrom(), self.get_start(), self.get_end()))
     
     def __add__(self, other):
-        """ combine the coding sequences of two interval objects
+        """ combine the coding sequences of two Transcript objects
         
         When we determine the sites for sampling, occasioally we want to
         use sites from multiple alternative transcripts. We determine the sites
@@ -247,7 +247,7 @@ class Interval(SequenceMethods):
         
         Returns:
             an altered instance of the class, where the coding sequence regions
-            are the union of the coding regions of two Interval objects. This
+            are the union of the coding regions of two Transcript objects. This
             disrupts the ability to get meaningingful sequence from the object,
             so don't try to extract sequence from the returned object.
         """
