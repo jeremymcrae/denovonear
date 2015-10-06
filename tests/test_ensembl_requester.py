@@ -3,6 +3,7 @@
 
 import json
 import unittest
+import time
 
 from denovonear.ensembl_requester import EnsemblRequest
 
@@ -173,5 +174,15 @@ class TestEnsemblRequestPy(unittest.TestCase):
             (118380663, 118380833), (118382666, 118382740), (118390333, 118390507),
             (118390672, 118390779), (118391517, 118391600), (118392003, 118392132),
             (118392612, 118392887)])
+    
+    def test_rate_limit_ensembl_requests(self):
+        """ test that rate_limit_ensembl_requests() works correctly
+        """
         
+        current_time = time.time()
+        self.ensembl.prior_time = current_time
         
+        self.ensembl.rate_limit_ensembl_requests()
+        delta = self.ensembl.prior_time - current_time
+        
+        self.assertTrue(delta >= self.ensembl.rate_limit)
