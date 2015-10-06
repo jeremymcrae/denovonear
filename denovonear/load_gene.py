@@ -242,24 +242,4 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     # with transcripts for the reminaing de novos
     return max_transcript + minimise_transcripts(ensembl, gene_id, leftovers)
 
-
-def load_conservation(transcript, folder):
-    """ loads the conservation scores at base level for a gene
-    """
-    
-    # make sure we have the gene location for loading the conservation scores
-    chrom = transcript.get_chrom()
-    start = transcript.get_start()
-    end = transcript.get_end()
-    
-    print("loading conservation scores")
-    # add in phyloP conservation scores
-    scores = load_conservation_scores(folder, chrom, start, end)
-    try:
-        transcript.add_conservation_scores(scores)
-    except ValueError:
-        pass
-    
-    return transcript
-    
     

@@ -13,7 +13,7 @@ import math
 
 import scipy.stats
 
-from denovonear.load_gene import get_deprecated_gene_ids, load_gene, load_conservation, \
+from denovonear.load_gene import get_deprecated_gene_ids, load_gene, \
     get_de_novos_in_transcript
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
