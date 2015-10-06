@@ -4,9 +4,8 @@
 import copy
 
 from denovonear.interval_sequence_methods import SequenceMethods
-from denovonear.interval_conservation_methods import ConservationMethods
 
-class Interval(SequenceMethods, ConservationMethods):
+class Interval(SequenceMethods):
     """ Class to define transcript regions.
     
     Uses gene and exon coordinates to define positions, and check whether
