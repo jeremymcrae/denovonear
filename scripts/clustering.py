@@ -18,7 +18,6 @@ from denovonear.load_gene import get_deprecated_gene_ids, load_gene, load_conser
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
 from denovonear.load_de_novos import load_de_novos
-from denovonear.load_conservation_scores import load_conservation_scores
 from denovonear.site_specific_rates import SiteRates
 from denovonear.analyse_de_novo_clustering import AnalyseDeNovoClustering
 from denovonear.analyse_de_novo_conservation import AnalyseDeNovoConservation
