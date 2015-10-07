@@ -121,22 +121,20 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
     if gene_id in old_gene_ids:
         gene_id = old_gene_ids[gene_id]
     
-    func_events = de_novos["functional"]
     missense = de_novos["missense"]
     nonsense = de_novos["nonsense"]
-    synonymous = de_novos["synonymous"]
     
     # load the set of transcripts that are the  minimum set of transcripts
     # required to contain all the de novos, unless we can't find any coding
     # transcripts that contain the de novos.
     try:
-        transcripts = load_gene(ensembl, gene_id, func_events)
+        transcripts = load_gene(ensembl, gene_id, missense + nonsense)
     except IndexError as e:
         print(e)
         return None
     
-    probs = {"miss_prob": [], "nons_prob": [], "syn_prob": []}
-    dists = {"miss_dist": [], "nons_dist": [], "syn_dist": []}
+    probs = {"miss_prob": [], "nons_prob": []}
+    dists = {"miss_dist": [], "nons_dist": []}
     
     for transcript in transcripts:
         
@@ -204,7 +202,7 @@ def main():
         
         de_novos = known_de_novos[gene_id]
         
-        if len(de_novos["functional"]) < 2:
+        if len(de_novos["missense"] + de_novos["nonsense"]) < 2:
             continue
         
         probs = analyse_gene(gene_id, initial_iterations, ensembl, de_novos, \

@@ -68,7 +68,8 @@ def main():
     output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")
     
     for gene_id in sorted(known_de_novos):
-        func_events = known_de_novos[gene_id]["functional"]
+        de_novos = known_de_novos[gene_id]
+        func_events = de_novos["missense"] + de_novos["nonsense"]
         
         # fix HGNC IDs that have been discontinued in favour of other gene IDs
         if gene_id in old_gene_ids:
