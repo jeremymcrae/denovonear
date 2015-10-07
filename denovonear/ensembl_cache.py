@@ -21,18 +21,19 @@ class EnsemblCache(object):
         """ initialise the class with the local cache folder
         
         Args:
-            cache_folder: path to the cache 
+            cache_folder: path to the cache
         """
         
         self.cache_folder = cache_folder
         self.cache_path = os.path.join(self.cache_folder, "ensembl_cache.db")
         
         self.genome_build = genome_build
+        self.today = datetime.today()
         
         self.connect_to_database()
     
     def connect_to_database(self):
-        """ connect to a sqlite database for the cached data (creates a new 
+        """ connect to a sqlite database for the cached data (creates a new
         database if it doesn't already exist).
         """
         
@@ -50,10 +51,10 @@ class EnsemblCache(object):
                 conn.commit()
                 c.close()
             except sqlite3.OperationalError:
-                # occurs when multiple processes simultaneously try to create the 
+                # occurs when multiple processes simultaneously try to create the
                 # database
                 
-                # briefly sleep, so the process creating the database has time to 
+                # briefly sleep, so the process creating the database has time to
                 # construct it
                 c.close()
                 time.sleep(5)
@@ -74,8 +75,8 @@ class EnsemblCache(object):
     def check_if_data_in_cache(self, url):
         """ checks if the data for a url has already been stored in the cache
         
-        Makes sure that the data is not out of date, by only allowing data that 
-        is less than six months old, and produced by the same Ensembl REST API 
+        Makes sure that the data is not out of date, by only allowing data that
+        is less than six months old, and produced by the same Ensembl REST API
         version.
         
         Args:
@@ -90,7 +91,7 @@ class EnsemblCache(object):
         self.c.execute("SELECT * FROM ensembl WHERE key =? AND genome_build=?", (key, self.genome_build))
         row = self.c.fetchone()
         
-        # if the data has been cached, check that it is not out of date, and 
+        # if the data has been cached, check that it is not out of date, and
         # the data was generated from the same Ensembl API version
         if row is not None:
             api_version = row["api_version"]
@@ -102,7 +103,7 @@ class EnsemblCache(object):
                 self.data = self.data.decode("utf-8")
             
             cache_date = datetime.strptime(row["cache_date"], "%Y-%m-%d")
-            diff = datetime.today() - cache_date
+            diff = self.today - cache_date
             
             if diff.days < 180 and self.api_version == api_version:
                 return True
@@ -112,9 +113,9 @@ class EnsemblCache(object):
     def retrieve_data(self):
         """retrieves data for a URL (checked earlier that this exists)
         
-        The function is only used if the data exists in the cache. In order to 
-        check if the data is in the cache, we selected database rows, and 
-        parsed the contents (to check if the data is obsolete). Rather than 
+        The function is only used if the data exists in the cache. In order to
+        check if the data is in the cache, we selected database rows, and
+        parsed the contents (to check if the data is obsolete). Rather than
         reselecting the data, just use the data loaded earlier.
         
         Returns:
@@ -137,7 +138,7 @@ class EnsemblCache(object):
         if key == "info.rest":
             return
         
-        current_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
+        current_date = datetime.strftime(self.today, "%Y-%m-%d")
         
         # python3 zlib requires encoded strings
         if IS_PYTHON3:
@@ -145,7 +146,7 @@ class EnsemblCache(object):
         
         data = zlib.compress(data)
         
-        # python2 sqlite3 can't write "8-bit bytestrings", but it can handle 
+        # python2 sqlite3 can't write "8-bit bytestrings", but it can handle
         # buffer versions of the bytestrings
         if IS_PYTHON2:
             data = buffer(data)
@@ -171,7 +172,7 @@ class EnsemblCache(object):
         # none of which are necessary for uniquely defining the data
         key[-1] = key[-1].split(";")[0]
         
-        # convert "feature=transcript" to "transcript" or "type=protein" to 
+        # convert "feature=transcript" to "transcript" or "type=protein" to
         # "protein"
         final = key[-1].split("?")
         if "=" in final[-1]:
@@ -183,7 +184,7 @@ class EnsemblCache(object):
         for pos in range(len(key)):
             key[pos] = key[pos].replace(":", "_")
         
-        # if the url ended with "?", then the final list element will be "", 
+        # if the url ended with "?", then the final list element will be "",
         # which we should remove
         if key[-1] == "":
             key = key[:-1]
