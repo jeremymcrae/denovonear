@@ -187,7 +187,8 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     chrom = combined_transcript.get_chrom()
     length = "NA"
     if combined_transcript is not None:
-        length = combined_transcript.get_coding_distance(combined_transcript.cds_min, combined_transcript.cds_max)
+        length = combined_transcript.get_coding_distance(\
+            combined_transcript.cds_min, combined_transcript.cds_max)
     
     return (chrom, length, missense, nonsense, splice_lof, splice_region, synonymous)
 
@@ -273,7 +274,8 @@ def main():
         transcripts = load_genes(input_genes)
     
     output = open(output_file, "w")
-    output.write("transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n")
+    output.write("transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate\t"
+        "splice_lof_rate\tsplice_region_rate\tsynonymous_rate\n")
     
     for gene_id in sorted(transcripts):
         print(gene_id)
@@ -285,7 +287,8 @@ def main():
             rates = rates[2:]
             # log transform the rates, to keep them consistent with the rates from
             # Daly et al.
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, chrom, length, *log_transform(rates))
+            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, \
+                chrom, length, *log_transform(rates))
         except ValueError as error:
             line = "{0}\t{1}\n".format(gene_id, error)
         except KeyError as error:
