@@ -17,7 +17,7 @@ from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.site_specific_rates import SiteRates
-from denovonear.analyse_de_novo_clustering import AnalyseDeNovoClustering
+from denovonear.cluster_de_novos import ClusterDeNovos
 
 def get_options():
     """ get the command line switches
@@ -134,7 +134,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict)
         site_weights = SiteRates(transcript, mut_dict)
         
         print("simulating clustering")
-        clust = AnalyseDeNovoClustering(transcript, site_weights, iterations)
+        clust = ClusterDeNovos(transcript, site_weights, iterations)
         
         (miss_dist, miss_prob) = clust.analyse_missense_and_splice_region(missense_events)
         (nons_dist, nons_prob) = clust.analyse_lof(nonsense_events)

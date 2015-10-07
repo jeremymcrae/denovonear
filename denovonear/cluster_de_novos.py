@@ -3,8 +3,7 @@ distances apart within the gene, and compare that to simulated de novo events
 within the same gene.
 """
 
-from __future__ import division
-from __future__ import print_function
+from __future__ import division, print_function
 
 import os
 import sys
@@ -14,9 +13,10 @@ import ctypes
 import glob
 import heapq
 
-class AnalyseDeNovos(object):
-    """ class to analyse clustering of de novo events via site specific
-    mutation rates
+from denovonear.geometric_mean import geomean
+
+class ClusterDeNovos(object):
+    """ class to analyse clustering of de novos via site specific mutation rates
     """
     
     def __init__(self, transcript, site_weights, iterations):
@@ -39,6 +39,7 @@ class AnalyseDeNovos(object):
         self.transcript = transcript
         self.site_weights = site_weights
         self.max_iter = iterations
+        self.dist = []
     
     def analyse_missense_and_splice_region(self, de_novo_events):
         """ analyse clustering of missense and splice_region de novos
@@ -90,10 +91,9 @@ class AnalyseDeNovos(object):
         
         minimum_prob = 1/(1 + iterations)
         sim_prob = minimum_prob
-        self.dist = []
         
         cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
-        observed_value = self.get_score(cds_positions)
+        observed_value = geomean(cds_positions)
         
         # if the p-value that we obtain is right at the minimum edge of the
         # simulated distribution, increase the number of iterations until the
@@ -164,13 +164,9 @@ class AnalyseDeNovos(object):
             return ("NA", "NA")
         
         cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
-        observed_value = self.get_score(cds_positions)
+        observed_value = geomean(cds_positions)
         
-        sites = []
-        probs = []
-        for (pos, rate) in weights.choices:
-            sites.append(pos)
-            probs.append(rate)
+        sites, probs = zip(*weights.choices)
         
         # convert the sampler sites to c types
         c_sites = ctypes.c_int * len(sites)
@@ -187,7 +183,8 @@ class AnalyseDeNovos(object):
         c_observed_value = ctypes.c_double(observed_value)
         
         # call a C++ library to handle the simulations
-        sim_prob = self.lib.c_analyse_de_novos(c_sites, c_probs, length, iterations, de_novo_count, c_observed_value)
+        sim_prob = self.lib.c_analyse_de_novos(c_sites, c_probs, length,
+            iterations, de_novo_count, c_observed_value)
         
         if type(observed_value) != "str":
             observed_value = "{0:0.1f}".format(observed_value)
@@ -213,7 +210,7 @@ class AnalyseDeNovos(object):
                 site = weights.choice()
                 positions.append(site)
             
-            value = self.get_score(positions)
+            value = geomean(positions)
             temp_dist.append(value)
         
         # sort the current distances, then use a sort function that is fast
@@ -237,22 +234,3 @@ class AnalyseDeNovos(object):
             cds_positions.append(dist)
         
         return cds_positions
-    
-    def geomean(self, values):
-        """ get the geometric mean of a list of values
-        """
-        
-        # get the geometric mean, but be careful around values of 0, since
-        # without correction, the mean distance would be zero
-        if 0 in values:
-            # allow for 0s in a geometric mean by shifting everything up one,
-            # then dropping the mean by one at the end
-            values = [math.log10(x + 1) for x in values]
-            logmean = sum(values)/len(values)
-            mean = (10 ** logmean) - 1
-        else:
-            values = [math.log10(x) for x in values]
-            logmean = sum(values)/len(values)
-            mean = 10 ** logmean
-        
-        return mean
