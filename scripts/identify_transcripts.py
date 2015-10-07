@@ -13,7 +13,6 @@ import argparse
 from denovonear.load_gene import construct_gene_object, get_deprecated_gene_ids, \
     count_de_novos_per_transcript, minimise_transcripts
 from denovonear.ensembl_requester import EnsemblRequest
-from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
 from denovonear.site_specific_rates import SiteRates
 from denovonear.load_de_novos import load_de_novos
 

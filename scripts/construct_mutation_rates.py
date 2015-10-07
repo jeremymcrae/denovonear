@@ -15,7 +15,7 @@ import tempfile
 
 from denovonear.load_gene import construct_gene_object
 from denovonear.ensembl_requester import EnsemblRequest
-from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
+from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.site_specific_rates import SiteRates
 
 def get_options():
@@ -273,7 +273,7 @@ def main():
     
     # load all the data
     ensembl = EnsemblRequest(cache_dir, genome_build)
-    mut_dict = load_trincleotide_mutation_rates(rates_file)
+    mut_dict = load_mutation_rates(rates_file)
     
     if input_transcripts is not None:
         transcripts = load_transcripts(input_transcripts)

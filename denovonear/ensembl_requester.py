@@ -18,7 +18,7 @@ else:
 
 from denovonear.ensembl_cache import EnsemblCache
 
-logging.basicConfig(filename='ensembl_requests.log',level=logging.WARNING)
+logging.basicConfig(filename='ensembl_requests.log', level=logging.WARNING)
 
 class EnsemblRequest(object):
     """ Uses the Ensembl REST API to obtain gene information from Ensembl.
@@ -108,7 +108,9 @@ class EnsemblRequest(object):
         
         self.rate_limit_ensembl_requests()
         response, status_code, requested_headers = self.open_url(self.server + ext, headers=headers)
-        logging.warning("{0}\t{1}\t{2}\t{3}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext))
+        logging.warning("{0}\t{1}\t{2}\t{3}".format(\
+            time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, \
+            sequence_id, self.server + ext))
         
         # we might end up passing too many simultaneous requests, or too many
         # requests per hour, just wait until the period is finished before
@@ -135,7 +137,10 @@ class EnsemblRequest(object):
             try:
                 json.loads(response)
             except ValueError:
-                logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, sequence_id, self.server + ext, "cannot obtain json output"))
+                logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(\
+                    time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), \
+                    status_code, sequence_id, self.server + ext, \
+                    "cannot obtain json output"))
                 return self.ensembl_request(ext, sequence_id, requested_headers)
         
         self.cache.cache_url_data(self.server + ext, response)
@@ -317,7 +322,7 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers={"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         
         self.request_attempts = 0
         ext = "/overlap/id/{0}?feature=exon".format(transcript_id)
@@ -339,7 +344,7 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers={"Content-Type": "application/json"}
+        headers = {"Content-Type": "application/json"}
         
         self.request_attempts = 0
         ext = "/overlap/id/{0}?feature=cds".format(transcript_id)

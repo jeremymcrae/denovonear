@@ -10,8 +10,8 @@ def get_deprecated_gene_ids(filename):
     """
     
     deprecated = {}
-    with open(filename) as f:
-        for line in f:
+    with open(filename) as handle:
+        for line in handle:
             line = line.strip().split()
             old = line[0]
             new = line[1]
@@ -94,7 +94,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
         # this, rather than use the function in_coding_region(), since that
         # function does not allow for splice site variants.
         try:
-            cds_pos = transcript.convert_chr_pos_to_cds_positions(de_novo)
+            transcript.convert_chr_pos_to_cds_positions(de_novo)
             in_transcript.append(de_novo)
         except ValueError:
             continue

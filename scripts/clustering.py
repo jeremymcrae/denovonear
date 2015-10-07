@@ -14,7 +14,7 @@ import scipy.stats
 from denovonear.load_gene import get_deprecated_gene_ids, load_gene, \
     get_de_novos_in_transcript
 from denovonear.ensembl_requester import EnsemblRequest
-from denovonear.load_mutation_rates import load_trincleotide_mutation_rates
+from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.site_specific_rates import SiteRates
 from denovonear.cluster_de_novos import ClusterDeNovos
@@ -165,7 +165,7 @@ def main():
     
     # load all the data
     ensembl = EnsemblRequest(args.cache_dir, args.genome_build)
-    mut_dict = load_trincleotide_mutation_rates(args.rates_path)
+    mut_dict = load_mutation_rates(args.rates_path)
     
     old_gene_ids = {}
     # only load the old gene ID converter if we have specified the file
