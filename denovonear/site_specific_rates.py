@@ -4,10 +4,8 @@
 from __future__ import print_function
 
 from denovonear.weighted_choice import WeightedChoice
-from denovonear.coverage_stats import CoverageStats
 
-
-class SiteRates(CoverageStats):
+class SiteRates():
     """ class to build weighted choice random samplers for nonsense, missense,
     and functional classes of variants, using site specific mutation rates
     
@@ -16,12 +14,11 @@ class SiteRates(CoverageStats):
     defined at: http://www.ensembl.org/info/genome/variation/predicted_data.html
     """
     
-    def __init__(self, gene, mut_dict, masked_sites=None, use_coverage=False):
+    def __init__(self, gene, mut_dict, masked_sites=None:
         
         self.gene = gene
         self.mut_dict = mut_dict
         self.masked = masked_sites
-        self.use_coverage = use_coverage
     
     def get_missense_rates_for_gene(self):
         return self.build_weighted_site_rates_for_gene(self.missense_check)
@@ -169,9 +166,6 @@ class SiteRates(CoverageStats):
         probs = []
         range_start, range_end = self.get_gene_range()
         
-        if self.use_coverage:
-            self.set_coverages(self.gene.get_chrom(), range_start, range_end)
-        
         for bp in range(range_start, range_end):
             # ignore sites within masked regions (typically masked because the
             # site has been picked up on alternative transcript)
@@ -225,8 +219,6 @@ class SiteRates(CoverageStats):
                 
                 if mut_type(initial_aa, mutated_aa, bp):
                     rate = self.mut_dict[self.seq][mutated_seq]
-                    if self.use_coverage:
-                        rate = self.adjust_rate_for_coverage(bp, rate)
                     probs.append([cds_pos, rate])
         
         return WeightedChoice(probs)

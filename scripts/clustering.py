@@ -2,9 +2,7 @@
 within a single gene.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
+from __future__ import print_function, division, absolute_import
 
 import sys
 import os
@@ -34,8 +32,6 @@ def get_options():
         filename")
     parser.add_argument("--rates", dest="rates_path", required=True, \
         help="Path to file containing trinucleotide mutation rates.")
-    parser.add_argument("--indel-only", default=False, action="store_true",\
-        help="whether to analyse indel sites.")
     parser.add_argument("--deprecated-genes", dest="deprecated_genes_path", \
         help="deprecated gene IDs filename")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
@@ -44,10 +40,6 @@ def get_options():
     parser.add_argument("--cache-folder", dest="cache_dir", \
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory)")
-    parser.add_argument("--coverage-adjust", dest="use_coverage", default=False, \
-        action="store_true", \
-        help="whether to adjust site mutation rates for sequencing coverage.")
-    parser.add_argument("--coverage-dir", help="location of ExAC coverage files")
     
     args = parser.parse_args()
     
@@ -98,7 +90,7 @@ def combine_p_values(probs):
     
     return fixed_probs
 
-def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict, use_coverage, coverage_dir):
+def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict):
     """ run the analysis code for a single gene
     
     Args:
@@ -109,8 +101,6 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
             indexed by functional type
         old_gene_ids: dictionary of updated HGNC symbols, indexed by their old ID
         mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence
-        use_coverage: whether to compensate for the depth of sequence coverage
-        coverage_dir: path to folder containing coverage data, or None
     
     Returns:
         a dictionary containing P values, and distances for missense, nonsense,
@@ -141,9 +131,7 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict,
         missense_events = get_de_novos_in_transcript(transcript, missense)
         nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
         
-        site_weights = SiteRates(transcript, mut_dict, use_coverage=use_coverage)
-        if coverage_dir is not None:
-            site_weights.set_coverage_dir(coverage_dir)
+        site_weights = SiteRates(transcript, mut_dict)
         
         print("simulating clustering")
         clust = AnalyseDeNovoClustering(transcript, site_weights, iterations)
@@ -184,14 +172,7 @@ def main():
     if args.deprecated_genes_path is not None:
         old_gene_ids = get_deprecated_gene_ids(args.deprecated_genes_path)
     
-    # We typically only test SNVs, but we can also check clustering in indels.
-    # Indel clustering currently assumes a uniform mutationm rate across sites,
-    # which is not the best model, but is .
-    if not args.indel_only:
-        known_de_novos = load_de_novos(args.input)
-    else:
-        known_de_novos = load_de_novos(args.input, \
-            exclude_indels=False, exclude_snvs=True)
+    known_de_novos = load_de_novos(args.input)
     
     output = open(args.output, "w")
     output.write("\t".join(["gene_id", "mutation_category", "events_n", \
@@ -206,7 +187,7 @@ def main():
             continue
         
         probs = analyse_gene(gene_id, initial_iterations, ensembl, de_novos, \
-            old_gene_ids, mut_dict, args.use_coverage, args.coverage_dir)
+            old_gene_ids, mut_dict)
         
         if probs is None:
             continue
