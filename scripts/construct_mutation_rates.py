@@ -44,15 +44,10 @@ def get_options():
         default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
         to cache Ensembl data into (defaults to clustering code directory).")
     
-    parser.add_argument("--coverage-adjust", default=False, action="store_true", \
-        help="whether to adjust site mutation rates for sequencing coverage.")
-    parser.add_argument("--coverage-dir", help="location of ExAC coverage files")
-    
     args = parser.parse_args()
     
     return args.transcript_input, args.gene_input, args.output, args.mut_rates, \
-        args.cache_folder, args.genome_build.lower(), args.coverage_adjust, \
-        args.coverage_dir
+        args.cache_folder, args.genome_build.lower()
 
 def load_transcripts(path):
     """ load a file listing transcript IDs per line
@@ -108,7 +103,7 @@ def load_genes(path):
             
     return transcripts
 
-def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir):
+def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     """ determines missense, nonsense and synonymous mutation rates for a gene
     
     This can estimate a mutation rate from the union of transcripts for a gene.
@@ -162,14 +157,11 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, use_cov, cov_dir
             continue
         
         if combined_transcript is None:
-            site_weights = SiteRates(transcript, mut_dict, use_coverage=use_cov)
+            site_weights = SiteRates(transcript, mut_dict)
             combined_transcript = copy.deepcopy(transcript)
         else:
-            site_weights = SiteRates(transcript, mut_dict, masked_sites=combined_transcript, use_coverage=use_cov)
+            site_weights = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
             combined_transcript += transcript
-        
-        if cov_dir is not None:
-            site_weights.set_coverage_dir(cov_dir)
         
         missense_rates = site_weights.get_missense_rates_for_gene()
         nonsense_rates = site_weights.get_nonsense_rates_for_gene()
@@ -269,7 +261,7 @@ def include_indel_rates(path):
 def main():
     
     input_transcripts, input_genes, output_file, rates_file, cache_dir, \
-        genome_build, use_coverage, coverage_dir = get_options()
+        genome_build = get_options()
     
     # load all the data
     ensembl = EnsemblRequest(cache_dir, genome_build)
@@ -286,8 +278,7 @@ def main():
     for gene_id in sorted(transcripts):
         print(gene_id)
         try:
-            rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl, \
-                use_coverage, coverage_dir)
+            rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
             
             chrom = rates[0]
             length = rates[1]
