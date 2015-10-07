@@ -12,7 +12,7 @@ lof = ["stop_gained", "splice_acceptor_variant",
     
 synonymous = ["synonymous_variant"]
 
-def load_de_novos(path):
+def load_de_novos(path, exclude_indels=True):
     """ load mutations into dict indexed by HGNC ID.
     
     Args:
@@ -21,6 +21,10 @@ def load_de_novos(path):
             hgnc  chr  pos      consequence         var_type
             CTC1  17   8139190  missense_variant    snv
             CTC1  17   8139191  frameshift_variant  indel
+        exclude_indels: True/False for whether we want to exclude indels. If we
+            are testing clustering of de novos, we can only use SNVs, but if we
+            are determining mutation rates for a gene, then we include indels,
+            in order to identify the transcripts that the de novos lie within.
     
     Returns:
         dictionary of missense and lof counts for each gene, indexed by HGNC symbols
@@ -39,7 +43,7 @@ def load_de_novos(path):
             
             # ignore indels (some splice_acceptor_variants (in the
             # functional_consequences) are indels
-            if "indel" in var_type.lower():
+            if exclude_indels and "indel" in var_type.lower():
                 continue
             
             # trim out variants that are missing data
