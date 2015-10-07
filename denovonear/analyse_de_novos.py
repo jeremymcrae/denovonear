@@ -81,7 +81,7 @@ class AnalyseDeNovos(object):
             iterations: the (minimum) number of perumtations to run.
         
         Returns:
-            mean conservation for the observed de novos and probability of 
+            mean conservation for the observed de novos and probability of
             obtaining a mean conservation less than the observed conservation
         """
         
@@ -95,9 +95,9 @@ class AnalyseDeNovos(object):
         cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
         observed_value = self.get_score(cds_positions)
         
-        # if the p-value that we obtain is right at the minimum edge of the 
+        # if the p-value that we obtain is right at the minimum edge of the
         # simulated distribution, increase the number of iterations until the
-        # p-value is no longer at the very edge (or we reach 100 million 
+        # p-value is no longer at the very edge (or we reach 100 million
         # iterations).
         while iterations < 100000000 and sim_prob == minimum_prob:
             minimum_prob = 1/(1 + iterations)
@@ -114,10 +114,6 @@ class AnalyseDeNovos(object):
             
             iterations += 1000000 # for if we need to run more iterations
         
-        # output = open("/nfs/users/nfs_j/jm33/apps/mutation_rates/data/distribution.txt", "w")
-        # for val in dist:
-        #     output.write(str(val) + "\n")
-        
         if type(observed_value) != "str":
             observed_value = "{0:0.1f}".format(observed_value)
         
@@ -129,16 +125,16 @@ class AnalyseDeNovos(object):
         Args:
             p_val: current simulated P value
             iterations: iterations run in order to obtain the simulated P value
-            z_score: 
-            alpha: threshold 
+            z_score:
+            alpha: threshold
         
         Returns:
             True/False for whether to halt the permuations
         """
         
-        # assess whether the P-value could never fall below 0.1, and halt after 
-        # a smaller number of iterations, in order to minimise run time. Figure 
-        # out the lower bound of the confidence interval for the current 
+        # assess whether the P-value could never fall below 0.1, and halt after
+        # a smaller number of iterations, in order to minimise run time. Figure
+        # out the lower bound of the confidence interval for the current
         # simulated P value.
         delta = (z_score * math.sqrt((p_val * (1 - p_val))))/iterations
         lower_bound = p_val - delta
@@ -160,7 +156,7 @@ class AnalyseDeNovos(object):
             iterations: the (minimum) number of perumtations to run.
         
         Returns:
-            mean conservation for the observed de novos and probability of 
+            mean conservation for the observed de novos and probability of
             obtaining a mean conservation less than the observed conservation
         """
         
@@ -207,14 +203,6 @@ class AnalyseDeNovos(object):
             max_iter: number of iterations/simulations to run
         """
         
-        # # occasionally we want to find the dispersion of sampled sites in a 
-        # # gene so we write the sampled sites to a file for analysis
-        # src_dir = os.path.dirname(__file__)
-        # cluster_dir = os.path.dirname(src_dir)
-        # path = os.path.join(cluster_dir, "data", "sampled_sites.weighted.txt")
-        # output = open(path, "w")
-        # chrom_positions = []
-        
         iteration = len(self.dist)
         temp_dist = []
         while iteration < max_iter:
@@ -224,18 +212,11 @@ class AnalyseDeNovos(object):
             while len(positions) < sample_n:
                 site = weights.choice()
                 positions.append(site)
-                # chr_pos = self.transcript.get_position_on_chrom(site)
-                # chrom_positions.append(str(chr_pos))
             
-            # the following line is class specific - can do distance clustering,
-            # conservation scores
             value = self.get_score(positions)
             temp_dist.append(value)
         
-        # output.write("\n".join(chrom_positions))
-        # output.close()
-        
-        # sort the current distances, then use a sort function that is fast 
+        # sort the current distances, then use a sort function that is fast
         # when merging two sorted lists
         temp_dist = sorted(temp_dist)
         self.dist = list(heapq.merge(self.dist, temp_dist))
@@ -264,7 +245,7 @@ class AnalyseDeNovos(object):
         # get the geometric mean, but be careful around values of 0, since
         # without correction, the mean distance would be zero
         if 0 in values:
-            # allow for 0s in a geometric mean by shifting everything up one, 
+            # allow for 0s in a geometric mean by shifting everything up one,
             # then dropping the mean by one at the end
             values = [math.log10(x + 1) for x in values]
             logmean = sum(values)/len(values)
@@ -275,5 +256,3 @@ class AnalyseDeNovos(object):
             mean = 10 ** logmean
         
         return mean
-
-
