@@ -33,6 +33,7 @@ class TestGeomeanPy(unittest.TestCase):
         
         self.assertEqual(geomean([100, 100]), 0)
         self.assertEqual(geomean([100, 110]), 10)
+        self.assertEqual(geomean([100, 100, 1000]), 92.2860120092046)
         self.assertEqual(geomean([100, 110, 1000]), 200.08329863520368)
         
         # check that if we try to get the mean distance for a list with fewer
