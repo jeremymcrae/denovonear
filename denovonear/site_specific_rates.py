@@ -1,11 +1,9 @@
 """ get weight gene mutation rates
 """
 
-from __future__ import print_function
-
 from denovonear.weighted_choice import WeightedChoice
 
-class SiteRates():
+class SiteRates(object):
     """ class to build weighted choice random samplers for nonsense, missense,
     and functional classes of variants, using site specific mutation rates
     
@@ -14,7 +12,7 @@ class SiteRates():
     defined at: http://www.ensembl.org/info/genome/variation/predicted_data.html
     """
     
-    def __init__(self, gene, mut_dict, masked_sites=None:
+    def __init__(self, gene, mut_dict, masked_sites=None):
         
         self.gene = gene
         self.mut_dict = mut_dict
