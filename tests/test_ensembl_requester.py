@@ -51,6 +51,11 @@ class TestEnsemblRequestPy(unittest.TestCase):
         prev = self.ensembl.get_previous_symbol("KMT2A")
         self.assertEqual(prev, ["MLL"])
         
+        # make a check for a gene with multiple documents, to check that we
+        # don't raise an error
+        prev = self.ensembl.get_previous_symbol("KRT16P1")
+        self.assertEqual(prev, ["KRT14P"])
+        
     def test_get_transcript_ids_for_ensembl_gene_ids(self):
         """ test that get_transcript_ids_for_ensembl_gene_ids() works correctly
         """
