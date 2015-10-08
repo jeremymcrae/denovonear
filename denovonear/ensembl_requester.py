@@ -194,6 +194,9 @@ class EnsemblRequest(object):
         prev_gene = []
         docs = gene_json["response"]["docs"]
         
+        # strip out any gene entries that have been invalidated
+        docs = [ x for x in docs if x["status"] != "Entry Withdrawn"]
+        
         if len(docs) == 0:
             pass
         elif len(docs) > 1:
