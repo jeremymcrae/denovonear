@@ -123,7 +123,7 @@ class EnsemblRequest(object):
             
             return self.ensembl_request(ext, sequence_id, headers)
         # retry after 30 seconds if we get service unavailable error
-        elif status_code in [503, 504]:
+        elif status_code in [500, 503, 504]:
             time.sleep(30)
             return self.ensembl_request(ext, sequence_id, headers)
         elif status_code != 200:
