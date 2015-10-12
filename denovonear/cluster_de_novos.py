@@ -41,7 +41,7 @@ class ClusterDeNovos(object):
         self.max_iter = iterations
         self.dist = []
     
-    def analyse_consequence(self, consequence):
+    def analyse_consequence(self, consequence, de_novo_events):
         """ analyse clustering of a particulare functional consequence
         
         Args:
@@ -49,6 +49,7 @@ class ClusterDeNovos(object):
                 "lof", "synonymous" etc. The full list is "missense", "nonsense",
                  "functional", "synonymous", "lof", "loss_of_function",
                  "splice_lof", "splice_region", "missense_and_splice_region".
+            de_novo_events: list of de novos within a gene
         
         Returns:
             p-value for getting the observing clustering within the functional

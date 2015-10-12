@@ -45,7 +45,7 @@ class SiteRates(object):
             "splice_lof": self.splice_lof_check,
             "splice_region": self.splice_region_check,
             "missense_and_splice_region":
-                self.get_missense_and_splice_region_rates_for_gene}
+                self.missense_and_splice_region_check}
         
         return self.build_weighted_site_rates_for_gene(categories[category])
     
