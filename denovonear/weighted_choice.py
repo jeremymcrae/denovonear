@@ -29,7 +29,7 @@ class WeightedChoice(object):
         """ return the cumulative probability for the class
         """
         
-        if len(choices == 0):
+        if len(self.cum_probs == 0):
             return 0
         else:
             return self.cum_probs[-1]
