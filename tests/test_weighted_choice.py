@@ -3,6 +3,7 @@
 from __future__ import division
 
 import unittest
+import random
 
 from denovonear.weighted_choice import WeightedChoice
 
@@ -26,6 +27,8 @@ class TestWeightedChoicePy(unittest.TestCase):
     def test___init__(self):
         """ check that __init__() sets the cumulative probability correctly
         """
+        
+        random.seed(1)
         
         # check for two values
         choices = WeightedChoice([("a", 1), ("b", 5)])
@@ -57,6 +60,8 @@ class TestWeightedChoicePy(unittest.TestCase):
         or > 10 s for 10 million samples.
         """
         
+        random.seed(1)
+        
         choices = WeightedChoice([("a", 1), ("b", 5)])
         s = self.sample(choices, 100000)
         self.assertAlmostEqual(s.count("a")/len(s), 0.1667, places=2)
@@ -82,9 +87,3 @@ class TestWeightedChoicePy(unittest.TestCase):
         choices = WeightedChoice(list(zip(small, small)))
         s = self.sample(choices, 100000)
         self.assertAlmostEqual(s.count(small[0])/len(s), 0.0001, places=3)
-        
-        
-    
-
-# if __name__ == '__main__':
-#     unittest.main()
