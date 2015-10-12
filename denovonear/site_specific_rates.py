@@ -18,29 +18,36 @@ class SiteRates(object):
         self.mut_dict = mut_dict
         self.masked = masked_sites
     
-    def get_missense_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.missense_check)
+    def get_cds_rates(self, category):
+        """ get site-specific mutation rates for each CDS base
         
-    def get_nonsense_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.nonsense_check)
-    
-    def get_functional_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.functional_check)
-    
-    def get_synonymous_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.synonymous_check)
+        This also includes the rates for pertinent splice region sites.
         
-    def get_lof_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.loss_of_function_check)
-    
-    def get_splice_loss_of_function_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.splice_lof_check)
-    
-    def get_splice_region_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.splice_region_check)
-    
-    def get_missense_and_splice_region_rates_for_gene(self):
-        return self.build_weighted_site_rates_for_gene(self.missense_and_splice_region_check)
+        Args:
+            category: string to indicate the consequence type e.g. "missense, or
+                "lof", "synonymous" etc. The full list is "missense", "nonsense",
+                 "functional", "synonymous", "lof", "loss_of_function",
+                 "splice_lof", "splice_region", "missense_and_splice_region".
+        
+        Returns:
+            A WeightedChoice object for the CDS, where each position is paired
+            with its mutation rate. We can then randomly sample sites from the
+            CDS WeightedChoice object according to the probability of each site
+            being mutated to the specific consequence type.
+        """
+        
+        categories = {"missense": self.missense_check,
+            "nonsense": self.nonsense_check,
+            "functional": self.functional_check,
+            "synonymous": self.synonymous_check,
+            "lof": self.loss_of_function_check,
+            "loss_of_function": self.loss_of_function_check,
+            "splice_lof": self.splice_lof_check,
+            "splice_region": self.splice_region_check,
+            "missense_and_splice_region":
+                self.get_missense_and_splice_region_rates_for_gene}
+        
+        return self.build_weighted_site_rates_for_gene(categories[category])
     
     def get_mutated_aa(self, base, codon, codon_pos):
         """ find the amino acid resulting from a base change to a codon

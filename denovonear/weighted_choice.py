@@ -6,7 +6,7 @@ import random
 import bisect
 
 class WeightedChoice(object):
-    """ class for weighted choices, rather than a function, so we don't have to 
+    """ class for weighted choices, rather than a function, so we don't have to
     keep resumming the weights.
     """
     
@@ -24,7 +24,16 @@ class WeightedChoice(object):
         for pair in self.choices:
             cum_prob += pair[1]
             self.cum_probs.append(cum_prob)
+    
+    def get_summed_rate(self):
+        """ return the cumulative probability for the class
+        """
         
+        if len(choices == 0):
+            return 0
+        else:
+            return self.cum_probs[-1]
+    
     def choice(self):
         """ chooses a random element using a set of probability weights
         

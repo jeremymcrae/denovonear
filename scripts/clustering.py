@@ -136,8 +136,8 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict)
         print("simulating clustering")
         clust = ClusterDeNovos(transcript, site_weights, iterations)
         
-        (miss_dist, miss_prob) = clust.analyse_missense_and_splice_region(missense_events)
-        (nons_dist, nons_prob) = clust.analyse_lof(nonsense_events)
+        (miss_dist, miss_prob) = clust.analyse_consequence("missense")
+        (nons_dist, nons_prob) = clust.analyse_consequence("lof")
         
         dists["miss_dist"].append(miss_dist)
         dists["nons_dist"].append(nons_dist)

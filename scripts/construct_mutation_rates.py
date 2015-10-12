@@ -163,26 +163,21 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
             site_weights = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
             combined_transcript += transcript
         
-        missense_rates = site_weights.get_missense_rates_for_gene()
-        nonsense_rates = site_weights.get_nonsense_rates_for_gene()
-        splice_lof_rates = site_weights.get_splice_loss_of_function_rates_for_gene()
-        splice_region_rates = site_weights.get_splice_region_rates_for_gene()
-        synonymous_rates = site_weights.get_synonymous_rates_for_gene()
+        missense_rates = site_weights.get_cds_rates("missense")
+        nonsense_rates = site_weights.get_cds_rates("nonsense")
+        splice_lof_rates = site_weights.get_cds_rates("splice_lof")
+        splice_region_rates = site_weights.get_cds_rates("splice_region")
+        synonymous_rates = site_weights.get_cds_rates("synonymous")
         
         # if any sites have been sampled in the transcript, then add the
         # cumulative probability from those sites to the approporiate
         # mutation rate. Sometimes we won't have any sites for a transcript, as
         # all the sites will have been captured in previous transcripts.
-        if len(missense_rates.choices) > 0:
-            missense += missense_rates.cum_probs[-1]
-        if len(nonsense_rates.choices) > 0:
-            nonsense += nonsense_rates.cum_probs[-1]
-        if len(splice_lof_rates.choices) > 0:
-            splice_lof += splice_lof_rates.cum_probs[-1]
-        if len(splice_region_rates.choices) > 0:
-            splice_region += splice_region_rates.cum_probs[-1]
-        if len(synonymous_rates.choices) > 0:
-            synonymous += synonymous_rates.cum_probs[-1]
+        missense += missense_rates.get_summed_rate()
+        nonsense += nonsense_rates.get_summed_rate()
+        splice_lof += splice_lof_rates.get_summed_rate()
+        splice_region += splice_region_rates.get_summed_rate()
+        synonymous += synonymous_rates.get_summed_rate()
     
     chrom = combined_transcript.get_chrom()
     length = "NA"
