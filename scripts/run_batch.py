@@ -54,7 +54,7 @@ def split_denovos(denovo_path, temp_dir):
         
         # open a file handle to write the de novos to
         if count == 1:
-            name = "{0}.{1}.txt".format(basename, (len(paths) + 1))
+            name = "{0}.{1}.txt".format(basename, iteration)
             path = os.path.join(temp_dir, name)
             output = open(path, "w")
             output.write(header)
@@ -63,7 +63,7 @@ def split_denovos(denovo_path, temp_dir):
         prior = gene
         output.write(line)
     
-    return iteration
+    return iteration - 1
 
 def is_number(string):
     """ check whether a string can be converted to a number
@@ -180,7 +180,7 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
 def main():
     args = get_options()
     
-    batch_process(args.script, args.input, args.temp_dir, args.rates, args.output)
+    batch_process(args.script, args.input, args.temp_dir, args.rates, args.out)
 
 if __name__ == '__main__':
     main()
