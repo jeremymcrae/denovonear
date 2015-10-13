@@ -39,9 +39,9 @@ def split_denovos(denovo_path, temp_dir):
     basename = os.path.basename(denovo_path)
     lines = sorted(lines)
     
+    iteration = 1
     prior = ""
     count = 0
-    paths = []
     for line in lines:
         count += 1
         tmp = line.split("\t")
@@ -58,12 +58,12 @@ def split_denovos(denovo_path, temp_dir):
             path = os.path.join(temp_dir, name)
             output = open(path, "w")
             output.write(header)
-            paths.append(path)
+            iteration += 1
         
         prior = gene
         output.write(line)
     
-    return paths
+    return iteration
 
 def is_number(string):
     """ check whether a string can be converted to a number
@@ -148,11 +148,11 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     """ sets up a lsf job array
     """
     
-    paths = split_denovos(de_novo_path, temp_dir)
+    count = split_denovos(de_novo_path, temp_dir)
     
     # set up run parameters
     job_name = "denovonear"
-    job_id = "{0}[1-{1}]%10".format(job_name, len(paths))
+    job_id = "{0}[1-{1}]%10".format(job_name, count)
     
     basename = os.path.basename(de_novo_path)
     infile = os.path.join(temp_dir, "{}.\$LSB_JOBINDEX\.txt".format(basename))
