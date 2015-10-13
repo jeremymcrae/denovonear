@@ -6,6 +6,7 @@ import subprocess
 import time
 import random
 import argparse
+import tempfile
 
 def get_options():
     """ get the command line options
@@ -54,8 +55,7 @@ def split_denovos(denovo_path, temp_dir):
         
         # open a file handle to write the de novos to
         if count == 1:
-            name = "{0}.{1}.txt".format(basename, iteration)
-            path = os.path.join(temp_dir, name)
+            path = os.path.join(temp_dir, "tmp.{}.txt".format(iteration))
             output = open(path, "w")
             output.write(header)
             iteration += 1
@@ -148,6 +148,7 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     """ sets up a lsf job array
     """
     
+    temp_dir = tempfile.mkdtemp(prefix=temp_dir)
     count = split_denovos(de_novo_path, temp_dir)
     
     # set up run parameters
@@ -155,8 +156,8 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     job_id = "{0}[1-{1}]%10".format(job_name, count)
     
     basename = os.path.basename(de_novo_path)
-    infile = os.path.join(temp_dir, "{}.\$LSB_JOBINDEX\.txt".format(basename))
-    outfile = os.path.join(temp_dir, "{}.\$LSB_JOBINDEX\.output.txt".format(basename))
+    infile = os.path.join(temp_dir, "tmp.\$LSB_JOBINDEX\.txt")
+    outfile = os.path.join(temp_dir, "tmp.\$LSB_JOBINDEX\.output")
     
     command = ["python", script,
         "--in", infile,
@@ -167,15 +168,13 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     
     # merge the array output after the array finishes
     merge_id = "merge1_" + job_name
-    command = ["head", "-n", "1", os.path.join(temp_dir, "{}.1.txt".format(basename)), ">", output_path, \
-        "; tail", "-q", "-n", "+2", os.path.join(temp_dir, "{}.*.txt".format(basename)), ">>", output_path]
+    command = ["head", "-n", "1", os.path.join(temp_dir, "tmp.1.output"), ">", output_path, \
+        "; tail", "-q", "-n", "+2", os.path.join(temp_dir, "tmp.*.output"), "|", "sort", ">>", output_path]
     submit_bsub_job(command, merge_id, dependent_id=job_id)
     time.sleep(2)
     
     # submit a cleanup job to the cluster
-    cleanup_id = "cleanup"
-    command = ["rm", de_novo_path + ".*.txt"]
-    submit_bsub_job(command, cleanup_id, dependent_id=merge_id)
+    submit_bsub_job(["rm", "-r", temp_dir], job_id="cleanup", dependent_id=merge_id)
     
 def main():
     args = get_options()
