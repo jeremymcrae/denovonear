@@ -19,22 +19,24 @@ def get_options():
         "file listing known mutations in genes. See example file in data folder"
         "for format.")
     parser.add_argument("--rates", required=True, help="Path to rates file.")
+    parser.add_argument("--temp-dir", required=True, help="path to hold intermediate files")
     parser.add_argument("--out", required=True, help="Path to output file.")
     
     args = parser.parse_args()
     
     return args
 
-def split_denovos(denovo_path):
+def split_denovos(denovo_path, temp_dir):
     """ split de novos from an input file into files containing 100 de novos
     """
     
     # open the de novos, drop the header line, then sort them (which will be by
     # HGNC symbol, as the first element of each line)
-    f = open(denovo_path, "r")
-    lines = f.readlines()
-    header = lines.pop(0)
+    with open(denovo_path, "r") as handle:
+        lines = handle.readlines()
+        header = lines.pop(0)
     
+    basename = os.path.basename(denovo_path)
     lines = sorted(lines)
     
     prior = ""
@@ -52,7 +54,8 @@ def split_denovos(denovo_path):
         
         # open a file handle to write the de novos to
         if count == 1:
-            path = "{0}.{1}.txt".format(denovo_path, (len(paths) + 1))
+            name = "{0}.{1}.txt".format(basename, (len(paths) + 1))
+            path = os.path.join(temp_dir, name)
             output = open(path, "w")
             output.write(header)
             paths.append(path)
@@ -141,25 +144,31 @@ def submit_bsub_job(command, job_id=None, dependent_id=None, memory=None, requeu
     command = " ".join(preamble + command)
     subprocess.call(command, shell=True)
 
-def batch_process_clustering(script, paths, de_novo_path, rates_path, output_path):
+def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     """ sets up a lsf job array
     """
+    
+    paths = split_denovos(de_novo_path, temp_dir)
     
     # set up run parameters
     job_name = "denovonear"
     job_id = "{0}[1-{1}]%10".format(job_name, len(paths))
     
-    command = ["python", script, \
-        "--in", de_novo_path + ".\$LSB_JOBINDEX\.txt", \
-        "--out", de_novo_path + ".\$LSB_JOBINDEX\.output.txt", \
+    basename = os.path.basename(de_novo_path)
+    infile = os.path.join(temp_dir, "{}.\$LSB_JOBINDEX\.txt".format(basename))
+    outfile = os.path.join(temp_dir, "{}.\$LSB_JOBINDEX\.output.txt".format(basename))
+    
+    command = ["python", script,
+        "--in", infile,
+        "--out", outfile,
         "--rates", rates_path]
     submit_bsub_job(command, job_id, memory=3000)
     time.sleep(2)
     
     # merge the array output after the array finishes
     merge_id = "merge1_" + job_name
-    command = ["head", "-n", "1", de_novo_path + ".1.output.txt", ">", output_path, \
-        "; tail", "-q", "-n", "+2", de_novo_path + ".*.output.txt", ">>", output_path]
+    command = ["head", "-n", "1", os.path.join(temp_dir, "{}.1.txt".format(basename)), ">", output_path, \
+        "; tail", "-q", "-n", "+2", os.path.join(temp_dir, "{}.*.txt".format(basename)), ">>", output_path]
     submit_bsub_job(command, merge_id, dependent_id=job_id)
     time.sleep(2)
     
@@ -170,8 +179,8 @@ def batch_process_clustering(script, paths, de_novo_path, rates_path, output_pat
     
 def main():
     args = get_options()
-    paths = split_denovos(args.input)
-    batch_process_clustering(args.script, paths, args.input, args.rates, args.output)
+    
+    batch_process(args.script, args.input, args.temp_dir, args.rates, args.output)
 
 if __name__ == '__main__':
     main()
