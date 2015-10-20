@@ -18,7 +18,7 @@ setup (name = "denovonear",
         author = "Jeremy McRae",
         author_email = "jeremy.mcrae@sanger.ac.uk",
         license="MIT",
-        packages=["denovonear"],
+        packages=["denovonear", "denovonear.gene_plotting"],
         install_requires=['pysam >= 0.8.0',
                           'scipy >= 0.9.0'
         ],
