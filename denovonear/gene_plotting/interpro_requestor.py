@@ -24,7 +24,7 @@ elif IS_PYTHON3:
 else:
     raise ValueError("unknown python version")
 
-from src.gene_plotting.interpro_parser import InterProParser
+from denovonear.gene_plotting.interpro_parser import InterProParser
 
 try:
     import xml.etree.cElementTree as et
@@ -172,7 +172,7 @@ class InterproRequest(InterProParser):
         
         self.request_attempts = 0
         header = {"User-Agent": self.getUserAgent()}
-        status = self.api_request("/status/" + job_id, header)
+        status = self.api_request("/status/{}".format(job_id), header)
         
         return status
     
@@ -180,7 +180,7 @@ class InterproRequest(InterProParser):
         
         self.request_attempts = 0
         header = {"User-Agent": self.getUserAgent()}
-        result_types = self.api_request("/resulttypes/" + job_id, header)
+        result_types = self.api_request("/resulttypes/{}".format(job_id), header)
         
         root = et.fromstring(result_types)
         
@@ -203,7 +203,7 @@ class InterproRequest(InterProParser):
         
         self.request_attempts = 0
         header = {"User-Agent": self.getUserAgent()}
-        api_response = self.api_request("/result/" + job_id + "/tsv", header)
+        api_response = self.api_request("/result/{}/tsv".format(job_id), header)
         
         domains = self.parse_interpro_results(api_response)
         domains = self.standardise_names(domains)
