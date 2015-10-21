@@ -5,6 +5,8 @@ from __future__ import division
 
 
 class GenomicPlot(object):
+    """ class to plot exons of genes using genomic coordinates.
+    """
     
     def plot_gene(self):
         """ plots the exons of a gene
@@ -14,8 +16,8 @@ class GenomicPlot(object):
         # gene, transcript and protein diagrams
         self.y_offset += self.box_height * 3
         
-        min_pos = transcript.get_start()
-        max_pos = transcript.get_end()
+        min_pos = self.transcript.get_start()
+        max_pos = self.transcript.get_end()
         strand = self.transcript.strand
         length = (max_pos - min_pos) / self.size
         
