@@ -8,23 +8,27 @@ from __future__ import print_function
 import webcolors
 import cairocffi as cairo
 
-from denovonear.gene_plotting.domain_plotter import DomainPlotter
-from denovonear.gene_plotting.transcript_plotter import TranscriptPlotter
-from denovonear.gene_plotting.gene_plotter import GenePlotter
+from denovonear.gene_plot.domains import DomainPlot
+from denovonear.gene_plot.transcript import TranscriptPlot
+from denovonear.gene_plot.genomic import GenomicPlot
 
-class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
+class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainsPlot):
     
     size = 1000
     y_offset = 0
     box_height = size/20
     
-    def __init__(self, hgnc_symbol, filename=None):
+    def __init__(self, transcript, hgnc_symbol, de_novos, filename=None):
         """ start the class with a matplotlib plot
         
         Args:
+            transcript: Transcript object for the gene
             hgnc_symbol: hgnc_symbol for the gene
+            de_novos: list of genomic coordinates for de novo variants
         """
         
+        self.transcript = transcript
+        self.de_novos = de_novos
         self.hgnc_symbol = hgnc_symbol
         
         width = self.size

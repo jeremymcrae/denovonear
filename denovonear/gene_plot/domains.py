@@ -3,11 +3,24 @@
 
 from __future__ import division
 
-class DomainPlotter(object):
+class DomainPlot(object):
+    """ class to plot protein domains.
+    """
     
     def plot_domains(self, domains, sequence, de_novos=None):
         """ plots protein domains
+        
+        Args:
+            domains: list of dictionaries for different domain annotations in a
+                protein
+            sequence: protein sequence as string
         """
+        
+        cds_coords = [ self.transcript.convert_chr_pos_to_cds_positions(x) for x in self.de_novos ]
+        
+        codons = [ self.transcript.get_codon_number_for_cds_position(x) for x in cds_coords ]
+        intracodons = [ self.transcript.get_position_within_codon(x)/3 for x in cds_coords ]
+        aa_coords = [ sum(x) for x in zip(codons, intracodons) ]
         
         length = len(sequence) / self.size
         
@@ -21,14 +34,14 @@ class DomainPlotter(object):
         for domain in domains:
             self.plot_single_domain(domain, length)
             
-        for de_novo in de_novos:
+        for de_novo in aa_coords:
             x_pos = de_novo / length
             width = 0.333 / length
             self.add_de_novo(x_pos, width)
         
         # and include the gene symbol and amino acid length on the domain plot
         text = "{} ({} aa)".format(self.hgnc_symbol, len(sequence))
-        self.add_text(length, text, y_adjust=self.box_height*1.5, horizontalalignment="right")
+        self.add_text(self.size, text, y_adjust=self.box_height*1.5, horizontalalignment="right")
     
     def plot_single_domain(self, domain, length):
         """ plots a single domain
