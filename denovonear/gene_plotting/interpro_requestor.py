@@ -31,7 +31,7 @@ try:
 except ImportError:
     import xml.etree.ElementTree as et
 
-logging.basicConfig(filename='interpro_requests.log',level=logging.WARNING)
+logging.basicConfig(filename='interpro_requests.log',level=logging.INFO)
 
 class InterproRequest(InterProParser):
     """ Uses the InterPro REST API to obtain domain information from InterPro.
