@@ -5,6 +5,8 @@ transcripts, and proteins (with domains).
 from __future__ import division
 from __future__ import print_function
 
+import math
+
 import webcolors
 import cairocffi as cairo
 
@@ -105,6 +107,35 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         for i, (x_pos, width) in enumerate(coordinates):
             self.add_box(x_pos, width, height=height, y_adjust=-height, \
                 fillcolor=color, strokecolor=color)
+            
+            # check how many other sites the de novo overlaps
+            temp = coordinates[:]
+            overlaps = [ x_pos <= z + z_width and x_pos + width >= z for z, z_width in temp ]
+            positions = [ x for x, value in enumerate(overlaps) if value ]
+            n_overlaps = sum(overlaps)
+            
+            # figure out the angle for the indicator line
+            increment = 180/(n_overlaps + 1)
+            angle = increment + positions.index(i) * increment
+            radians = math.radians(angle)
+            
+            dy = height * math.sin(radians)
+            dx = math.sqrt(height**2 - dy**2)
+            
+            if angle < 90:
+                dx = -dx
+            
+            # get the rgb values for the required stroke color
+            strokecolor = webcolors.name_to_rgb(color, spec=u'css3')
+            strokecolor = [ x/255 for x in strokecolor ]
+
+            # plot a line arcing out from the overlap point
+            self.cr.new_path()
+            self.cr.move_to(x_pos, self.y_offset - height)
+            self.cr.rel_line_to(dx, -dy)
+            self.cr.set_line_width(self.size/200)
+            self.cr.set_source_rgb(*strokecolor)
+            self.cr.stroke()
     
     def export_figure(self):
         """ exports the plot as a pdf
