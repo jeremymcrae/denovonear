@@ -37,8 +37,6 @@ class TranscriptPlot(object):
             self.add_box(x_pos, width, fillcolor="green")
         
         # and plot the de novo positions
-        for de_novo in cds_coords:
-            x_pos = de_novo / length
-            width = 1/length
-            self.add_de_novo(x_pos, width)
+        coordinates = [ (x/length, 1/length) for x in cds_coords ]
+        self.add_de_novos(coordinates)
         

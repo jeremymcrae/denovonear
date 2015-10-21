@@ -33,11 +33,9 @@ class DomainPlot(object):
         
         for domain in domains:
             self.plot_single_domain(domain, length)
-            
-        for de_novo in aa_coords:
-            x_pos = de_novo / length
-            width = 0.333 / length
-            self.add_de_novo(x_pos, width)
+        
+        coordinates = [ (x/length, 0.333/length) for x in aa_coords ]
+        self.add_de_novos(coordinates)
         
         # and include the gene symbol and amino acid length on the domain plot
         text = "{} ({} aa)".format(self.hgnc_symbol, len(sequence))

@@ -31,15 +31,11 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         self.de_novos = de_novos
         self.hgnc_symbol = hgnc_symbol
         
-        width = self.size
-        height = self.size
-        
         if filename is None:
             filename = "gene_plot.{0}".format(self.hgnc_symbol)
         
-        self.surface = cairo.PDFSurface(filename + '.pdf', width, height)
+        self.surface = cairo.PDFSurface(filename + '.pdf',  self.size,  self.size/2)
         self.cr = cairo.Context(self.surface)
-        self.de_novo_positions = []
     
     def add_box(self, x_pos, width, y_adjust=0, height=None, **kwargs):
         """ adds a rectangle to the plot
@@ -100,15 +96,15 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         self.cr.set_source_rgb(0, 0, 0)
         self.cr.show_text(text)
     
-    def add_de_novo(self, x_pos, width):
+    def add_de_novos(self, coordinates, color="red"):
         """ adds a line to show the position of a de novo
         """
         
-        self.de_novo_positions.append(x_pos)
-        
         height = self.box_height / 2
         
-        self.add_box(x_pos, width, height=height, y_adjust=-height, fillcolor="red", strokecolor="red")
+        for i, (x_pos, width) in enumerate(coordinates):
+            self.add_box(x_pos, width, height=height, y_adjust=-height, \
+                fillcolor=color, strokecolor=color)
     
     def export_figure(self):
         """ exports the plot as a pdf
