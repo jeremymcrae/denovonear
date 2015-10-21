@@ -114,6 +114,9 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
             positions = [ x for x, value in enumerate(overlaps) if value ]
             n_overlaps = sum(overlaps)
             
+            if n_overlaps == 1:
+                continue
+            
             # figure out the angle for the indicator line
             increment = 180/(n_overlaps + 1)
             angle = increment + positions.index(i) * increment
