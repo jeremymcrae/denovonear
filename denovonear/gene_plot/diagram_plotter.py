@@ -12,7 +12,7 @@ from denovonear.gene_plot.domains import DomainPlot
 from denovonear.gene_plot.transcript import TranscriptPlot
 from denovonear.gene_plot.genomic import GenomicPlot
 
-class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainsPlot):
+class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
     
     size = 1000
     y_offset = 0
