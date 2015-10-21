@@ -15,17 +15,17 @@ class GenePlotter(object):
         self.y_offset += self.box_height * 3
         
         strand = gene.strand
-        length = (max_pos - min_pos) / 100
+        length = (max_pos - min_pos) / self.size
         
         # plot the base strand
         x_pos = (gene.get_start() - min_pos) / length
         width = (gene.get_end() - gene.get_start()) / length
         height = self.box_height/8
         y_adjust = self.box_height/2 - height/2
-        self.add_box(x_pos, width, height=height, y_adjust=y_adjust, color="black")
+        self.add_box(x_pos, width, height=height, y_adjust=y_adjust, fillcolor="black")
         
         # give a label for the gene
-        self.add_text(x_pos, gene.get_name(), y_adjust=self.box_height/1.5)
+        self.add_text(x_pos, gene.get_name(), y_adjust=self.box_height*1.5)
         
         for (start, end) in gene.exons:
             self.plot_single_exon(start, end, length, gene, min_pos)
@@ -75,13 +75,13 @@ class GenePlotter(object):
         width = (end - start) / length
         
         if gene.in_coding_region(start) and gene.in_coding_region(end):
-            self.add_box(x_pos, width, facecolor="green")
+            self.add_box(x_pos, width, fillcolor="green")
         elif not gene.in_coding_region(start) and not gene.in_coding_region(end):
-            self.add_box(x_pos, width, facecolor="white")
+            self.add_box(x_pos, width, fillcolor="white")
         else:
             # exons with coding and untranslated regions, either utr first, or
             # utr second
             (x_pos_1, width_1, color_1), (x_pos_2, width_2, color_2) = self.mixed_coords(start, end, length, gene, min_pos)
             
-            self.add_box(x_pos_1, width_1, facecolor=color_1)
-            self.add_box(x_pos_2, width_2, facecolor=color_2)
+            self.add_box(x_pos_1, width_1, fillcolor=color_1)
+            self.add_box(x_pos_2, width_2, fillcolor=color_2)

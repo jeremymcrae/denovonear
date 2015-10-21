@@ -5,10 +5,8 @@ transcripts, and proteins (with domains).
 from __future__ import division
 from __future__ import print_function
 
-
-import matplotlib
-matplotlib.use("pdf")
-from matplotlib import pyplot
+import webcolors
+import cairocffi as cairo
 
 from denovonear.gene_plotting.domain_plotter import DomainPlotter
 from denovonear.gene_plotting.transcript_plotter import TranscriptPlotter
@@ -16,10 +14,11 @@ from denovonear.gene_plotting.gene_plotter import GenePlotter
 
 class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
     
+    size = 1000
     y_offset = 0
-    box_height = 5
+    box_height = size/20
     
-    def __init__(self, hgnc_symbol):
+    def __init__(self, hgnc_symbol, filename=None):
         """ start the class with a matplotlib plot
         
         Args:
@@ -27,8 +26,15 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         """
         
         self.hgnc_symbol = hgnc_symbol
-        self.figure = pyplot.figure()
-        self.plot = self.figure.add_subplot(1, 1, 1)
+        
+        width = self.size
+        height = self.size
+        
+        if filename is None:
+            filename = "gene_plot.{0}".format(self.hgnc_symbol)
+        
+        self.surface = cairo.PDFSurface(filename + '.pdf', width, height)
+        self.cr = cairo.Context(self.surface)
         self.de_novo_positions = []
     
     def add_box(self, x_pos, width, y_adjust=0, height=None, **kwargs):
@@ -38,10 +44,26 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         if height == None:
             height = self.box_height
         
-        xy = (x_pos, self.y_offset + y_adjust)
-        rect = matplotlib.patches.Rectangle(xy, width, height=height, **kwargs)
+        if "strokecolor" in kwargs:
+            strokecolor = webcolors.name_to_rgb(kwargs["strokecolor"], spec=u'css3')
+            strokecolor = [ x/255 for x in strokecolor ]
+        else:
+            # default to a black stroke
+            strokecolor = [0, 0, 0]
         
-        self.plot.add_patch(rect)
+        if "fillcolor" in kwargs:
+            fillcolor = webcolors.name_to_rgb(kwargs["fillcolor"], spec=u'css3')
+            fillcolor = [ x/255 for x in fillcolor ]
+        else:
+            # default to a white fill
+            fillcolor = [1, 1, 1]
+        
+        self.cr.set_line_width(self.size/200)
+        self.cr.set_source_rgb(*strokecolor)
+        self.cr.rectangle(x_pos, self.y_offset + y_adjust, width, height)
+        self.cr.stroke_preserve()
+        self.cr.set_source_rgb(*fillcolor)
+        self.cr.fill()
     
     def add_text(self, x_pos, text, y_adjust=0, **kwargs):
         """ adds some text to the plot
@@ -54,10 +76,25 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
                 horizontalalignment="center" to pyplot.text
         """
         
-        y_pos = self.y_offset - y_adjust
-        xy = (x_pos, y_pos)
+        y_pos = self.y_offset + y_adjust
         
-        pyplot.text(x_pos, y_pos, text, size="x-large", family="sans-serif", **kwargs)
+        self.cr.select_font_face("Arial")
+        self.cr.set_font_size(self.size/50)
+        px = max(self.cr.device_to_user_distance(1, 1))
+        fascent, fdescent, fheight, fxadvance, fyadvance = self.cr.font_extents()
+        xbearing, ybearing, width, height, xadvance, yadvance = \
+                self.cr.text_extents(text)
+        
+        if "horizontalalignment" in kwargs:
+            if kwargs["horizontalalignment"] == "center":
+                x_pos = x_pos - xbearing - width / 2
+            if kwargs["horizontalalignment"] == "right":
+                x_pos = x_pos - xbearing - width
+        y_pos = y_pos - fdescent + fheight / 2
+        
+        self.cr.move_to(x_pos, y_pos)
+        self.cr.set_source_rgb(0, 0, 0)
+        self.cr.show_text(text)
     
     def add_de_novo(self, x_pos, width):
         """ adds a line to show the position of a de novo
@@ -66,39 +103,14 @@ class DiagramPlotter(GenePlotter, TranscriptPlotter, DomainPlotter):
         self.de_novo_positions.append(x_pos)
         
         height = self.box_height / 2
-        y_adjust = self.box_height
         
-        self.add_box(x_pos, width, color="red", height=height, y_adjust=y_adjust)
-    
-    def get_plot_size(self):
-        """ figure out what size the plotted figure will be
-        
-        Returns:
-            tuple of (width, height) in inches
-        """
-        
-        cm_per_inch = 2.54
-        
-        width_in_cm = 20
-        points_per_cm = 100 / width_in_cm
-        width = width_in_cm / cm_per_inch
-        
-        height_in_cm = self.y_offset / points_per_cm
-        height = height_in_cm / cm_per_inch
-        
-        return (width, height)
+        self.add_box(x_pos, width, height=height, y_adjust=-height, fillcolor="red", strokecolor="red")
     
     def export_figure(self):
         """ exports the plot as a pdf
         """
         
-        path = "gene_plot.{0}.pdf".format(self.hgnc_symbol)
+        self.cr.save()
         
-        # scale the axes, then remove them from view
-        pyplot.axis("off")
-        self.plot.autoscale()
-        self.figure.set_size_inches(self.get_plot_size())
-        
-        # and save the plot to a file
-        pyplot.savefig(path, bbox_inches="tight", pad_inches=0)
+        self.surface.write_to_png("test.png")
         

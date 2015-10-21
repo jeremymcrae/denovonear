@@ -20,7 +20,9 @@ setup (name = "denovonear",
         license="MIT",
         packages=["denovonear", "denovonear.gene_plotting"],
         install_requires=['pysam >= 0.8.0',
-                          'scipy >= 0.9.0'
+                          'scipy >= 0.9.0',
+                          'cairocffi >= 0.7.2',
+                          'webcolors >= 1.5'
         ],
         classifiers=[
             "Development Status :: 3 - Alpha",
