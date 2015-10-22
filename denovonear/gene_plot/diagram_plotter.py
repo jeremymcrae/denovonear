@@ -36,31 +36,34 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         if filename is None:
             filename = "gene_plot.{0}".format(self.hgnc_symbol)
         
-        self.surface = cairo.PDFSurface(filename + '.pdf',  self.size,  self.size/2)
+        self.surface = cairo.PDFSurface(filename + '.pdf',  self.size,  self.size/1.5)
         self.cr = cairo.Context(self.surface)
     
-    def add_box(self, x_pos, width, y_adjust=0, height=None, **kwargs):
+    def add_box(self, x_pos, width, y_adjust=0, height=None, strokecolor=None, fillcolor=None, linewidth=None):
         """ adds a rectangle to the plot
         """
         
-        if height == None:
+        if height is None:
             height = self.box_height
         
-        if "strokecolor" in kwargs:
-            strokecolor = webcolors.name_to_rgb(kwargs["strokecolor"], spec=u'css3')
-            strokecolor = [ x/255 for x in strokecolor ]
-        else:
+        if strokecolor is None:
             # default to a black stroke
             strokecolor = [0, 0, 0]
-        
-        if "fillcolor" in kwargs:
-            fillcolor = webcolors.name_to_rgb(kwargs["fillcolor"], spec=u'css3')
-            fillcolor = [ x/255 for x in fillcolor ]
         else:
+            strokecolor = webcolors.name_to_rgb(strokecolor, spec=u'css3')
+            strokecolor = [ x/255 for x in strokecolor ]
+        
+        if fillcolor is None:
             # default to a white fill
             fillcolor = [1, 1, 1]
+        else:
+            fillcolor = webcolors.name_to_rgb(fillcolor, spec=u'css3')
+            fillcolor = [ x/255 for x in fillcolor ]
         
-        self.cr.set_line_width(self.size/200)
+        if linewidth is None:
+            linewidth = self.size/200
+        
+        self.cr.set_line_width(linewidth)
         self.cr.set_source_rgb(*strokecolor)
         self.cr.rectangle(x_pos, self.y_offset + y_adjust, width, height)
         self.cr.stroke_preserve()
