@@ -101,19 +101,34 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         self.cr.set_source_rgb(0, 0, 0)
         self.cr.show_text(text)
     
-    def add_de_novos(self, coordinates, color="red"):
+    def add_de_novos(self, de_novos):
         """ adds a line to show the position of a de novo
+        
+        Args:
+            de_novos: dictionary of variants, indexed by (position, person_id)
+                tuples. Each variant entry contains a "coordinate" entry, which
+                is a tuple of (x_position, width).
         """
         
         height = self.box_height / 2
         
-        for i, (x_pos, width) in enumerate(coordinates):
+        i = -1
+        for key in sorted(de_novos):
+            i += 1
+            color = "gray"
+            if de_novos[key]["source"] == "internal":
+                color = "red"
+            
+            coords = de_novos[key]["coordinate"]
+            x_pos = coords[0]
+            width = coords[1]
+            
             self.add_box(x_pos, width, height=height, y_adjust=-height, \
-                fillcolor=color, strokecolor=color)
+                fillcolor=color, strokecolor=color, linewidth=0)
             
             # check how many other sites the de novo overlaps
-            temp = coordinates[:]
-            overlaps = [ x_pos <= z + z_width and x_pos + width >= z for z, z_width in temp ]
+            overlaps = [ x_pos <= de_novos[z]["coordinate"][0] + de_novos[z]["coordinate"][1] \
+                and x_pos + width >= de_novos[z]["coordinate"][0] for z in sorted(de_novos) ]
             positions = [ x for x, value in enumerate(overlaps) if value ]
             n_overlaps = sum(overlaps)
             
@@ -139,7 +154,7 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
             self.cr.new_path()
             self.cr.move_to(x_pos, self.y_offset - height)
             self.cr.rel_line_to(dx, -dy)
-            self.cr.set_line_width(self.size/200)
+            self.cr.set_line_width(self.size/1000)
             self.cr.set_source_rgb(*strokecolor)
             self.cr.stroke()
     

@@ -34,8 +34,12 @@ class GenomicPlot(object):
         for (start, end) in self.transcript.exons:
             self.plot_single_exon(start, end, length, min_pos)
         
-        coordinates = [ ((x - min_pos)/length, 1/length) for x in self.de_novos ]
-        self.add_de_novos(coordinates)
+        for x in self.de_novos:
+            x_pos = (self.de_novos[x]["start_pos"] - min_pos)/length
+            width = max(1/length, self.size/1000)
+            self.de_novos[x]["coordinate"] = (x_pos, width)
+        
+        self.add_de_novos(self.de_novos)
     
     def mixed_coords(self, start, end, length, min_pos):
         """

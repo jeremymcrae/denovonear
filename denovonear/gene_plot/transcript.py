@@ -12,8 +12,6 @@ class TranscriptPlot(object):
         """ plots a transcript
         """
         
-        cds_coords = [ self.transcript.convert_chr_pos_to_cds_positions(x) for x in self.de_novos ]
-        
         # increment the y_offset position, so as to avoid overplotting between
         # gene, transcript and protein diagrams
         self.y_offset += self.box_height * 3
@@ -37,6 +35,12 @@ class TranscriptPlot(object):
             self.add_box(x_pos, width, fillcolor="green")
         
         # and plot the de novo positions
-        coordinates = [ (x/length, 1/length) for x in cds_coords ]
-        self.add_de_novos(coordinates)
+        for x in self.de_novos:
+            cds = self.transcript.convert_chr_pos_to_cds_positions(self.de_novos[x]["start_pos"])
+            x_pos = cds/length
+            width = max(1/length, self.size/1000)
+            
+            self.de_novos[x]["coordinate"] = (x_pos, width)
+            
+        self.add_de_novos(self.de_novos)
         

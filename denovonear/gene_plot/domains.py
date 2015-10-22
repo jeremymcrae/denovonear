@@ -16,12 +16,6 @@ class DomainPlot(object):
             sequence: protein sequence as string
         """
         
-        cds_coords = [ self.transcript.convert_chr_pos_to_cds_positions(x) for x in self.de_novos ]
-        
-        codons = [ self.transcript.get_codon_number_for_cds_position(x) for x in cds_coords ]
-        intracodons = [ self.transcript.get_position_within_codon(x)/3 for x in cds_coords ]
-        aa_coords = [ sum(x) for x in zip(codons, intracodons) ]
-        
         length = len(sequence) / self.size
         
         # increment the y_offset position, so as to avoid overplotting between
@@ -34,8 +28,18 @@ class DomainPlot(object):
         for domain in domains:
             self.plot_single_domain(domain, length)
         
-        coordinates = [ (x/length, 0.333/length) for x in aa_coords ]
-        self.add_de_novos(coordinates)
+        # get the initial coordiantes to place the de novos at
+        for x in self.de_novos:
+            self.de_novo[x]["coordinate"] = ()
+            cds = self.transcript.convert_chr_pos_to_cds_positions(de_novos[x]["start_pos"])
+            codon = self.transcript.get_codon_number_for_cds_position(cds)
+            offset = self.transcript.get_position_within_codon(cds)/3
+            
+            position = (codon + offset)/length
+            width = max(0.33/length, self.size/1000)
+            self.de_novos[x]["coordinate"] = (position, width)
+        
+        self.add_de_novos(self.de_novos)
         
         # and include the gene symbol and amino acid length on the domain plot
         text = "{} ({} aa)".format(self.hgnc_symbol, len(sequence))
