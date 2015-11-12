@@ -34,9 +34,9 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         self.hgnc_symbol = hgnc_symbol
         
         if filename is None:
-            filename = "gene_plot.{0}".format(self.hgnc_symbol)
+            filename = "gene_plot.{0}.pdf".format(self.hgnc_symbol)
         
-        self.surface = cairo.PDFSurface(filename + '.pdf',  self.size,  self.size/1.5)
+        self.surface = cairo.PDFSurface(filename,  self.size,  self.size/1.5)
         self.cr = cairo.Context(self.surface)
     
     def add_box(self, x_pos, width, y_adjust=0, height=None, strokecolor=None, fillcolor=None, linewidth=None):
@@ -70,7 +70,7 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         self.cr.set_source_rgb(*fillcolor)
         self.cr.fill()
     
-    def add_text(self, x_pos, text, y_adjust=0, **kwargs):
+    def add_text(self, x_pos, text, y_adjust=0, horizontalalignment=None, rotate=None, fontsize=None):
         """ adds some text to the plot
         
         Args:
@@ -83,23 +83,35 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         
         y_pos = self.y_offset + y_adjust
         
+        if fontsize is None:
+            fontsize = "medium"
+        
+        sizes = {"small": self.size/80, "medium": self.size/50, "large": self.size/30}
+        
         self.cr.select_font_face("Arial")
-        self.cr.set_font_size(self.size/50)
+        self.cr.set_font_size(sizes[fontsize])
         px = max(self.cr.device_to_user_distance(1, 1))
         fascent, fdescent, fheight, fxadvance, fyadvance = self.cr.font_extents()
         xbearing, ybearing, width, height, xadvance, yadvance = \
                 self.cr.text_extents(text)
         
-        if "horizontalalignment" in kwargs:
-            if kwargs["horizontalalignment"] == "center":
+        if horizontalalignment is not None:
+            if horizontalalignment == "center":
                 x_pos = x_pos - xbearing - width / 2
-            if kwargs["horizontalalignment"] == "right":
+            elif horizontalalignment == "right":
                 x_pos = x_pos - xbearing - width
         y_pos = y_pos - fdescent + fheight / 2
         
         self.cr.move_to(x_pos, y_pos)
+        
+        if rotate is not None:
+            self.cr.rotate(math.radians(rotate))
+        
         self.cr.set_source_rgb(0, 0, 0)
         self.cr.show_text(text)
+        
+        if rotate is not None:
+            self.cr.rotate(-math.radians(rotate))
     
     def add_de_novos(self, de_novos):
         """ adds a line to show the position of a de novo
@@ -119,44 +131,103 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
             if de_novos[key]["source"] == "internal":
                 color = "red"
             
-            coords = de_novos[key]["coordinate"]
-            x_pos = coords[0]
-            width = coords[1]
-            
-            self.add_box(x_pos, width, height=height, y_adjust=-height, \
+            self.add_box(*de_novos[key]["coordinate"], height=height, y_adjust=-height, \
                 fillcolor=color, strokecolor=color, linewidth=0)
             
-            # check how many other sites the de novo overlaps
-            overlaps = [ x_pos <= de_novos[z]["coordinate"][0] + de_novos[z]["coordinate"][1] \
-                and x_pos + width >= de_novos[z]["coordinate"][0] for z in sorted(de_novos) ]
-            positions = [ x for x, value in enumerate(overlaps) if value ]
-            n_overlaps = sum(overlaps)
+            (x, y) = self.rotate_indicator(de_novos, key, i, color, height)
             
-            if n_overlaps == 1:
-                continue
-            
-            # figure out the angle for the indicator line
-            increment = 180/(n_overlaps + 1)
-            angle = increment + positions.index(i) * increment
-            radians = math.radians(angle)
-            
-            dy = height * math.sin(radians)
-            dx = math.sqrt(height**2 - dy**2)
-            
-            if angle < 90:
-                dx = -dx
-            
-            # get the rgb values for the required stroke color
-            strokecolor = webcolors.name_to_rgb(color, spec=u'css3')
-            strokecolor = [ x/255 for x in strokecolor ]
+            if len(de_novos[key]["ref_allele"]) == 1 and len(de_novos[key]["alt_allele"]) == 1:
+                alt_allele = de_novos[key]["alt_allele"]
+                
+                if self.transcript.strand == "-":
+                    alt_allele = self.transcript.reverse_complement(alt_allele)
+                
+                try:
+                    cds_pos = self.transcript.get_position_in_cds(de_novos[key]["start_pos"])
+                except AssertionError:
+                    continue
+                
+                if self.transcript.strand == "-":
+                    cds_pos += 1
+                
+                codon_number = self.transcript.get_codon_number_for_cds_position(cds_pos)
+                intra_codon = self.transcript.get_position_within_codon(cds_pos)
+                
+                codon = self.transcript.get_codon_sequence(codon_number)
+                mutated_codon = list(codon)
+                mutated_codon[intra_codon] = alt_allele
+                mutated_codon = "".join(mutated_codon)
+                
+                initial_aa = self.transcript.translate_codon(codon)
+                mutated_aa = self.transcript.translate_codon(mutated_codon)
+                
+                text = "{}{}{}".format(initial_aa, codon_number + 1, mutated_aa)
+                
+                self.add_text(x, text, y, rotate=315, fontsize="small")
+    
+    def rotate_indicator(self, de_novos, key, i, color, height):
+        """
+        """
+        
+        (x_pos, width) = de_novos[key]["coordinate"]
+        positions = self.get_overlap_positions(de_novos, key)
+        if len(positions) == 1:
+            return (x_pos, -height)
+        
+        radians = self.get_rotation(positions, i)
+        dy = height * math.sin(radians)
+        dx = math.sqrt(height**2 - dy**2)
+        
+        if math.degrees(radians) < 90:
+            dx = -dx
+        
+        # get the rgb values for the required stroke color
+        strokecolor = webcolors.name_to_rgb(color, spec=u'css3')
+        strokecolor = [ x/255 for x in strokecolor ]
 
-            # plot a line arcing out from the overlap point
-            self.cr.new_path()
-            self.cr.move_to(x_pos, self.y_offset - height)
-            self.cr.rel_line_to(dx, -dy)
-            self.cr.set_line_width(self.size/1000)
-            self.cr.set_source_rgb(*strokecolor)
-            self.cr.stroke()
+        # plot a line arcing out from the overlap point
+        self.cr.new_path()
+        self.cr.move_to(x_pos, self.y_offset - height)
+        self.cr.rel_line_to(dx, -dy)
+        self.cr.set_line_width(self.size/1000)
+        self.cr.set_source_rgb(*strokecolor)
+        self.cr.stroke()
+        
+        return (x_pos + dx, -height-dy)
+    
+    def get_overlap_positions(self, de_novos, key):
+        """ identify the variants which overlap the current site
+        
+        Args:
+            de_novos: list of de novos within gene
+            key: current de novo to check
+        
+        Returns:
+            list positions for overlapping variants
+        """
+        
+        (x_pos, width) = de_novos[key]["coordinate"]
+        
+        # check how many other sites the de novo overlaps
+        overlaps = [ x_pos <= de_novos[z]["coordinate"][0] + de_novos[z]["coordinate"][1] \
+            and x_pos + width >= de_novos[z]["coordinate"][0] for z in sorted(de_novos) ]
+        return [ x for x, value in enumerate(overlaps) if value ]
+    
+    def get_rotation(self, positions, i):
+        """ get the rotation angle for line segments for overlapping de novos
+        
+        Args:
+            positions: list of positions that overlap the current de novo
+            i: position in list for current de novo
+        
+        Returns:
+            angle to plot segment in radians
+        """
+        
+        # figure out the angle for the indicator line
+        increment = 180/(len(positions) + 1)
+        angle = increment + positions.index(i) * increment
+        return math.radians(angle)
     
     def export_figure(self):
         """ exports the plot as a pdf
