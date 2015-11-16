@@ -44,3 +44,7 @@ class TranscriptPlot(object):
             
         self.add_de_novos(self.de_novos)
         
+        # and include the gene symbol and amino acid length on the domain plot
+        text = "{} bp".format(self.transcript.get_coding_distance(cds_start, cds_end) + 1)
+        self.add_text(self.size, text, y_adjust=self.box_height*1.5, horizontalalignment="right")
+        
