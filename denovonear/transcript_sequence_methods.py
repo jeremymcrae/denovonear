@@ -3,9 +3,17 @@
 
 from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
-import string
+import sys
 import math
+
+IS_PYTHON2 = sys.version_info[0] == 2
+
+if IS_PYTHON2:
+    from string import maketrans
+else:
+    maketrans = str.maketrans
 
 class SequenceMethods(object):
     
@@ -160,7 +168,7 @@ class SequenceMethods(object):
         """ reverse complement a DNA or RNA sequence
         """
         
-        transdict = string.maketrans("acgtuACGTU", "tgcaaTGCAA")
+        transdict = maketrans("acgtuACGTU", "tgcaaTGCAA")
         
         return seq.translate(transdict)[::-1]
     
