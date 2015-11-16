@@ -1,9 +1,11 @@
 """ functions to parse the output from requests to the InterPro REST API
 """
 
-from __future__ import print_function
+# from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
+
+import sys
 
 class InterProParser(object):
     """ class to parse results from domain prediction runs from the EBI REST API
@@ -13,7 +15,7 @@ class InterProParser(object):
         """ find matches between the current domain to the other domain results
         
         If the domain overlaps any other domain, we check if the description
-        terms match, if they do, it is simply a matter of different tools 
+        terms match, if they do, it is simply a matter of different tools
         predicting the same domain, in which case we avoid duplicating the
         domain.
         
@@ -43,8 +45,8 @@ class InterProParser(object):
         for pos in range(len(domains)):
             names = list(domains[pos]["domain_type"])
             
-            names = [x.replace(" domain", "") for x in names]
-            name_lengths = [len(x) for x in names]
+            names = [ x.replace(" domain", "") for x in names ]
+            name_lengths = [ len(x) for x in names ]
             
             # find the shortest name (note, this won't necessarily be the best
             # name, but it's a start).
@@ -55,7 +57,7 @@ class InterProParser(object):
         return domains
     
     def build_domain_entry(self, line):
-        """ clean up a interpro results line. 
+        """ clean up a interpro results line.
         """
         
         entry = {}
@@ -77,7 +79,7 @@ class InterProParser(object):
             entry["accession"] = line[11]
         
         # normalise the domain type from the "Coils" tool
-        if entry["tool"] == "Coils":
+        if entry["tool"] == ["Coils"]:
             entry["domain_type"] = set(["Coiled coil"])
         
         return entry
@@ -92,9 +94,9 @@ class InterProParser(object):
             
             entry = self.build_domain_entry(line)
             
-            # I'm not using PANTHER, Gene3D or SUPERFAMILY results, since Ensembl 
-            # doesn't include them (and because they have slightly different naming 
-            # conventions, whichmakes more difficult to match predictions between 
+            # I'm not using PANTHER, Gene3D or SUPERFAMILY results, since Ensembl
+            # doesn't include them (and because they have slightly different naming
+            # conventions, whichmakes more difficult to match predictions between
             # different tools)
             if len(set(entry["tool"]) & set(["PANTHER", "Gene3D", "SUPERFAMILY"])) > 0:
                 continue
