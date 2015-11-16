@@ -24,7 +24,7 @@ elif IS_PYTHON3:
 else:
     raise ValueError("unknown python version")
 
-from denovonear.gene_plotting.interpro_parser import InterProParser
+from denovonear.gene_plot.interpro_parser import InterProParser
 
 try:
     import xml.etree.cElementTree as et
