@@ -56,7 +56,7 @@ class DomainPlot(object):
         x_pos = domain["start"] / length
         width = (domain["end"] - domain["start"]) / length
         
-        color = random.sample(webcolors.css3_names_to_hex, 1)[0]
+        color = random.choice(self.colorset)
         
         # add a box on the domain plot, as well as a text label centered
         # below the box
