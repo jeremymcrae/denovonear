@@ -70,15 +70,13 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         self.cr.set_source_rgb(*fillcolor)
         self.cr.fill()
     
-    def add_text(self, x_pos, text, y_adjust=0, horizontalalignment=None, rotate=None, fontsize=None):
+    def add_text(self, x_pos, text, y_adjust=0, horizontalalignment=None, rotate=None, fontsize=None, color=None):
         """ adds some text to the plot
         
         Args:
             x_pos: horizontal position at which to plot the text
             text: string of text to be plotted
             y_adjust: how far away to plot the text from the current y_offset
-            kwargs: additional arguments, mainly to add arguments like
-                horizontalalignment="center" to pyplot.text
         """
         
         y_pos = self.y_offset + y_adjust
@@ -95,11 +93,21 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         xbearing, ybearing, width, height, xadvance, yadvance = \
                 self.cr.text_extents(text)
         
+        if rotate is not None:
+            x_rot_height = width * math.sin(math.radians(rotate))
+            x_rot_width = math.sqrt(width ** 2 - x_rot_height ** 2)
+            rot_x_delta = width - x_rot_width
+            rot_y_delta = x_rot_height - height
+        
         if horizontalalignment is not None:
             if horizontalalignment == "center":
                 x_pos = x_pos - xbearing - width / 2
             elif horizontalalignment == "right":
                 x_pos = x_pos - xbearing - width
+            if rotate:
+                x_pos = x_pos + rot_x_delta
+                y_pos = y_pos - rot_y_delta
+    
         y_pos = y_pos - fdescent + fheight / 2
         
         self.cr.move_to(x_pos, y_pos)
@@ -107,7 +115,14 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
         if rotate is not None:
             self.cr.rotate(math.radians(rotate))
         
-        self.cr.set_source_rgb(0, 0, 0)
+        if color is None:
+            # default to a black fill
+            color = [0, 0, 0]
+        else:
+            color = webcolors.name_to_rgb(color, spec=u'css3')
+            color = [ x/255 for x in color ]
+        
+        self.cr.set_source_rgb(*color)
         self.cr.show_text(text)
         
         if rotate is not None:
