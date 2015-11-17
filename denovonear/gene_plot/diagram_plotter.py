@@ -235,5 +235,3 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot, Consequences):
         
         self.cr.save()
         
-        self.surface.write_to_png("test.png")
-        
