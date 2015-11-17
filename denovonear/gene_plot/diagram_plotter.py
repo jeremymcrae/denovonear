@@ -21,7 +21,7 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot, Consequences):
     # colors close to white, as they are difficult to distingush from background
     global white
     white = ["aliceblue", "azure", "beige", "cornsilk", "floralwhite",
-        "ghostwhite", "honeydew", "ivory", "lavenderblush", "linen",
+        "gainsboro", "ghostwhite", "honeydew", "ivory", "lavenderblush", "linen",
         "lightyellow", "mintcream", "oldlace", "seashell", "snow", "white",
         "whitesmoke"]
     colorset = webcolors.css3_names_to_hex.keys()
