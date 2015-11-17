@@ -13,8 +13,9 @@ import cairocffi as cairo
 from denovonear.gene_plot.domains import DomainPlot
 from denovonear.gene_plot.transcript import TranscriptPlot
 from denovonear.gene_plot.genomic import GenomicPlot
+from denovonear.gene_plot.consequences import Consequences
 
-class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
+class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot, Consequences):
     
     # Define a set of colors that we can plot domains as, but don't allow any
     # colors close to white, as they are difficult to distingush from background
@@ -163,85 +164,6 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot):
                 de_novos[key]["ref_allele"], de_novos[key]["alt_allele"])
             
             self.add_text(x, text, y, rotate=315, fontsize="small")
-    
-    def get_conseqence(self, pos, ref, alt):
-        """ get a consequence string for a de novo (e.g. R226Q)
-        
-        Args:
-            pos: nucleotide position of the variant
-            ref: reference allele for the variant
-            alt: alternate allele of the variant
-        
-        Returns:
-            string denoting the amino acid change at the given residue (e.g
-            R226Q for an arginine subsituted to a glutamine at the 226th
-            amino acid). Can return None for some variant types (e.g. indels and
-            splice site variants).
-        """
-        
-        matched = 0
-        try:
-            while ref[matched] == alt[matched]:
-                matched += 1
-        except IndexError:
-            pass
-        
-        if self.transcript.strand == "-":
-            pos -= matched
-            ref = self.transcript.reverse_complement(ref)
-            alt = self.transcript.reverse_complement(alt)
-        else:
-            pos += matched
-        
-        if self.transcript.in_coding_region(pos):
-            cds_pos = self.transcript.get_position_in_cds(pos)
-        else:
-            # figure out the HGVS-like code for splice site variants. First find
-            # the closest exon, then the code is based off the distance to the
-            # nearest end. We also need to take the strand into account.
-            start, end = self.transcript.find_closest_exon(pos)
-            
-            cds_pos = self.transcript.get_position_in_cds(end)
-            distance = min(abs(end - pos), abs(start - pos))
-            separator = "+"
-            if pos < start:
-                cds_pos = self.transcript.get_position_in_cds(start)
-                separator = "-"
-            
-            cds_pos += 1
-            if self.transcript.strand == "-":
-                distance -= 1
-                separator = {"-": "+", "+": "-"}[separator]
-            
-            return "c.{}{}{}{}>{}".format(cds_pos, separator, distance, ref, alt)
-        
-        if self.transcript.strand == "-":
-            cds_pos += 1
-        
-        codon_number = self.transcript.get_codon_number_for_cds_position(cds_pos)
-        intra_codon = self.transcript.get_position_within_codon(cds_pos)
-        
-        codon = self.transcript.get_codon_sequence(codon_number)
-        initial_aa = self.transcript.translate_codon(codon)
-        
-        if len(alt) != len(ref):
-            # the frameshift variants are ones where the difference in length
-            # between the ref and al allelels is not divisible by 3
-            if abs(len(ref) - len(alt)) % 3 != 0:
-                return "{}{}fs".format(initial_aa, codon_number + 1)
-            elif len(ref) > len(alt):
-                return "{}{}del".format(initial_aa, codon_number + 1)
-            elif len(ref) < len(alt):
-                return "{}{}ins".format(initial_aa, codon_number + 1)
-        
-        mutated_codon = list(codon)
-        mutated_codon[intra_codon] = alt
-        mutated_codon = "".join(mutated_codon)
-        mutated_aa = self.transcript.translate_codon(mutated_codon)
-        
-        text = "{}{}{}".format(initial_aa, codon_number + 1, mutated_aa)
-        
-        return text
     
     def rotate_indicator(self, de_novos, key, i, color, height):
         """
