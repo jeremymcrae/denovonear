@@ -138,11 +138,11 @@ class Consequences(object):
         # the frameshift variants are ones where the difference in length
         # between the ref and alt alleles is not divisible by 3
         if abs(len(ref) - len(alt)) % 3 != 0:
-            return "{}{}fs".format(initial_aa, codon["codon_number"])
+            return "{}{}fs".format(codon["initial_aa"], codon["codon_number"])
         elif len(ref) > len(alt):
-            return "{}{}del".format(initial_aa, codon["codon_number"])
+            return "{}{}del".format(codon["initial_aa"], codon["codon_number"])
         elif len(ref) < len(alt):
-            return "{}{}ins".format(initial_aa, codon["codon_number"])
+            return "{}{}ins".format(codon["initial_aa"], codon["codon_number"])
     
     def _get_splice_consequence(self, pos, ref, alt):
         """ figure out the HGVS-like code for splice site variants.
