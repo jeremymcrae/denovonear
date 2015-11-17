@@ -20,8 +20,9 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot, Consequences):
     # Define a set of colors that we can plot domains as, but don't allow any
     # colors close to white, as they are difficult to distingush from background
     global white
-    white = ["aliceblue", "azure", "floralwhite", "ghostwhite", "honeydew",
-        "ivory", "linen", "mintcream", "oldlace", "seashell", "snow", "white"]
+    white = ["aliceblue", "azure", "beige", "floralwhite", "ghostwhite",
+        "honeydew", "ivory", "linen", "mintcream", "oldlace", "seashell",
+        "snow", "white"]
     colorset = webcolors.css3_names_to_hex.keys()
     colorset = [ x for x in colorset if x not in white ]
     
