@@ -82,6 +82,8 @@ class InterProParser(object):
         if entry["tool"] == ["Coils"]:
             entry["domain_type"] = set(["Coiled coil"])
         
+        entry["domain_type"].discard("")
+        
         return entry
     
     def parse_interpro_results(self, api_response):
