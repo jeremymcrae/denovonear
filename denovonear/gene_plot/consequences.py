@@ -21,6 +21,10 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 class Consequences(object):
     """ class to identify HGVS-like codes for variants
+    
+    This class relies on a Transcript object: self.transcript, which defines
+    exon positions and genomic sequence to get coding positions, codon sequences
+    and translations.
     """
     
     def get_conseqence(self, pos, ref, alt):
@@ -112,6 +116,13 @@ class Consequences(object):
     
     def _get_indel_consequence(self, pos, ref, alt):
         """ figure out the HGVS-like code for indels (frameshifts too) variants.
+        
+        TODO: This function currently does not provide the full indel
+        information. For example, frameshift variants should also have the
+        distance in residues to the next stop codon (assuming the frameshift
+        variant has introduced a nearby stop codon). Deletions and insertions
+        should not just list the initial amino acid that differs, they should
+        also include the amino acids that have been removed (or introduced).
         
         Args:
             pos: nucleotide position of the variant (chromosome coordinates)
