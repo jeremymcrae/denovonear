@@ -47,14 +47,18 @@ class ClusterDeNovos(object):
         Args:
             category: string to indicate the consequence type e.g. "missense, or
                 "lof", "synonymous" etc. The full list is "missense", "nonsense",
-                 "functional", "synonymous", "lof", "loss_of_function",
-                 "splice_lof", "splice_region", "missense_and_splice_region".
+                "synonymous", "lof", "loss_of_function", "splice_lof",
+                "splice_region".
             de_novo_events: list of de novos within a gene
         
         Returns:
             p-value for getting the observing clustering within the functional
             category.
         """
+        
+        rename = {"lof": "loss_of_function"}
+        if consequence in rename:
+            consequence = rename[consequence]
         
         weights = self.site_weights.get_cds_rates(consequence)
         return self.analyse_de_novos(de_novo_events, weights, self.max_iter)

@@ -75,8 +75,8 @@ class FunctionalChecks(object):
         
         I won't consider insertions, since insertions upstream of the exon
         probably wouldn't impact the transcript, whereas insertions that
-        extend in distance past the exon end would simply extend the 
-        transcript sequence, so it only matters if the insertion is in 
+        extend in distance past the exon end would simply extend the
+        transcript sequence, so it only matters if the insertion is in
         frame or not. Obviously this will not always be true, eg
         insertions that introduce new intron/exon boundaries.
         """
@@ -126,7 +126,7 @@ class FunctionalChecks(object):
         codon = self.gene.get_codon_sequence(codon_number)
         
         # make sure the reference codon contains the reference allele (the
-        # alleles might have been swapped since I select the more frequent 
+        # alleles might have been swapped since I select the more frequent
         # allele as the reference, rather than directly from the reference
         # sequence)
         if codon[codon_pos] == alt:
@@ -135,7 +135,7 @@ class FunctionalChecks(object):
             codon = "".join(codon)
         
         # figure out if the variant impacts the amino acid.
-        # Occasionally the variant occurs in an incomplete transcript (eg 
+        # Occasionally the variant occurs in an incomplete transcript (eg
         # rs28394186 in ENST00000336769). Those may give odd length codons
         # which we shall ignore (since they are so rare).
         initial_aa = self.gene.translate_codon(codon)
@@ -151,9 +151,11 @@ class FunctionalChecks(object):
         
         lof = False
         missense = False
-        if self.missense_and_splice_region_check(initial_aa, mutated_aa, pos):
+        if self.missense_check(initial_aa, mutated_aa, pos) or \
+                self.splice_region_check(initial_aa, mutated_aa, pos):
             missense = True
-        elif self.loss_of_function_check(initial_aa, mutated_aa, pos):
+        elif self.nonsense_check(initial_aa, mutated_aa, pos) or \
+                self.splice_lof_check(initial_aa, mutated_aa, pos):
             lof = True
         
         return (lof, missense)
@@ -162,4 +164,3 @@ class FunctionalChecks(object):
     
     
     
-
