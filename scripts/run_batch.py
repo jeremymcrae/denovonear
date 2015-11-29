@@ -163,7 +163,7 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
         "--in", infile,
         "--out", outfile,
         "--rates", rates_path]
-    submit_bsub_job(command, job_id, memory=3000, logfile="clustering.bjob")
+    submit_bsub_job(command, job_id, memory=4000, logfile="clustering.bjob")
     time.sleep(2)
     
     # merge the array output after the array finishes
