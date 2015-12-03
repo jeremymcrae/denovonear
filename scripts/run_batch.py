@@ -181,14 +181,14 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     time.sleep(2)
     
     # merge the array output after the array finishes
-    merge_id = "merge1_" + job_name
+    merge_id = "{}_merge".format(job_name)
     command = ["head", "-n", "1", os.path.join(temp_dir, "tmp.1.output"), ">", output_path, \
         "; tail", "-q", "-n", "+2", os.path.join(temp_dir, "tmp.*.output"), "|", "sort", ">>", output_path]
     submit_bsub_job(command, merge_id, dependent_id=job_id, logfile="clustering.bjob")
     time.sleep(2)
     
     # submit a cleanup job to the cluster
-    submit_bsub_job(["rm", "-r", temp_dir], job_id="cleanup", \
+    submit_bsub_job(["rm", "-r", temp_dir], job_id="{}_cleanup".format(job_name), \
         dependent_id=merge_id, logfile="clustering.bjob")
     
 def main():
