@@ -27,8 +27,28 @@ def get_options():
     
     return args
 
+def count_missense_per_gene(lines):
+    """ count the number of missense variants in each gene.
+    """
+    
+    counts = {}
+    for x in lines:
+        x = x.split("\t")
+        gene = x[0]
+        consequence = x[3]
+        
+        if gene not in counts:
+            counts[gene] = 0
+        
+        if consequence != "missense_variant":
+            continue
+        
+        counts[gene] += 1
+    
+    return counts
+
 def split_denovos(denovo_path, temp_dir):
-    """ split de novos from an input file into files containing 100 de novos
+    """ split de novos from an input file into files, one for each gene
     """
     
     # open the de novos, drop the header line, then sort them (which will be by
@@ -38,32 +58,26 @@ def split_denovos(denovo_path, temp_dir):
         header = lines.pop(0)
     
     basename = os.path.basename(denovo_path)
-    lines = sorted(lines)
     
-    iteration = 1
-    prior = ""
-    count = 0
-    for line in lines:
-        count += 1
-        tmp = line.split("\t")
-        gene = tmp[0]
+    # only include genes with 2+ missense SNVs
+    counts = count_missense_per_gene(lines)
+    counts = dict((k, v) for k, v in counts.items() if v > 1 )
+    
+    genes = set([])
+    for line in sorted(lines):
+        gene = line.split("\t")[0]
         
-        # once there are more than 100 de novos in the file, and we have cleared
-        # any in progress genes, then get ready to start a new file
-        if count > 100 and gene != prior:
-            count = 1
-        
-        # open a file handle to write the de novos to
-        if count == 1:
-            path = os.path.join(temp_dir, "tmp.{}.txt".format(iteration))
+        # open a new output file whenever we hit a different gene
+        if gene not in genes and gene in counts:
+            genes.add(gene)
+            path = os.path.join(temp_dir, "tmp.{}.txt".format(len(genes)))
             output = open(path, "w")
             output.write(header)
-            iteration += 1
         
-        prior = gene
-        output.write(line)
+        if gene in counts:
+            output.write(line)
     
-    return iteration - 1
+    return len(genes)
 
 def is_number(string):
     """ check whether a string can be converted to a number
@@ -148,12 +162,12 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     """ sets up a lsf job array
     """
     
-    temp_dir = tempfile.mkdtemp(prefix=temp_dir)
+    temp_dir = tempfile.mkdtemp(dir=temp_dir)
     count = split_denovos(de_novo_path, temp_dir)
     
     # set up run parameters
     job_name = "denovonear"
-    job_id = "{0}[1-{1}]%10".format(job_name, count)
+    job_id = "{0}[1-{1}]%20".format(job_name, count)
     
     basename = os.path.basename(de_novo_path)
     infile = os.path.join(temp_dir, "tmp.\$LSB_JOBINDEX\.txt")
@@ -163,7 +177,7 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
         "--in", infile,
         "--out", outfile,
         "--rates", rates_path]
-    submit_bsub_job(command, job_id, memory=4000, logfile="clustering.bjob")
+    submit_bsub_job(command, job_id, memory=3500, logfile="clustering.bjob")
     time.sleep(2)
     
     # merge the array output after the array finishes
