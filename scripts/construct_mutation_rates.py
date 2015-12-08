@@ -157,17 +157,17 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
             continue
         
         if combined_transcript is None:
-            site_weights = SiteRates(transcript, mut_dict)
+            sites = SiteRates(transcript, mut_dict)
             combined_transcript = copy.deepcopy(transcript)
         else:
-            site_weights = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
+            sites = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
             combined_transcript += transcript
         
-        missense_rates = site_weights.get_cds_rates("missense")
-        nonsense_rates = site_weights.get_cds_rates("nonsense")
-        splice_lof_rates = site_weights.get_cds_rates("splice_lof")
-        splice_region_rates = site_weights.get_cds_rates("splice_region")
-        synonymous_rates = site_weights.get_cds_rates("synonymous")
+        missense_rates = sites["missense"]
+        nonsense_rates = sites["nonsense"]
+        splice_lof_rates = sites["splice_lof"]
+        splice_region_rates = sites["splice_region"]
+        synonymous_rates = sites["synonymous"]
         
         # if any sites have been sampled in the transcript, then add the
         # cumulative probability from those sites to the approporiate

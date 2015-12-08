@@ -4,19 +4,20 @@
 #include <random>
 #include <vector>
 
-class WeightedChoice 
-{
-    int * sites;
-    double * probs;
-    int length;
-    std::vector<double> cumulative;
-    double cumulative_sum;
-    
-    public:
+namespace weights {
+    class WeightedChoice
+    {
+        std::vector<int> sites;
+        std::vector<double> cumulative;
+        std::uniform_real_distribution<double> dist;
         std::mt19937_64 generator;
-        WeightedChoice (int sites[], double probs[], int len);
-        std::vector<double> make_cumulative_sums();
-        int choice();
-};
+
+        public:
+            WeightedChoice();
+            void add_choice(int site, double prob);
+            int choice();
+            double get_summed_rate();
+    };
+}
 
 #endif

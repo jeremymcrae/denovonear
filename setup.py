@@ -2,15 +2,24 @@
 import sys
 from setuptools import setup
 from distutils.core import Extension
+from Cython.Build import cythonize
 
 EXTRA_COMPILE_ARGS = ["-std=c++0x"]
 
 if sys.platform == "darwin":
     EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
 
-module1 = Extension("libsimulatedenovo",
-        extra_compile_args = EXTRA_COMPILE_ARGS,
-        sources = ["denovonear/cpp/simulate.cpp", "denovonear/cpp/weighted_choice.cpp"])
+# module1 = Extension("libsimulatedenovo",
+#         extra_compile_args = EXTRA_COMPILE_ARGS,
+#         sources = ["denovonear/cpp/simulate.cpp", "denovonear/cpp/weighted_choice.cpp"])
+    
+module = cythonize(Extension(
+    "denovonear/weights.pyx",
+    extra_compile_args=EXTRA_COMPILE_ARGS,
+    sources=["denovonear/cpp/weighted_choice.cpp"],
+    language="c++",
+    # std="c++0x"
+    ))
 
 setup (name = "denovonear",
         description = 'Package to examine de novo clustering',
@@ -28,5 +37,5 @@ setup (name = "denovonear",
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
         ],
-        ext_modules = [module1],
+        ext_modules=module,
         test_suite="tests")

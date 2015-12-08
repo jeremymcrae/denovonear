@@ -6,18 +6,20 @@
 #include "weighted_choice.h"
 
 
-std::vector<double> get_distances(int sites[], short len)
+double* get_distances(int sites[], short len, int combos)
 {
     /**
         gets the distances between all the pairs of elements from a list
         
         @sites array of positions
         @len length of the sites array
+        @combos number of pairwise combinations possible from the sites
         @return vector of paired positions
     */
     
-    std::vector<double> distances;
+    double* distances = new double [combos];
     
+    int pos = 0;
     // get all non-repeating combinations of the sites
     for (int i=0; i<len; i++)
     {
@@ -28,7 +30,8 @@ std::vector<double> get_distances(int sites[], short len)
             if (j != i)
             {
                 double distance = abs(sites[i] - sites[j]);
-                distances.push_back(distance);
+                distances[pos] = distance;
+                pos += 1;
             }
         }
     }
@@ -36,20 +39,20 @@ std::vector<double> get_distances(int sites[], short len)
     return distances;
 }
 
-bool has_zero(std::vector<double> distances)
+bool has_zero(double distances[], int sz)
 {
     /**
-        @check if any value in a vector is zero
+        @check if any value in an array is zero
         
-        @distances vector of values
+        @distances array of values
+        @sz length of the distances array
         @return true/false for containing zero
     */
-        
-    unsigned long sz = distances.size();
+    
     bool zero_val = false;
     
     // find if any of the elements are zero
-    for (unsigned i=0; i<sz; i++)
+    for (int i=0; i<sz; i++)
     {
         if (distances[i] == 0.0)
         {
@@ -61,32 +64,33 @@ bool has_zero(std::vector<double> distances)
     return zero_val;
 }
 
-double get_geomean(std::vector<double> distances)
+double get_geomean(double distances[], int sz)
 {
     /**
         gets the geometric mean of a vector of distances
         
         @sites array of positions
+        @sz length of the distances array
         @return geometric mean
     */
-    unsigned long sz = distances.size();
-    bool zero_val = has_zero(distances);
+    
+    bool zero_val = has_zero(distances, sz);
     
     if (zero_val)
     {
         // if some values are zero, adjust all of the values upwards, and get
         // the log10 value
-        for (unsigned i=0; i<sz; i++) distances[i] = log10(distances[i] + 1);
+        for (int i=0; i<sz; i++) distances[i] = log10(distances[i] + 1);
     }
     else
     {
         // get the log10 value when we lack zero values
-        for (unsigned i=0; i<sz; i++) distances[i] = log10(distances[i]);
+        for (int i=0; i<sz; i++) distances[i] = log10(distances[i]);
     }
     
     // sum the distances in the vector
     double total = 0;
-    for (unsigned i=0; i<sz; i++) total += distances[i];
+    for (int i=0; i<sz; i++) total += distances[i];
     
     // calculate the mean value
     double mean = total/sz;
@@ -98,15 +102,13 @@ double get_geomean(std::vector<double> distances)
     return mean;
 }
 
-std::vector<double> simulate_distribution(int sites[], double probs[], int len,
-    long iterations, int de_novo_count)
+std::vector<double> simulate_distribution(WeightedChoice weights, long iterations,
+    int de_novo_count)
 {
     /**
         simulates de novos weighted by mutation rate
         
-        @sites array of CDS positions
-        @probs array of mutation rates matches to the sites
-        @len length of the sites and probs arrays
+        @weights WeightedChoice object, to sample sites
         @iteration number of iterations to run
         @de_novo_count number of de novos to simulate per iteration
         @return a list of mean distances for each iteration
@@ -116,12 +118,11 @@ std::vector<double> simulate_distribution(int sites[], double probs[], int len,
     // TODO: figure out why I can't start this in the function that calls this,
     // TODO: when I tried, each set of simulations gave the same choices, which
     // TODO: implies the sampler restarts each time with the same seed.
-    WeightedChoice weights (sites, probs, len);
+    // WeightedChoice weights();
     
-    // use a python object to return the mean distances, makes it easier to
-    // call from python
+    // use a vector to return the mean distances, easier to call from python
+    int combos = ((de_novo_count - 1) * de_novo_count)/2;
     std::vector<double> mean_distances;
-    // double mean_distances[iterations];
     
     // run through the required iterations
     for (int n=0; n < iterations; n++)
@@ -136,8 +137,9 @@ std::vector<double> simulate_distribution(int sites[], double probs[], int len,
         
         // convert the positions into distances between all pairs, and get the
         // geometric mean distance of all the distances
-        std::vector<double> distances = get_distances(positions, de_novo_count);
-        double mean_distance = get_geomean(distances);
+        double *distances = get_distances(positions, de_novo_count, combos);
+        double mean_distance = get_geomean(distances, combos);
+        delete[] distances;
         mean_distances.push_back(mean_distance);
     }
     
@@ -176,15 +178,13 @@ bool halt_permutation(double p_val, int iterations, double z, double alpha)
     return exceeds;
 }
 
-double analyse_de_novos(int sites[], double probs[], int len,
-    int iterations, int de_novo_count, double observed_value)
+double analyse_de_novos(WeightedChoice weights, int iterations, int de_novo_count,
+    double observed_value)
 {
     /**
         simulates de novos weighted by mutation rate
         
-        @sites array of CDS positions
-        @probs array of mutation rates matches to the sites
-        @len length of the sites and probs arrays
+        @weights WeightedChoice object, to sample sites
         @iteration number of iterations to run
         @de_novo_count number of de novos to simulate per iteration
         @observed_value mean distance observed in the real de novo events
@@ -202,7 +202,7 @@ double analyse_de_novos(int sites[], double probs[], int len,
         minimum_prob = 1.0/(1.0 + (double) iterations);
         
         // simulate mean distances between de novos
-        std::vector<double> new_dist = simulate_distribution(sites, probs, len, iters_to_run, de_novo_count);
+        std::vector<double> new_dist = simulate_distribution(weights, iters_to_run, de_novo_count);
         
         // merge the two sorted lists into a sorted vector
         std::vector<double> v(iterations);
@@ -230,11 +230,16 @@ double analyse_de_novos(int sites[], double probs[], int len,
 
 
 extern "C" {
-    WeightedChoice* WeightedChoice_new(int pos[], double p[], int len) { return new WeightedChoice(pos, p, len); }
-    int WeightedChoice_choice(WeightedChoice* chooser) { return  chooser->choice(); }
-    double c_analyse_de_novos(int sites[], double probs[], int len,
-        int iterations, int de_novo_count, double observed_value)
-    {
-        return analyse_de_novos(sites, probs, len, iterations, de_novo_count, observed_value);
+    WeightedChoice* WeightedChoice_new() {
+        return new WeightedChoice();
+    }
+    void WeightedChoice_add_choice(WeightedChoice* chooser, int site, double prob) {
+        return chooser->add_choice(site, prob);
+    }
+    int WeightedChoice_choice(WeightedChoice* chooser) {
+        return chooser->choice();
+    }
+    double WeightedChoice_get_summed_rate(WeightedChoice* chooser) {
+        return chooser->get_summed_rate();
     }
 }
