@@ -21,7 +21,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 import unittest
 
-from denovonear.geometric_mean import geomean
+from denovonear.weights import get_distances, geomean
 
 class TestGeomeanPy(unittest.TestCase):
     """ unit test the geomean function
@@ -31,10 +31,10 @@ class TestGeomeanPy(unittest.TestCase):
         """ test get_position_in_cds() works correctly
         """
         
-        self.assertEqual(geomean([100, 100]), 0)
-        self.assertEqual(geomean([100, 110]), 10)
-        self.assertEqual(geomean([100, 100, 1000]), 92.2860120092046)
-        self.assertEqual(geomean([100, 110, 1000]), 200.08329863520368)
+        self.assertEqual(geomean(get_distances([100, 100])), 0)
+        self.assertEqual(geomean(get_distances([100, 110])), 10)
+        self.assertEqual(geomean(get_distances([100, 100, 1000])), 92.2860120092046)
+        self.assertEqual(geomean(get_distances([100, 110, 1000])), 200.08329863520368)
         
         # check that if we try to get the mean distance for a list with fewer
         # than two positions in it, we get an error, since we can't estimate any

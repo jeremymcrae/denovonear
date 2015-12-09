@@ -1,22 +1,7 @@
 """ get weight gene mutation rates
 """
 
-# import ctypes
-
-from denovonear.weighted_choice import WeightedChoice
-
-
-# lib = ctypes.CDLL("build/lib.linux-x86_64-2.7/libsimulatedenovo.so")
-#
-# # make sure we set the return type
-# WeightedChoice = lib.WeightedChoice_new
-# add_choice = lib.WeightedChoice_add_choice
-#
-# add_choice.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_double]
-#
-# a = WeightedChoice()
-# add_choice(a, 1, 0.5)
-
+from denovonear.weights import WeightedChoice
 
 def get_codon_details(transcript, bp, boundary_dist):
     """ get the details of the codon which a variant resides in
@@ -106,7 +91,7 @@ class SiteRates(object):
         for bp in range(range_start, range_end):
             self.check_position(bp)
     
-    def __getattr__(self, category):
+    def __getitem__(self, category):
         """ get site-specific mutation rates for each CDS base
         
         Args:

@@ -12,20 +12,29 @@ if sys.platform == "darwin":
 # module1 = Extension("libsimulatedenovo",
 #         extra_compile_args = EXTRA_COMPILE_ARGS,
 #         sources = ["denovonear/cpp/simulate.cpp", "denovonear/cpp/weighted_choice.cpp"])
-    
-module1 = cythonize(Extension(
-    "denovonear/weights",
-    extra_compile_args=EXTRA_COMPILE_ARGS,
-    sources=["denovonear/cpp/weights.pyx", "denovonear/cpp/sims.pyx"],
-    language="c++"
-    ))
 
-module2 = cythonize(Extension(
-    "denovonear/sims",
-    extra_compile_args=EXTRA_COMPILE_ARGS,
-    sources=["denovonear/cpp/sims.pyx"],
-    language="c++"
-    ))
+extensions = [
+    Extension("denovonear.weights",
+        extra_compile_args=EXTRA_COMPILE_ARGS,
+        sources=["denovonear/cpp/weights.pyx",
+            "denovonear/cpp/weighted_choice.cpp",
+            "denovonear/cpp/simulate.cpp"],
+        language="c++"),
+    # Extension("denovonear.sims",
+    #     extra_compile_args=EXTRA_COMPILE_ARGS,
+    #     sources=["denovonear/cpp/sims.pyx"],
+    #     # include_dirs = ["denovonear/cpp"],
+    #     language="c++")
+    ]
+
+# module1 = cythonize(Extension(
+#     "denovonear/weights",
+#     extra_compile_args=EXTRA_COMPILE_ARGS,
+#     sources=["denovonear/cpp/weights.pyx", "denovonear/cpp/sims.pyx"],
+#     language="c++"
+#     ))
+
+module1 = cythonize(extensions)
 
 setup (name = "denovonear",
         description = 'Package to examine de novo clustering',

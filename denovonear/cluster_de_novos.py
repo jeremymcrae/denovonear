@@ -5,16 +5,12 @@ within the same gene.
 
 from __future__ import division, print_function
 
-import os
-import sys
-import ctypes
-import glob
-
-from denovonear.geometric_mean import geomean
+from denovonear.weights import geomean, get_distances, analyse_de_novos
 
 class ClusterDeNovos(object):
     """ class to analyse clustering of de novos via site specific mutation rates
     """
+    
     
     def __init__(self, transcript, rates, iterations):
         """ initialise the class
@@ -26,22 +22,9 @@ class ClusterDeNovos(object):
             iterations: number of simulations to perform
         """
         
-        # define the c library to use
-        for path in sys.path:
-            if os.path.isdir(path):
-                files = glob.glob(os.path.join(path, "*simulatedenovo*so"))
-                if len(files) > 0:
-                    lib_path = files[0]
-                    self.lib = ctypes.CDLL(lib_path)
-                    
-                    # make sure we set the return type
-                    self.lib.analyse_de_novos.restype = ctypes.c_double
-                    break
-        
         self.transcript = transcript
         self.rates = rates
         self.iterations = iterations
-        self.dist = []
     
     def analyse_de_novos(self, consequence, de_novos):
         """ find the probability of getting de novos with a mean conservation
@@ -71,16 +54,11 @@ class ClusterDeNovos(object):
         weights = self.rates[consequence]
         
         cds_positions = self.convert_de_novos_to_cds_positions(de_novos)
-        observed_value = geomean(cds_positions)
-        
-        # convert the number of iterations and de novos to ctypes
-        iterations = ctypes.c_int(self.iterations)
-        de_novo_count = ctypes.c_int(len(de_novos))
-        c_observed_value = ctypes.c_double(observed_value)
+        distances = get_distances(cds_positions)
+        observed_value = geomean(distances)
         
         # call a C++ library to handle the simulations
-        sim_prob = self.lib.c_analyse_de_novos(weights, iterations, de_novo_count,
-            c_observed_value)
+        sim_prob = analyse_de_novos(weights, self.iterations, len(de_novos), observed_value)
         
         if type(observed_value) != "str":
             observed_value = "{0:0.1f}".format(observed_value)
