@@ -31,7 +31,7 @@ setup (name="denovonear",
                           'scipy >= 0.9.0',
                           'cairocffi >= 0.7.2',
                           'webcolors >= 1.5',
-                          'cythong >= 0.22'
+                          'cython >= 0.22.0'
         ],
         classifiers=[
             "Development Status :: 3 - Alpha",
