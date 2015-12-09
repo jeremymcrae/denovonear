@@ -13,12 +13,18 @@ if sys.platform == "darwin":
 #         extra_compile_args = EXTRA_COMPILE_ARGS,
 #         sources = ["denovonear/cpp/simulate.cpp", "denovonear/cpp/weighted_choice.cpp"])
     
-module = cythonize(Extension(
-    "denovonear/weights.pyx",
+module1 = cythonize(Extension(
+    "denovonear/weights",
     extra_compile_args=EXTRA_COMPILE_ARGS,
-    sources=["denovonear/cpp/weighted_choice.cpp"],
-    language="c++",
-    # std="c++0x"
+    sources=["denovonear/cpp/weights.pyx", "denovonear/cpp/sims.pyx"],
+    language="c++"
+    ))
+
+module2 = cythonize(Extension(
+    "denovonear/sims",
+    extra_compile_args=EXTRA_COMPILE_ARGS,
+    sources=["denovonear/cpp/sims.pyx"],
+    language="c++"
     ))
 
 setup (name = "denovonear",
@@ -37,5 +43,6 @@ setup (name = "denovonear",
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
         ],
-        ext_modules=module,
+        # ext_modules=[module1, module2],
+        ext_modules=module1,
         test_suite="tests")

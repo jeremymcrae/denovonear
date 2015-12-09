@@ -32,7 +32,7 @@ class WeightedChoice(object):
             probability: probability of selecting this choice.
         """
         
-        self.choices.append((name, probability))
+        self.choices.append(name)
         
         cum_prob = self.get_summed_rate() + probability
         self.cum_probs.append(cum_prob)
@@ -54,7 +54,7 @@ class WeightedChoice(object):
         """
         
         # figure out where in the list a random probability would fall
-        r = random.uniform(0, self.cum_probs[-1])
+        r = random.uniform(0, self.get_summed_rate())
         pos = bisect.bisect_left(self.cum_probs, r)
         
-        return self.choices[pos][0]
+        return self.choices[pos]

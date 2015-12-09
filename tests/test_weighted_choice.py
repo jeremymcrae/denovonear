@@ -3,51 +3,55 @@
 from __future__ import division
 
 import unittest
-import random
 
-from denovonear.weighted_choice import WeightedChoice
+# from denovonear.weighted_choice import WeightedChoice
+from weights import WeightedChoice
 
 class TestWeightedChoicePy(unittest.TestCase):
     """ unit test the WeightedChoice class
     """
-    
-    def sample(self, chooser, max_iter):
-        """ repeatedly sample a weighted choice object, up to max_iter
-        """
-        
-        samples = []
-        
-        iteration = 0
-        while iteration < max_iter:
-            iteration += 1
-            samples.append(chooser.choice())
-        
-        return samples
         
     def test___init__(self):
-        """ check that __init__() sets the cumulative probability correctly
+        """ check that __init__() initiates the object correctly
         """
         
-        random.seed(1)
+        choices = WeightedChoice()
         
-        # check for two values
-        choices = WeightedChoice([("a", 1), ("b", 5)])
-        self.assertEqual(choices.cum_probs, [1, 6])
-         
-         # check for three values
-        choices = WeightedChoice([("a", 1), ("b", 5), ("c", 10)])
-        self.assertEqual(choices.cum_probs, [1, 6, 16])
+        # check that an object without any possible choices has a cumulative
+        # sum of 0, but returns a choice of -1
+        self.assertEqual(choices.get_summed_rate(), 0)
+        self.assertEqual(choices.choice(), -1)
+        
+        # check that the type is set correctly
+        self.assertEqual(type(choices), WeightedChoice)
+        
+    def test_add_choice(self):
+        """ test that add_choice() works correctly
+        """
+        
+        # check the cumulative sum while adding in new values
+        choices = WeightedChoice()
+        choices.add_choice(1, 1)
+        self.assertEqual(choices.get_summed_rate(), 1)
+        choices.add_choice(2, 5)
+        self.assertEqual(choices.get_summed_rate(), 6)
+        choices.add_choice(3, 10)
+        self.assertEqual(choices.get_summed_rate(), 16)
         
         # check that it works for unsorted probabilities
-        choices = WeightedChoice([("a", 1), ("b", 10), ("c", 5)])
-        self.assertEqual(choices.cum_probs, [1, 11, 16])
+        choices = WeightedChoice()
+        choices.add_choice(1, 1)
+        choices.add_choice(2, 10)
+        choices.add_choice(3, 5)
+        self.assertEqual(choices.get_summed_rate(), 16)
         
         # check for very low values, with very high precision (but not
         # necessarily exactly equal)
-        choices = WeightedChoice([("a", 5e-9), ("b", 1e-8), ("c", 1.000000000000005e-10)])
-        self.assertAlmostEqual(choices.cum_probs[0], 5e-9, places=23)
-        self.assertAlmostEqual(choices.cum_probs[1], 1.5e-8, places=23)
-        self.assertAlmostEqual(choices.cum_probs[2], 1.51000000000000005e-8, places=23)
+        choices = WeightedChoice()
+        choices.add_choice(1, 5e-9)
+        choices.add_choice(2, 1e-8)
+        choices.add_choice(3, 1.000000000000005e-10)
+        self.assertAlmostEqual(choices.get_summed_rate(), 1.51000000000000005e-8, places=23)
     
     def test_choice(self):
         """ test that choice() works correctly.
@@ -56,34 +60,58 @@ class TestWeightedChoicePy(unittest.TestCase):
         getting exact values out, so repeated samples are expected to obtain
         proportions of values equivalent to their weight value. The difference
         to the expected proportion minimises with larger sample sets, but at
-        the cost of making the test hang for > 1 second for 1 million seconds,
+        the cost of making the test hang for > 1 second for 1 million samples,
         or > 10 s for 10 million samples.
         """
         
-        random.seed(1)
+        iterations = 1000000
         
-        choices = WeightedChoice([("a", 1), ("b", 5)])
-        s = self.sample(choices, 100000)
-        self.assertAlmostEqual(s.count("a")/len(s), 0.1667, places=2)
+        choices = WeightedChoice()
+        choices.add_choice(1, 1)
+        choices.add_choice(2, 5)
+        s = [ choices.choice() for x in range(iterations) ]
+        self.assertAlmostEqual(s.count(1)/len(s), 0.1667, places=2)
         
-        choices = WeightedChoice([("a", 1), ("b", 5), ("c", 4)])
-        s = self.sample(choices, 100000)
-        self.assertAlmostEqual(s.count("a")/len(s), 0.100, places=2)
-        self.assertAlmostEqual(s.count("b")/len(s), 0.500, places=2)
-        self.assertAlmostEqual(s.count("c")/len(s), 0.400, places=2)
+        # add another choice, then check that all of the choices have been
+        # sampled aat the expecetd proportions
+        choices.add_choice(3, 4)
+        s = [ choices.choice() for x in range(iterations) ]
+        self.assertAlmostEqual(s.count(1)/len(s), 0.100, places=2)
+        self.assertAlmostEqual(s.count(2)/len(s), 0.500, places=2)
+        self.assertAlmostEqual(s.count(3)/len(s), 0.400, places=2)
+        
+        # check that all the choices have been made from the inserted values
+        self.assertEqual(set(s), set([1, 2, 3]))
+    
+    def test_choice_small_numbers(self):
+        """ test that choice() works correctly.
+        """
+        
+        iterations = 1000000
         
         # very small numbers at the end still have expected proportions
-        choices = WeightedChoice([("a", 1), ("b", 5), ("c", 0.0001)])
-        s = self.sample(choices, 100000)
-        self.assertAlmostEqual(s.count("c")/len(s), 0.0001, places=3)
+        choices = WeightedChoice()
+        choices.add_choice(1, 1)
+        choices.add_choice(2, 5)
+        choices.add_choice(3, 0.0001)
+        s = [ choices.choice() for x in range(iterations) ]
+        self.assertAlmostEqual(s.count(3)/len(s), 0.0001, places=3)
         
         # very small numbers at the start still have expected proportions
-        choices = WeightedChoice([("a", 0.0001), ("b", 1), ("c", 5)])
-        s = self.sample(choices, 100000)
-        self.assertAlmostEqual(s.count("a")/len(s), 0.0001, places=3)
+        choices = WeightedChoice()
+        choices.add_choice(1, 0.0001)
+        choices.add_choice(2, 1)
+        choices.add_choice(3, 5)
+        s = [ choices.choice() for x in range(iterations) ]
+        self.assertAlmostEqual(s.count(1)/len(s), 0.0001, places=3)
         
         # check that the sampling works correctly at low weight values
-        small = [x * 0.000000000001 for x in range(1000, 3000)]
-        choices = WeightedChoice(list(zip(small, small)))
-        s = self.sample(choices, 100000)
-        self.assertAlmostEqual(s.count(small[0])/len(s), 0.0001, places=3)
+        choices = WeightedChoice()
+        
+        numbers = range(1000, 3000)
+        small = [ x * 0.000000000001 for x in numbers ]
+        for (name, prob) in zip(numbers, small):
+            choices.add_choice(name, prob)
+        
+        s = [ choices.choice() for x in range(iterations) ]
+        self.assertAlmostEqual(s.count(numbers[0])/len(s), 0.0001, places=3)
