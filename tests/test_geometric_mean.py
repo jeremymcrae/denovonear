@@ -19,6 +19,7 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import math
 import unittest
 
 from denovonear.weights import get_distances, geomean
@@ -36,10 +37,11 @@ class TestGeomeanPy(unittest.TestCase):
         self.assertEqual(geomean(get_distances([100, 100, 1000])), 92.2860120092046)
         self.assertEqual(geomean(get_distances([100, 110, 1000])), 200.08329863520368)
         
+        self.assertEqual(geomean([100]), 100)
+        
         # check that if we try to get the mean distance for a list with fewer
         # than two positions in it, we get an error, since we can't estimate any
         # distances
-        self.assertRaises(ZeroDivisionError, geomean, [100])
-        self.assertRaises(ZeroDivisionError, geomean, [])
+        self.assertTrue(math.isnan(geomean([])))
         
     
