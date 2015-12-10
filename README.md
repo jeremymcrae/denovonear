@@ -6,7 +6,7 @@
 This code assesses whether recurrent de novo single-nucleotide variants lie
 closer together within the coding sequence of a gene than expected by chance.
 We use mutation rates based on the local sequence context to determine the
-expected likelyhood that specific regions of the gene contain mutations.
+expected likelihood that specific regions of the gene contain mutations.
 Currently, the local sequence context mutation rates are per-trinucleotide
 mutation rates provided by Kaitlin Samocha of the Broad Institute, see [Nature
 Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html).
@@ -53,8 +53,8 @@ de novo variants are based on, and defaults to GRCh37.
 #### Identify transcripts containing de novo events
 You can identify transcripts containing de novos events with the
 `identify_transcripts.py` script. This either identifies all transcripts for a
-gene with one or more de novo events, or identifyies the minimal set of
-transcripts to contain all de novos (where transcrips are prioritised on the
+gene with one or more de novo events, or identifies the minimal set of
+transcripts to contain all de novos (where transcripts are prioritised on the
 basis of number of de novo events, and length of coding sequence). Transcripts
 can be identified with:
 ```sh
