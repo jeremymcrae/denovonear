@@ -38,6 +38,6 @@ script:
      --transcripts data/example_transcript_ids.txt \
      --rates data/forSanger_1KG_mutation_rate_table.txt \
      --out output.txt"
- - python -m coverage run --source=./ -m unittest discover
+ - python -m coverage run --source=./denovonear -m unittest discover
 after_success:
  - coveralls
