@@ -87,8 +87,8 @@ def main():
             continue
         
         # write the transcript details to a file
-        for (transcript_id, count, length) in counts:
-            line = "{0}\t{1}\t{2}\t{3}\n".format(gene_id, transcript_id, length, count)
+        for key in counts:
+            line = "{0}\t{1}\t{2}\t{3}\n".format(gene_id, key, counts[key]["len"], counts[key]["n"])
             output.write(line)
         
     output.close()

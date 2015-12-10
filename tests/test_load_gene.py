@@ -141,12 +141,12 @@ class TestLoadGenePy(unittest.TestCase):
         hgnc = "DYNLL1"
         lengths = get_transcript_ids_sorted_by_length(self.ensembl, hgnc)
         
-        expected = [('ENST00000548342', 89),
-            ('ENST00000549989', 89), ('ENST00000392509', 89),
-            ('ENST00000392508', 89), ('ENST00000242577', 89),
-            ('ENST00000550845', 67), ('ENST00000550178', 67),
-            ('ENST00000548214', 67), ('ENST00000552870', 47),
-            ('ENST00000549649', 42)]
+        expected = {'ENST00000548342': 89,
+            'ENST00000549989': 89, 'ENST00000392509': 89,
+            'ENST00000392508': 89, 'ENST00000242577': 89,
+            'ENST00000550845': 67, 'ENST00000550178': 67,
+            'ENST00000548214': 67, 'ENST00000552870': 47,
+            'ENST00000549649': 42}
         
         self.assertEqual(lengths, expected)
     
@@ -180,11 +180,16 @@ class TestLoadGenePy(unittest.TestCase):
         sites = [120934226, 120936012]
         counts = count_de_novos_per_transcript(self.ensembl, hgnc, sites)
         
-        expected = [['ENST00000548342', 2, 89], ['ENST00000549989', 2, 89], \
-            ['ENST00000392509', 2, 89], ['ENST00000392508', 2, 89], \
-            ['ENST00000242577', 2, 89], ['ENST00000550845', 1, 67], \
-            ['ENST00000550178', 1, 67], ['ENST00000548214', 1, 67], \
-            ['ENST00000552870', 1, 47], ['ENST00000549649', 1, 42]]
+        expected = {'ENST00000549649': {'len': 42, 'n': 1},
+            'ENST00000548214': {'len': 67, 'n': 1},
+            'ENST00000242577': {'len': 89, 'n': 2},
+            'ENST00000392508': {'len': 89, 'n': 2},
+            'ENST00000392509': {'len': 89, 'n': 2},
+            'ENST00000549989': {'len': 89, 'n': 2},
+            'ENST00000550178': {'len': 67, 'n': 1},
+            'ENST00000552870': {'len': 47, 'n': 1},
+            'ENST00000550845': {'len': 67, 'n': 1},
+            'ENST00000548342': {'len': 89, 'n': 2}}
         
         self.assertEqual(counts, expected)
         
@@ -199,15 +204,17 @@ class TestLoadGenePy(unittest.TestCase):
         hgnc = "DYNLL1"
         sites = [120934226, 120936012]
         counts = minimise_transcripts(self.ensembl, hgnc, sites)
-        expected = [['ENST00000548342', 2, 89], ['ENST00000549989', 2, 89], \
-            ['ENST00000392509', 2, 89], ['ENST00000392508', 2, 89], \
-            ['ENST00000242577', 2, 89]]
+        expected = {'ENST00000242577': {'len': 89, 'n': 2},
+            'ENST00000392508': {'len': 89, 'n': 2},
+            'ENST00000392509': {'len': 89, 'n': 2},
+            'ENST00000549989': {'len': 89, 'n': 2},
+            'ENST00000548342': {'len': 89, 'n': 2}}
         
         self.assertEqual(counts, expected)
         
         # check that when we don't have any de novos, we return an empty list
-        self.assertEqual(minimise_transcripts(self.ensembl, hgnc, []), [])
+        self.assertEqual(minimise_transcripts(self.ensembl, hgnc, []), {})
         
         # check that when none of the de novos are in a transcript, we return
         # an empty list.
-        self.assertEqual(minimise_transcripts(self.ensembl, hgnc, [100]), [])
+        self.assertEqual(minimise_transcripts(self.ensembl, hgnc, [100]), {})
