@@ -9,16 +9,14 @@ EXTRA_COMPILE_ARGS = ["-std=c++0x"]
 if sys.platform == "darwin":
     EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
 
-extensions = [
+module1 = cythonize([
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
         sources=["denovonear/cpp/weights.pyx",
             "denovonear/cpp/weighted_choice.cpp",
             "denovonear/cpp/simulate.cpp"],
         language="c++"),
-    ]
-
-module1 = cythonize(extensions)
+    ])
 
 setup (name="denovonear",
         description='Package to examine de novo clustering',
