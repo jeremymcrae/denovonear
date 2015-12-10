@@ -5,7 +5,7 @@
 #include <python2.7/Python.h>
 #include "weighted_choice.h"
 
-std::vector<double> _get_distances(std::vector<int> sites)
+std::vector<int> _get_distances(std::vector<int> sites)
 {
     /**
         gets the distances between all the pairs of elements from a list
@@ -15,7 +15,7 @@ std::vector<double> _get_distances(std::vector<int> sites)
     */
     
     int len = sites.size();
-    std::vector<double> distances;
+    std::vector<int> distances;
     
     // get all non-repeating combinations of the sites
     for (int i=0; i<len; i++)
@@ -34,7 +34,7 @@ std::vector<double> _get_distances(std::vector<int> sites)
     return distances;
 }
 
-bool _has_zero(std::vector<double> distances)
+bool _has_zero(std::vector<int> distances)
 {
     /**
         @check if any value in an vector is zero
@@ -45,46 +45,39 @@ bool _has_zero(std::vector<double> distances)
     */
     
     bool zero_val = false;
-    if (std::find(distances.begin(), distances.end(), 0.0) != distances.end()) {
+    if (std::find(distances.begin(), distances.end(), 0) != distances.end()) {
         zero_val = true;
     }
     
     return zero_val;
 }
 
-double _geomean(std::vector<double> distances)
+double _geomean(std::vector<int> distances)
 {
     /**
         gets the geometric mean of a vector of distances
         
-        @sites array of positions
+        @sites vector of distances
         @return geometric mean
     */
     unsigned long sz = distances.size();
     bool zero_val = _has_zero(distances);
     
-    if (zero_val)
-    {
-        // if some values are zero, adjust all of the values upwards, and get
-        // the log10 value
-        for (unsigned i=0; i<sz; i++) distances[i] = log10(distances[i] + 1);
-    }
-    else
-    {
-        // get the log10 value when we lack zero values
-        for (unsigned i=0; i<sz; i++) distances[i] = log10(distances[i]);
-    }
-    
-    // sum the distances in the vector
     double total = 0;
-    for (unsigned i=0; i<sz; i++) total += distances[i];
+    // if some values are zero, adjust the values upwards, then add the log10
+    // value, otherwise add the uncorrected log10 value
+    if (zero_val) {
+        for (unsigned i=0; i<sz; i++) { total += log10(distances[i] + 1); }
+    } else {
+        for (unsigned i=0; i<sz; i++) { total += log10(distances[i]); }
+    }
     
     // calculate the mean value
     double mean = total/sz;
     mean = std::pow(10, mean);
     
     // adjust mean back to where it should be if we had a zero value
-    if (zero_val) mean -= 1;
+    if (zero_val) { mean -= 1; }
     
     return mean;
 }
@@ -122,7 +115,7 @@ std::vector<double> _simulate_distribution(Chooser choices, long iterations,
         
         // convert the positions into distances between all pairs, and get the
         // geometric mean distance of all the distances
-        std::vector<double> distances = _get_distances(positions);
+        std::vector<int> distances = _get_distances(positions);
         
         mean_distances.push_back(_geomean(distances));
     }
