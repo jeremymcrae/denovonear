@@ -5,7 +5,7 @@ import unittest
 
 from denovonear.transcript import Transcript
 
-class TestTranscriptlPy(unittest.TestCase):
+class TestTranscriptPy(unittest.TestCase):
     """ unit test the Transcript class
     """
     
