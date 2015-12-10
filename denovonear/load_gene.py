@@ -234,7 +234,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     max_transcripts = {x: counts[x] for x in counts if x in tx_ids}
     
     # find which de novos occur in the transcript with the most de novos
-    gene = construct_gene_object(ensembl, max_transcripts.keys()[0])
+    gene = construct_gene_object(ensembl, next(iter(max_transcripts)))
     denovos_in_gene = get_de_novos_in_transcript(gene, de_novos)
     
     # trim the de novos to the ones not in the current transcript
