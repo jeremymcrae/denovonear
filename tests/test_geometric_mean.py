@@ -29,19 +29,43 @@ class TestGeomeanPy(unittest.TestCase):
     """
     
     def test_geomean(self):
-        """ test get_position_in_cds() works correctly
+        """ test geomean() works correctly
         """
         
-        self.assertEqual(geomean(get_distances([100, 100])), 0)
-        self.assertEqual(geomean(get_distances([100, 110])), 10)
-        self.assertEqual(geomean(get_distances([100, 100, 1000])), 92.2860120092046)
-        self.assertEqual(geomean(get_distances([100, 110, 1000])), 200.08329863520368)
-        
-        self.assertEqual(geomean([100]), 100)
+        self.assertEqual(geomean([0]), 0)
+        self.assertEqual(geomean([1]), 1)
+        self.assertEqual(geomean([1, 1]), 1)
+        self.assertEqual(geomean([1, 2]), 1.4142135623730951)
+        self.assertEqual(geomean([10]), 10)
+        self.assertEqual(geomean([0, 900, 900]), 92.2860120092046)
+        self.assertEqual(geomean([10, 890, 900]), 200.08329863520368)
         
         # check that if we try to get the mean distance for a list with fewer
         # than two positions in it, we get an error, since we can't estimate any
         # distances
         self.assertTrue(math.isnan(geomean([])))
+    
+    def test_get_distance(self):
+        """ test that get_distances() works correctly
+        """
+        
+        # check pairwise distances
+        self.assertEqual(get_distances([0, 0]), [0])
+        self.assertEqual(get_distances([0, 1]), [1])
+        self.assertEqual(get_distances([0, 1, 10]), [1, 10, 9])
+        
+        # empty lists (or lists with one entry) can't give pairwise distances
+        self.assertEqual(get_distances([]), [])
+        self.assertEqual(get_distances([0]), [])
+        
+        # check that float positionss are automatically converted to integers
+        self.assertEqual(get_distances([0.5, 10]), [10])
+        
+        # check that negative positions still work
+        self.assertEqual(get_distances([-10, -5]), [5])
+        
+        # and check we get an error if we call with strings
+        with self.assertRaises(TypeError):
+            get_distances([0, 1, "e"])
         
     
