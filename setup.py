@@ -12,9 +12,9 @@ if sys.platform == "darwin":
 module1 = cythonize([
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
-        sources=["denovonear/cpp/weights.pyx",
-            "denovonear/cpp/weighted_choice.cpp",
-            "denovonear/cpp/simulate.cpp"],
+        sources=["denovonear/weights.pyx",
+            "denovonear/weighted_choice.cpp",
+            "denovonear/simulate.cpp"],
         language="c++"),
     ])
 
