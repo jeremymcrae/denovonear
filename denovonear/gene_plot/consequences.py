@@ -19,6 +19,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from denovonear.site_specific_rates import get_boundary_distance, \
+    get_codon_info
+
 class Consequences(object):
     """ class to identify HGVS-like codes for variants
     
@@ -87,33 +90,6 @@ class Consequences(object):
         
         return pos
     
-    def _get_codon_info(self, pos):
-        """ find the codon and supporting information for a transcript position
-        
-        Args:
-            pos: nucleotide position of the variant (chromosome coordinates)
-        
-        Returns:
-            dictionary of codon information, such as the codon sequence, codon
-            number, amino acid for the codon, location of the variant within the
-            codon.
-        """
-        
-        cds_pos = self.transcript.get_position_in_cds(pos)
-        
-        if self.transcript.strand == "-":
-            cds_pos += 1
-        
-        codon_number = self.transcript.get_codon_number_for_cds_position(cds_pos)
-        intra_codon = self.transcript.get_position_within_codon(cds_pos)
-        codon = self.transcript.get_codon_sequence(codon_number)
-        initial_aa = self.transcript.translate_codon(codon)
-        
-        info = {"cds_pos": cds_pos, "codon_number": codon_number + 1,
-            "codon": codon, "initial_aa": initial_aa, "intra_codon": intra_codon}
-        
-        return info
-    
     def _get_indel_consequence(self, pos, ref, alt):
         """ figure out the HGVS-like code for indels (frameshifts too) variants.
         
@@ -133,7 +109,8 @@ class Consequences(object):
             HGVS-like code for a indel variant e.g. R226fs.
         """
         
-        codon = self._get_codon_info(pos)
+        distance = get_boundary_distance(self.transcript, pos)
+        codon = get_codon_info(self.transcript, pos, distance)
         
         # the frameshift variants are ones where the difference in length
         # between the ref and alt alleles is not divisible by 3
@@ -193,9 +170,10 @@ class Consequences(object):
             the 226nd amino acid being substituted with a glutamine.
         """
         
-        codon = self._get_codon_info(pos)
+        distance = get_boundary_distance(self.transcript, pos)
+        codon = get_codon_info(self.transcript, pos, distance)
         
-        mutated_codon = list(codon["codon"])
+        mutated_codon = list(codon["codon_seq"])
         mutated_codon[codon["intra_codon"]] = alt
         mutated_codon = "".join(mutated_codon)
         mutated_aa = self.transcript.translate_codon(mutated_codon)

@@ -3,7 +3,7 @@
 
 from denovonear.weights import WeightedChoice
 
-def get_codon_details(transcript, bp, boundary_dist):
+def get_codon_info(transcript, bp, boundary_dist):
     """ get the details of the codon which a variant resides in
     
     Args:
@@ -26,20 +26,21 @@ def get_codon_details(transcript, bp, boundary_dist):
     
     if in_coding:
         cds_pos = transcript.get_position_in_cds(bp)
-        codon = transcript.get_codon_number_for_cds_position(cds_pos)
-        codon_pos = transcript.get_position_within_codon(cds_pos)
-        codon_seq = transcript.get_codon_sequence(codon)
+        codon_number = transcript.get_codon_number_for_cds_position(cds_pos)
+        intra_codon = transcript.get_position_within_codon(cds_pos)
+        codon_seq = transcript.get_codon_sequence(codon_number)
         initial_aa = transcript.translate_codon(codon_seq)
     else:
         # for non-exonic positions, use the nearest exon boundary
         site = [x for x in [exon_start, exon_end] if abs(x - bp) == boundary_dist]
         cds_pos = transcript.get_position_in_cds(site[0])
-        codon_pos = None
+        codon_number = None
+        intra_codon = None
         codon_seq = None
         initial_aa = None
     
-    return {"cds_pos": cds_pos, "codon_seq": codon_seq,
-        "codon_pos": codon_pos, "initial_aa": initial_aa}
+    return {"cds_pos": cds_pos, "codon_seq": codon_seq, "intra_codon": intra_codon,
+         "codon_number": codon_number, "initial_aa": initial_aa}
 
 def get_boundary_distance(transcript, bp):
     """ get the distance in bp for a variant to the nearest exon boundary
@@ -108,13 +109,13 @@ class SiteRates(object):
         
         return self.rates[category]
     
-    def get_mutated_aa(self, base, codon, codon_pos):
+    def get_mutated_aa(self, base, codon, intra_codon):
         """ find the amino acid resulting from a base change to a codon
         """
           
         # figure out what the mutated codon is
         mutated_codon = list(codon)
-        mutated_codon[codon_pos] = base
+        mutated_codon[intra_codon] = base
         mutated_codon = "".join(mutated_codon)
         
         return self.gene.translate_codon(mutated_codon)
@@ -152,7 +153,8 @@ class SiteRates(object):
         splice_donor or splice_acceptor
         """
         
-        if self.splice_lof_check(initial_aa, mutated_aa, position):
+        if self.splice_lof_check(initial_aa, mutated_aa, position) or \
+                initial_aa != mutated_aa:
             return False
         
         # catch splice region variants within the exon, and in the appropriate
@@ -184,9 +186,7 @@ class SiteRates(object):
         start = min(boundary_1, boundary_2)
         end = max(boundary_1, boundary_2)
         
-        if self.gene.strand == "+":
-            start -= 1
-        
+        # shift the en position out by one, to use in python ranges
         end += 1
         
         return (start, end)
@@ -212,7 +212,7 @@ class SiteRates(object):
         self.boundary_dist = get_boundary_distance(self.gene, bp)
         
         try:
-            codon = get_codon_details(self.gene, bp, self.boundary_dist)
+            codon = get_codon_info(self.gene, bp, self.boundary_dist)
         except IndexError:
             return None
         
@@ -225,7 +225,7 @@ class SiteRates(object):
             alt_base = seq[0] + base + seq[2]
             rate = self.mut_dict[seq][alt_base]
             if initial_aa is not None:
-                mutated_aa = self.get_mutated_aa(base, codon["codon_seq"], codon["codon_pos"])
+                mutated_aa = self.get_mutated_aa(base, codon["codon_seq"], codon["intra_codon"])
             
             if self.nonsense_check(initial_aa, mutated_aa, bp):
                 category = "nonsense"
