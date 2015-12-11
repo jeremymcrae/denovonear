@@ -48,4 +48,3 @@ def get_p_value(transcript, rates, iterations, consequence, de_novos):
         observed_value = "{0:0.1f}".format(observed_value)
     
     return (observed_value, sim_prob)
-    
