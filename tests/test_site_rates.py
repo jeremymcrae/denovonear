@@ -395,8 +395,3 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertEqual(self.weights["splice_lof"].get_summed_rate(), 0)
         self.assertEqual(self.weights["splice_region"].get_summed_rate(), 1.5e-6)
         self.assertEqual(self.weights["loss_of_function"].get_summed_rate(), 0)
-        
-        
-        
-        
-        
