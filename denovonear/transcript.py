@@ -454,7 +454,7 @@ class Transcript(SequenceMethods):
         
         return distance
     
-    def convert_chr_pos_to_cds_positions(self, pos):
+    def chrom_pos_to_cds(self, pos):
         """ returns a chromosome position as distance from CDS ATG start
         """
         

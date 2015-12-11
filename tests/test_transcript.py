@@ -275,43 +275,43 @@ class TestTranscriptPy(unittest.TestCase):
         self.gene.cds = [(1100, 1200), (1300, 1400), (1800, 1900)]
         self.assertEqual(self.gene.get_coding_distance(1100, 1900), 302)
     
-    def test_convert_chr_pos_to_cds_positions(self):
-        """ test that convert_chr_pos_to_cds_positions() works correctly
+    def test_chrom_pos_to_cds(self):
+        """ test that chrom_pos_to_cds() works correctly
         """
         
         self.gene.cds = [(1100, 1200), (1800, 1900)]
         self.gene.strand = "+"
         
         # note that all of these chr positions are 0-based (ie pos - 1)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1099), 0)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1100), 1)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1199), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1099), 0)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1100), 1)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1199), 100)
         
         # check that outside exon boundaries gets the closest exon position, if
         # the variant is close enough
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1200), 100)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1201), 100)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1798), 101)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1799), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1200), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1201), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1798), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1799), 101)
         
         # check that sites sufficiently distant from an exon raise an error, or
         # sites upstream of a gene, just outside the CDS, but within an exon
         with self.assertRaises(ValueError):
-            self.gene.convert_chr_pos_to_cds_positions(1215)
+            self.gene.chrom_pos_to_cds(1215)
         with self.assertRaises(ValueError):
-            self.gene.convert_chr_pos_to_cds_positions(1098)
+            self.gene.chrom_pos_to_cds(1098)
         
         # check that sites in a different exon are counted correctly
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1799), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1799), 101)
         
         # check that sites on the reverse strand still give the correct CDS
         self.gene.strand = "-"
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1899), 0)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1890), 9)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1799), 100)
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1790), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1899), 0)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1890), 9)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1799), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1790), 100)
         
-        self.assertEqual(self.gene.convert_chr_pos_to_cds_positions(1200), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1200), 101)
         
         
     

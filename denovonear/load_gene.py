@@ -94,7 +94,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
         # this, rather than use the function in_coding_region(), since that
         # function does not allow for splice site variants.
         try:
-            transcript.convert_chr_pos_to_cds_positions(de_novo)
+            transcript.chrom_pos_to_cds(de_novo)
             in_transcript.append(de_novo)
         except ValueError:
             continue
