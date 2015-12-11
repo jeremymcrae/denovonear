@@ -17,7 +17,7 @@ from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.site_specific_rates import SiteRates
-from denovonear.cluster_de_novos import ClusterDeNovos
+from denovonear.cluster_de_novos import get_p_value
 
 def get_options():
     """ get the command line switches
@@ -131,13 +131,11 @@ def analyse_gene(gene_id, iterations, ensembl, de_novos, old_gene_ids, mut_dict)
         missense_events = get_de_novos_in_transcript(transcript, missense)
         nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
         
-        site_weights = SiteRates(transcript, mut_dict)
+        weights = SiteRates(transcript, mut_dict)
         
         print("simulating clustering")
-        clust = ClusterDeNovos(transcript, site_weights, iterations)
-        
-        (miss_dist, miss_prob) = clust.analyse_de_novos("missense", missense_events)
-        (nons_dist, nons_prob) = clust.analyse_de_novos("lof", nonsense_events)
+        (miss_dist, miss_prob) = get_p_value(transcript, weights, iterations, "missense", missense_events)
+        (nons_dist, nons_prob) = get_p_value(transcript, weights, iterations, "lof", nonsense_events)
         
         dists["miss_dist"].append(miss_dist)
         dists["nons_dist"].append(nons_dist)
