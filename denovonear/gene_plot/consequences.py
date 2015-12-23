@@ -76,6 +76,13 @@ class Consequences(object):
             position adjusted by the number of bases of the alleles that match.
         """
         
+        # if we are on the reverse strand, then reverse the alleles, so as to
+        # get them back oriented to the genomic strand. Reverse strand alleles
+        # remain as the  complement
+        if self.transcript.strand == "-":
+            ref = ref[::-1]
+            alt = alt[::-1]
+        
         matched = 0
         try:
             while ref[matched] == alt[matched]:
@@ -83,8 +90,8 @@ class Consequences(object):
         except IndexError:
             pass
         
-        if self.transcript.strand == "-":
-            pos -= matched
+        if self.transcript.strand == "-" and len(ref) > len(alt):
+            pos += len(ref) - 2
         else:
             pos += matched
         
@@ -111,6 +118,9 @@ class Consequences(object):
         
         distance = get_boundary_distance(self.transcript, pos)
         codon = get_codon_info(self.transcript, pos, distance)
+        
+        # change the codon number from being 0-based to 1-based
+        codon["codon_number"] += 1
         
         # the frameshift variants are ones where the difference in length
         # between the ref and alt alleles is not divisible by 3
@@ -172,6 +182,9 @@ class Consequences(object):
         
         distance = get_boundary_distance(self.transcript, pos)
         codon = get_codon_info(self.transcript, pos, distance)
+        
+        # change the codon number from being 0-based to 1-based
+        codon["codon_number"] += 1
         
         mutated_codon = list(codon["codon_seq"])
         mutated_codon[codon["intra_codon"]] = alt
