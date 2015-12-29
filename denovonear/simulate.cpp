@@ -1,4 +1,4 @@
-// #include <iostream>
+#include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -20,14 +20,11 @@ std::vector<int> _get_distances(std::vector<int> sites)
     // get all non-repeating combinations of the sites
     for (int i=0; i<len; i++)
     {
-        for (int j=i; j<len; j++)
+        for (int j=i+1; j<len; j++)
         {
             // only include if the array positions differ, so we avoid finding
             // the distance to itself
-            if (j != i)
-            {
-                distances.push_back(abs(sites[i] - sites[j]));
-            }
+            distances.push_back(abs(sites[i] - sites[j]));
         }
     }
     
