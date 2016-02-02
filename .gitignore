@@ -6,5 +6,6 @@ cache/
 build/
 dist/
 results/
+denovonear/weights.cpp
 *.egg-info/
 *.so
