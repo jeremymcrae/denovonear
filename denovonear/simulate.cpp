@@ -3,10 +3,10 @@
 #include <cmath>
 #include <vector>
 #include <python2.7/Python.h>
+
 #include "weighted_choice.h"
 
-std::vector<int> _get_distances(std::vector<int> sites)
-{
+std::vector<int> _get_distances(std::vector<int> sites) {
     /**
         gets the distances between all the pairs of elements from a list
         
@@ -18,10 +18,8 @@ std::vector<int> _get_distances(std::vector<int> sites)
     std::vector<int> distances;
     
     // get all non-repeating combinations of the sites
-    for (int i=0; i<len; i++)
-    {
-        for (int j=i+1; j<len; j++)
-        {
+    for (int i=0; i < len; i++) {
+        for (int j=i+1; j < len; j++) {
             // only include if the array positions differ, so we avoid finding
             // the distance to itself
             distances.push_back(abs(sites[i] - sites[j]));
@@ -31,8 +29,7 @@ std::vector<int> _get_distances(std::vector<int> sites)
     return distances;
 }
 
-bool _has_zero(std::vector<int> distances)
-{
+bool _has_zero(std::vector<int> distances) {
     /**
         @check if any value in an vector is zero
         
@@ -49,24 +46,23 @@ bool _has_zero(std::vector<int> distances)
     return zero_val;
 }
 
-double _geomean(std::vector<int> distances)
-{
+double _geomean(std::vector<int> distances) {
     /**
         gets the geometric mean of a vector of distances
         
         @sites vector of distances
         @return geometric mean
     */
-    unsigned long sz = distances.size();
+    int sz = distances.size();
     bool zero_val = _has_zero(distances);
     
     double total = 0;
     // if some values are zero, adjust the values upwards, then add the log10
     // value, otherwise add the uncorrected log10 value
     if (zero_val) {
-        for (unsigned i=0; i<sz; i++) { total += log10(distances[i] + 1); }
+        for (int i=0; i < sz; i++) { total += log10(distances[i] + 1); }
     } else {
-        for (unsigned i=0; i<sz; i++) { total += log10(distances[i]); }
+        for (int i=0; i < sz; i++) { total += log10(distances[i]); }
     }
     
     // calculate the mean value
@@ -79,9 +75,8 @@ double _geomean(std::vector<int> distances)
     return mean;
 }
 
-std::vector<double> _simulate_distribution(Chooser choices, long iterations,
-    int de_novo_count)
-{
+std::vector<double> _simulate_distribution(Chooser choices, int iterations,
+    int de_novo_count) {
     /**
         simulates de novos weighted by mutation rate
         
@@ -91,22 +86,14 @@ std::vector<double> _simulate_distribution(Chooser choices, long iterations,
         @return a list of mean distances for each iteration
     */
     
-    // construct the weighted sampler
-    // TODO: figure out why I can't start this in the function that calls this,
-    // TODO: when I tried, each set of simulations gave the same choices, which
-    // TODO: implies the sampler restarts each time with the same seed.
-    // WeightedChoice choices();
-    
     // use a vector to return the mean distances, easier to call from python
     std::vector<double> mean_distances;
     
     // run through the required iterations
-    for (int n=0; n < iterations; n++)
-    {
+    for (int n=0; n < iterations; n++) {
         // randomly select de novo sites for the iteration
         std::vector<int> positions;
-        for (int i=0; i < de_novo_count; i++)
-        {
+        for (int i=0; i < de_novo_count; i++) {
             positions.push_back(choices.choice());
         }
         
@@ -124,8 +111,7 @@ std::vector<double> _simulate_distribution(Chooser choices, long iterations,
     return mean_distances;
 }
 
-bool _halt_permutation(double p_val, int iterations, double z, double alpha)
-{
+bool _halt_permutation(double p_val, int iterations, double z, double alpha) {
     /**
         halt permutations if the P value could never be significant
     
@@ -153,8 +139,7 @@ bool _halt_permutation(double p_val, int iterations, double z, double alpha)
 }
 
 double _analyse_de_novos(Chooser choices, int iterations, int de_novo_count,
-    double observed_value)
-{
+    double observed_value) {
     /**
         simulates de novos weighted by mutation rate
         
@@ -165,26 +150,27 @@ double _analyse_de_novos(Chooser choices, int iterations, int de_novo_count,
         @return a list of mean distances for each iteration
     */
     
-    double minimum_prob = 1.0/(1.0 + (double) iterations);
+    double minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
     double sim_prob = minimum_prob;
     std::vector<double> dist;
     
-    while (iterations < 100000000 and sim_prob == minimum_prob)
-    {
-        unsigned long iters_to_run = iterations - dist.size();
+    while (iterations < 100000000 && sim_prob == minimum_prob) {
+        int iters_to_run = iterations - dist.size();
         
-        minimum_prob = 1.0/(1.0 + (double) iterations);
+        minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
         
         // simulate mean distances between de novos
-        std::vector<double> new_dist = _simulate_distribution(choices, iters_to_run, de_novo_count);
+        std::vector<double> new_dist = _simulate_distribution(choices,
+            iters_to_run, de_novo_count);
         
         // merge the two sorted lists into a sorted vector
         std::vector<double> v(iterations);
-        std::merge(dist.begin(), dist.end(), new_dist.begin(), new_dist.end(), v.begin());
+        std::merge(dist.begin(), dist.end(), new_dist.begin(), new_dist.end(),
+            v.begin());
         dist = v;
         
         // figure out where in the list a random probability would fall
-        std::vector< double >::iterator pos;
+        std::vector<double>::iterator pos;
         pos = std::upper_bound(dist.begin(), dist.end(), observed_value);
         double position = pos - dist.begin();
         
@@ -196,7 +182,7 @@ double _analyse_de_novos(Chooser choices, int iterations, int de_novo_count,
         double alpha = 0.1;
         if (_halt_permutation(sim_prob, iterations, z, alpha)) { break; }
         
-        iterations += 100000; // for if we need to run more iterations
+        iterations += 100000;  // for if we need to run more iterations
     }
     
     return sim_prob;

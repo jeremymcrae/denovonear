@@ -8,8 +8,7 @@
 // g++ -std=c++0x -c -fPIC weighted_choice.cpp -o weighted_choice.o
 // g++ -shared -Wl,-soname,libchooser.so -o libchooser.so weighted_choice.o
 
-Chooser::Chooser()
-{
+Chooser::Chooser() {
     /**
         Constructor for Chooser class
     */
@@ -19,8 +18,7 @@ Chooser::Chooser()
     generator.seed(random_seed);
 }
 
-void Chooser::add_choice(int site, double prob)
-{
+void Chooser::add_choice(int site, double prob) {
      /**
         adds another choice to the class object
         
@@ -39,8 +37,7 @@ void Chooser::add_choice(int site, double prob)
     dist = temp;
 }
 
-int Chooser::choice()
-{
+int Chooser::choice() {
     /**
         chooses a random element using a set of probability weights
         
@@ -62,13 +59,12 @@ int Chooser::choice()
     return sites[pos - cumulative.begin()];
 }
 
-double Chooser::get_summed_rate()
-{
+double Chooser::get_summed_rate() {
     /**
-       gets the cumulative sum for all the current choices.
-   */
-   
-   if (sites.empty()) {
+        gets the cumulative sum for all the current choices.
+    */
+    
+    if (sites.empty()) {
         return 0.0;
     } else {
         return cumulative.back();
