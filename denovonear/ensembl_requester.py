@@ -89,9 +89,7 @@ class EnsemblRequest(object):
             response = response.decode("utf-8")
         
         # parse the headers into a key, value dictionary
-        headers = {}
-        for key, value in zip(handler.headers.keys(), handler.headers.values()):
-            headers[key.lower()] = value
+        headers = dict(zip(handler.headers.keys(), handler.headers.values()))
         
         return response, status_code, headers
     
