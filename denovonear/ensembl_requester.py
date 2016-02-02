@@ -83,7 +83,7 @@ class EnsemblRequest(object):
         try:
             handler = request.urlopen(req)
         except HTTPError as handler:
-            # if we get a http error, we still process the status code, since a 
+            # if we get a http error, we still process the status code, since a
             # later step deals with different status codes differently.
             pass
         except URLError as handler:
@@ -95,7 +95,7 @@ class EnsemblRequest(object):
             response = response.decode("utf-8")
         
         # parse the headers into a key, value dictionary
-        headers = dict(zip(handler.headers.keys(), handler.headers.values()))
+        headers = dict(zip(map(str.lower, handler.headers.keys()), handler.headers.values()))
         
         return response, status_code, headers
     
