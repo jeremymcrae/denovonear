@@ -82,10 +82,12 @@ class EnsemblRequest(object):
         
         try:
             handler = request.urlopen(req)
-        except HTTPError as e:
-            handler = e
-        except URLError as e:
-            raise e
+        except HTTPError as handler:
+            # if we get a http error, we still process the status code, since a 
+            # later step deals with different status codes differently.
+            pass
+        except URLError as handler:
+            raise handler
         
         status_code = handler.getcode()
         response = handler.read()
