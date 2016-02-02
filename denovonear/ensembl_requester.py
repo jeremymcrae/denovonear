@@ -13,8 +13,10 @@ IS_PYTHON3 = sys.version_info[0] == 3
  
 if IS_PYTHON3:
     import urllib.request as request
+    from urllib.error import HTTPError, URLError
 else:
     import urllib2 as request
+    from urllib2 import HTTPError, URLError
 
 from denovonear.ensembl_cache import EnsemblCache
 
@@ -80,8 +82,10 @@ class EnsemblRequest(object):
         
         try:
             handler = request.urlopen(req)
-        except Exception as e:
+        except HTTPError as e:
             handler = e
+        except URLError as e:
+            raise e
         
         status_code = handler.getcode()
         response = handler.read()
