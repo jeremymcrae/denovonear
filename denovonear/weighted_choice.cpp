@@ -18,7 +18,7 @@ Chooser::Chooser() {
     generator.seed(random_seed);
 }
 
-void Chooser::add_choice(int site, double prob) {
+void Chooser::add_choice(int site, double prob, char ref=NULL, char alt=NULL) {
      /**
         adds another choice to the class object
         
@@ -30,6 +30,12 @@ void Chooser::add_choice(int site, double prob) {
     cumulative_sum += prob;
     cumulative.push_back(cumulative_sum);
     sites.push_back(site);
+    
+    // add the alleles to a site list
+    std::vector<char> vars;
+    vars.push_back(ref)
+    vars.push_back(alt)
+    alleles.pushback(vars)
     
     // any time we add another choice, reset the sampler, so we can sample
     // from all the possible entries.
@@ -57,6 +63,31 @@ int Chooser::choice() {
     
     // return the site position matching the probability
     return sites[pos - cumulative.begin()];
+}
+
+AlleleChoice Chooser::choice_with_alleles() {
+    /**
+        chooses a random element using a set of probability weights
+        
+        @return the name of the randomly selected element (e.g. position)
+    */
+    
+    if (cumulative.empty()) {
+        return -1;
+    }
+    
+    // get a random float between 0 and the cumulative sum
+    double number = dist(generator);
+    
+    // figure out where in the list a random probability would fall
+    std::vector<double>::iterator pos;
+    pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
+    
+    // identify the site position and alleles matching the probability
+    pos = sites[pos - cumulative.begin()];
+    temp = alleles[pos - cumulative.begin()]
+    
+    return values {pos, temp.front(), temp.back()};
 }
 
 double Chooser::get_summed_rate() {
