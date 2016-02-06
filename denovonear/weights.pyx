@@ -28,6 +28,7 @@ cdef extern from "weighted_choice.h":
         Chooser() except +
         void add_choice(int, double)
         int choice()
+        AlleleChoice choice_with_alleles()
         double get_summed_rate()
     
     cdef struct AlleleChoice:
@@ -65,7 +66,7 @@ cdef class WeightedChoice:
         
         a = self.thisptr.choice_with_alleles()
         
-        return [a.pos, a.ref a.alt]
+        return [a.pos, a.ref, a.alt]
     
     def get_summed_rate(self):
         """ return the cumulative probability for the object

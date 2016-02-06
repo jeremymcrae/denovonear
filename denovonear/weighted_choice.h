@@ -4,13 +4,11 @@
 #include <random>
 #include <vector>
 
-#define NULL nullptr
-
 struct AlleleChoice {
     int pos;
     char ref;
     char alt;
-}
+};
 
 class Chooser {
     std::vector<int> sites;
@@ -21,7 +19,7 @@ class Chooser {
 
  public:
     Chooser();
-    void add_choice(int site, double prob, char ref=NULL, char alt=NULL);
+    void add_choice(int site, double prob, char ref="N", char alt="N");
     int choice();
     AlleleChoice choice_with_alleles();
     double get_summed_rate();
