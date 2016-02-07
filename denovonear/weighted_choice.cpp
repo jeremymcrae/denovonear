@@ -18,7 +18,7 @@ Chooser::Chooser() {
     generator.seed(random_seed);
 }
 
-void Chooser::add_choice(int site, double prob, char ref="N", char alt="N") {
+void Chooser::add_choice(int site, double prob, char ref, char alt) {
      /**
         adds another choice to the class object
         
@@ -32,10 +32,8 @@ void Chooser::add_choice(int site, double prob, char ref="N", char alt="N") {
     sites.push_back(site);
     
     // add the alleles to a site list
-    std::vector<char> vars;
-    vars.push_back(ref)
-    vars.push_back(alt)
-    alleles.pushback(vars)
+    refs.push_back(ref);
+    alts.push_back(alt);
     
     // any time we add another choice, reset the sampler, so we can sample
     // from all the possible entries.
@@ -73,7 +71,7 @@ AlleleChoice Chooser::choice_with_alleles() {
     */
     
     if (cumulative.empty()) {
-        return -1;
+        return AlleleChoice {-1, 'N', 'N'};
     }
     
     // get a random float between 0 and the cumulative sum
@@ -85,9 +83,10 @@ AlleleChoice Chooser::choice_with_alleles() {
     
     // identify the site position and alleles matching the probability
     int site = sites[pos - cumulative.begin()];
-    std::vector<char> temp = alleles[pos - cumulative.begin()];
+    char ref = refs[pos - cumulative.begin()];
+    char alt = alts[pos - cumulative.begin()];
     
-    return values {site, temp.front(), temp.back()};
+    return AlleleChoice {site, ref, alt};
 }
 
 double Chooser::get_summed_rate() {

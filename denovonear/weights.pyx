@@ -26,7 +26,7 @@ from cython.operator cimport dereference as deref
 cdef extern from "weighted_choice.h":
     cdef cppclass Chooser:
         Chooser() except +
-        void add_choice(int, double)
+        void add_choice(int, double, char, char)
         int choice()
         AlleleChoice choice_with_alleles()
         double get_summed_rate()
@@ -42,14 +42,15 @@ cdef class WeightedChoice:
         self.thisptr = new Chooser()
     def __dealloc__(self):
         del self.thisptr
-    def add_choice(self, site, prob):
+    def add_choice(self, site, prob, ref='A', alt='N'):
         """ add another possible choice for selection
         
         Args:
             site: an CDS position so we know each choice.
             prob: probability of selecting this choice.
         """
-        self.thisptr.add_choice(site, prob)
+        
+        self.thisptr.add_choice(site, prob, ord(ref), ord(alt))
     
     def choice(self):
         """ chooses a random element using a set of probability weights
@@ -64,9 +65,9 @@ cdef class WeightedChoice:
         """
         """
         
-        a = self.thisptr.choice_with_alleles()
+        choice = self.thisptr.choice_with_alleles()
         
-        return [a.pos, a.ref, a.alt]
+        return {"pos": choice.pos, "ref": chr(choice.ref), "alt": chr(choice.alt)}
     
     def get_summed_rate(self):
         """ return the cumulative probability for the object

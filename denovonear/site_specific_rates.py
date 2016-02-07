@@ -3,6 +3,11 @@
 
 from denovonear.weights import WeightedChoice
 
+try:
+    maketrans = str.maketrans
+except AttributeError:
+    from string import maketrans
+
 def get_codon_info(transcript, bp, boundary_dist):
     """ get the details of the codon which a variant resides in
     
@@ -76,6 +81,7 @@ class SiteRates(object):
     bases = set(["A", "C", "G", "T"])
     categories = ["missense", "nonsense", "synonymous", "splice_lof",
         "splice_region", "loss_of_function"]
+    transdict = maketrans("acgtuACGTU", "tgcaaTGCAA")
     
     def __init__(self, gene, mut_dict, masked_sites=None):
         
@@ -240,4 +246,12 @@ class SiteRates(object):
             
             self.rates[category].add_choice(cds_pos, rate)
             if category in ["nonsense", "splice_lof"]:
-                self.rates["loss_of_function"].add_choice(cds_pos, rate)
+                # figure out what the ref and alt allelels are, with respect to
+                # the + strand.
+                ref_base = seq[1]
+                alt = base
+                if self.gene.strand == "-":
+                    ref_base = ref_base.translate(self.transdict)
+                    alt = alt.translate(self.transdict)
+                
+                self.rates["loss_of_function"].add_choice(cds_pos, rate, ref_base, alt)

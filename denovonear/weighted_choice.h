@@ -12,14 +12,15 @@ struct AlleleChoice {
 
 class Chooser {
     std::vector<int> sites;
+    std::vector<char> refs;
+    std::vector<char> alts;
     std::vector<double> cumulative;
-    std::vector< std::vector<char> > alleles;
     std::uniform_real_distribution<double> dist;
     std::mt19937_64 generator;
 
  public:
     Chooser();
-    void add_choice(int site, double prob, char ref="N", char alt="N");
+    void add_choice(int site, double prob, char ref='N', char alt='N');
     int choice();
     AlleleChoice choice_with_alleles();
     double get_summed_rate();
