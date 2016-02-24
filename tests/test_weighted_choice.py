@@ -137,5 +137,3 @@ class TestWeightedChoicePy(unittest.TestCase):
         with self.assertRaises(TypeError):
             choices.add_choice(1, 1, "AA", "A")
             choices.add_choice(1, 1, "A", "AG")
-    
-        
