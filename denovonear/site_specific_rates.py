@@ -239,7 +239,7 @@ class SiteRates(object):
             elif self.synonymous_check(initial_aa, mutated_aa, bp):
                 category = "synonymous"
             
-            self.rates[category].add_choice(cds_pos, rate)
+            self.rates[category].add_choice(cds_pos, rate, ref_base, alt)
             if category in ["nonsense", "splice_lof"]:
                 # figure out what the ref and alt allelels are, with respect to
                 # the + strand.
