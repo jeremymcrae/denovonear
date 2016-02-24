@@ -48,19 +48,9 @@ int Chooser::choice() {
         @return the name of the randomly selected element (e.g. position)
     */
     
-    if (cumulative.empty()) {
-        return -1;
-    }
-    
-    // get a random float between 0 and the cumulative sum
-    double number = dist(generator);
-    
-    // figure out where in the list a random probability would fall
-    std::vector<double>::iterator pos;
-    pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
-    
-    // return the site position matching the probability
-    return sites[pos - cumulative.begin()];
+    // first get the position and alleles, but only return the position
+    AlleleChoice choice = choice_with_alleles();
+    return choice.pos;
 }
 
 AlleleChoice Chooser::choice_with_alleles() {
@@ -80,13 +70,9 @@ AlleleChoice Chooser::choice_with_alleles() {
     // figure out where in the list a random probability would fall
     std::vector<double>::iterator pos;
     pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
+    int offset = pos - cumulative.begin();
     
-    // identify the site position and alleles matching the probability
-    int site = sites[pos - cumulative.begin()];
-    char ref = refs[pos - cumulative.begin()];
-    char alt = alts[pos - cumulative.begin()];
-    
-    return AlleleChoice {site, ref, alt};
+    return AlleleChoice {sites[offset], refs[offset], alts[offset]};
 }
 
 double Chooser::get_summed_rate() {

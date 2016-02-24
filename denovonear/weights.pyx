@@ -46,8 +46,10 @@ cdef class WeightedChoice:
         """ add another possible choice for selection
         
         Args:
-            site: an CDS position so we know each choice.
-            prob: probability of selecting this choice.
+            site: a CDS position of the selected base.
+            prob: probability of selecting this base.
+            ref: string for reference allele
+            alt: string for alternate allele
         """
         
         self.thisptr.add_choice(site, prob, ord(ref), ord(alt))
@@ -62,7 +64,11 @@ cdef class WeightedChoice:
         return self.thisptr.choice()
     
     def choice_with_alleles(self):
-        """
+        """ chooses a random element, but include alleles in output
+        
+        Returns:
+            a dictionary of the randomly selected element, with "pos", "ref"
+            and "alt" entries.
         """
         
         choice = self.thisptr.choice_with_alleles()
