@@ -239,14 +239,14 @@ class SiteRates(object):
             elif self.synonymous_check(initial_aa, mutated_aa, bp):
                 category = "synonymous"
             
+            # figure out what the ref and alt alleles are, with respect to
+            # the + strand.
+            ref_base = seq[1]
+            alt = base
+            if self.gene.strand == "-":
+                ref_base = self.transdict[ref_base]
+                alt = self.transdict[alt]
             self.rates[category].add_choice(cds_pos, rate, ref_base, alt)
+            
             if category in ["nonsense", "splice_lof"]:
-                # figure out what the ref and alt allelels are, with respect to
-                # the + strand.
-                ref_base = seq[1]
-                alt = base
-                if self.gene.strand == "-":
-                    ref_base = self.transdict[ref_base]
-                    alt = self.transdict[alt]
-                
                 self.rates["loss_of_function"].add_choice(cds_pos, rate, ref_base, alt)
