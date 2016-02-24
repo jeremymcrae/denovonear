@@ -72,7 +72,7 @@ class TestWeightedChoicePy(unittest.TestCase):
         self.assertAlmostEqual(s.count(1)/len(s), 0.1667, places=2)
         
         # add another choice, then check that all of the choices have been
-        # sampled aat the expecetd proportions
+        # sampled at the expecetd proportions
         choices.add_choice(3, 4)
         s = [ choices.choice() for x in range(iterations) ]
         self.assertAlmostEqual(s.count(1)/len(s), 0.100, places=2)
@@ -114,3 +114,28 @@ class TestWeightedChoicePy(unittest.TestCase):
         
         s = [ choices.choice() for x in range(iterations) ]
         self.assertAlmostEqual(s.count(numbers[0])/len(s), 0.0001, places=3)
+    
+    def test_choice_with_alleles(self):
+        """ test that choice_with_alleles() works correctly.
+        """
+        
+        # if you add a choice with alleles, then check that we get back alleles,
+        # and that they are the same
+        choices = WeightedChoice()
+        choices.add_choice(1, 1, "A", "T")
+        self.assertEqual(choices.choice_with_alleles(),
+            {'alt': 'T', 'ref': 'A', 'pos': 1})
+        self.assertEqual(choices.choice(), 1)
+        
+        # if you add choices without alleles, then default the alleles to "N"
+        choices = WeightedChoice()
+        choices.add_choice(1, 1)
+        self.assertEqual(choices.choice_with_alleles(),
+            {'alt': 'N', 'ref': 'N', 'pos': 1})
+        
+        # make sure you can't add multi-base alleles to the choices
+        with self.assertRaises(TypeError):
+            choices.add_choice(1, 1, "AA", "A")
+            choices.add_choice(1, 1, "A", "AG")
+    
+        

@@ -27,8 +27,7 @@ cdef extern from "weighted_choice.h":
     cdef cppclass Chooser:
         Chooser() except +
         void add_choice(int, double, char, char)
-        int choice()
-        AlleleChoice choice_with_alleles()
+        AlleleChoice choice()
         double get_summed_rate()
     
     cdef struct AlleleChoice:
@@ -42,7 +41,7 @@ cdef class WeightedChoice:
         self.thisptr = new Chooser()
     def __dealloc__(self):
         del self.thisptr
-    def add_choice(self, site, prob, ref='A', alt='N'):
+    def add_choice(self, site, prob, ref='N', alt='N'):
         """ add another possible choice for selection
         
         Args:
@@ -61,7 +60,7 @@ cdef class WeightedChoice:
             the name of the randomly selected element (e.g. position)
         """
         
-        return self.thisptr.choice()
+        return self.thisptr.choice().pos
     
     def choice_with_alleles(self):
         """ chooses a random element, but include alleles in output
@@ -71,7 +70,7 @@ cdef class WeightedChoice:
             and "alt" entries.
         """
         
-        choice = self.thisptr.choice_with_alleles()
+        choice = self.thisptr.choice()
         
         return {"pos": choice.pos, "ref": chr(choice.ref), "alt": chr(choice.alt)}
     

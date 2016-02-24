@@ -94,7 +94,7 @@ std::vector<double> _simulate_distribution(Chooser choices, int iterations,
         // randomly select de novo sites for the iteration
         std::vector<int> positions;
         for (int i=0; i < de_novo_count; i++) {
-            positions.push_back(choices.choice());
+            positions.push_back(choices.choice().pos);
         }
         
         // convert the positions into distances between all pairs, and get the

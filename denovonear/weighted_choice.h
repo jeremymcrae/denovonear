@@ -21,8 +21,7 @@ class Chooser {
  public:
     Chooser();
     void add_choice(int site, double prob, char ref='N', char alt='N');
-    int choice();
-    AlleleChoice choice_with_alleles();
+    AlleleChoice choice();
     double get_summed_rate();
 };
 

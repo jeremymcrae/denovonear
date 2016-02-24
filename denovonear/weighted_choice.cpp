@@ -41,23 +41,11 @@ void Chooser::add_choice(int site, double prob, char ref, char alt) {
     dist = temp;
 }
 
-int Chooser::choice() {
+AlleleChoice Chooser::choice() {
     /**
         chooses a random element using a set of probability weights
         
-        @return the name of the randomly selected element (e.g. position)
-    */
-    
-    // first get the position and alleles, but only return the position
-    AlleleChoice choice = choice_with_alleles();
-    return choice.pos;
-}
-
-AlleleChoice Chooser::choice_with_alleles() {
-    /**
-        chooses a random element using a set of probability weights
-        
-        @return the name of the randomly selected element (e.g. position)
+        @returns the name of the randomly selected element (e.g. position)
     */
     
     if (cumulative.empty()) {
