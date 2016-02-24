@@ -24,16 +24,15 @@ void Chooser::add_choice(int site, double prob, char ref, char alt) {
         
         @site site position (e.g. 100001)
         @prob site mutation rate (e.g. 0.000000005)
+        @ref reference allele for site e.g. 'A'
+        @alt alternate allele for site e.g. 'T'
     */
     
-    double cumulative_sum = get_summed_rate();
-    cumulative_sum += prob;
+    // keep track of the cumulative sum for each added site
+    double cumulative_sum = get_summed_rate() + prob;
     cumulative.push_back(cumulative_sum);
-    sites.push_back(site);
     
-    // add the alleles to a site list
-    refs.push_back(ref);
-    alts.push_back(alt);
+    sites.push_back(AlleleChoice {site, ref, alt});
     
     // any time we add another choice, reset the sampler, so we can sample
     // from all the possible entries.
@@ -45,7 +44,7 @@ AlleleChoice Chooser::choice() {
     /**
         chooses a random element using a set of probability weights
         
-        @returns the name of the randomly selected element (e.g. position)
+        @returns AlleleChoice struct containing the pos, ref and alt
     */
     
     if (cumulative.empty()) {
@@ -60,7 +59,7 @@ AlleleChoice Chooser::choice() {
     pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
     int offset = pos - cumulative.begin();
     
-    return AlleleChoice {sites[offset], refs[offset], alts[offset]};
+    return sites[offset];
 }
 
 double Chooser::get_summed_rate() {

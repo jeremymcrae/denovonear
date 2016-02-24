@@ -11,9 +11,7 @@ struct AlleleChoice {
 };
 
 class Chooser {
-    std::vector<int> sites;
-    std::vector<char> refs;
-    std::vector<char> alts;
+    std::vector<AlleleChoice> sites;
     std::vector<double> cumulative;
     std::uniform_real_distribution<double> dist;
     std::mt19937_64 generator;

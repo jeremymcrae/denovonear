@@ -63,7 +63,7 @@ cdef class WeightedChoice:
             the name of the randomly selected element (e.g. position)
         """
         
-        return self.thisptr.choice().pos
+        return self.choice_with_alleles()["pos"]
     
     def choice_with_alleles(self):
         """ chooses a random element, but include alleles in output
