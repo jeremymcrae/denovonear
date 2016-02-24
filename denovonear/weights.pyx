@@ -51,6 +51,9 @@ cdef class WeightedChoice:
             alt: string for alternate allele
         """
         
+        if len(ref) > 1 or len(alt) > 1:
+            raise TypeError("requires single base alleles: {}, {}".format(ref, alt))
+        
         self.thisptr.add_choice(site, prob, ord(ref), ord(alt))
     
     def choice(self):
@@ -84,7 +87,7 @@ cdef extern from "simulate.h":
     bool _has_zero(vector[int])
     double _geomean(vector[int])
     bool _halt_permutation(double, int, double, double)
-    # vector[double] _simulate_distribution(Chooser, int, int)
+    vector[double] _simulate_distribution(Chooser, int, int)
     double _analyse_de_novos(Chooser, int, int, double)
 
 def get_distances(vector[int] positions):
@@ -117,12 +120,12 @@ def geomean(vector[int] distances):
     
     return _geomean(distances)
 
-# def simulate_distribution(WeightedChoice choices, int iterations, int de_novos_count):
-#     """
-#     """
-#
-#     return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
-#
+def simulate_distribution(WeightedChoice choices, int iterations, int de_novos_count):
+    """
+    """
+
+    return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
+
 def analyse_de_novos(WeightedChoice choices, int iterations, int de_novos_count, double observed_value):
     """
     """
