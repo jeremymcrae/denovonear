@@ -31,9 +31,9 @@ cdef extern from "weighted_choice.h":
         double get_summed_rate()
     
     cdef struct AlleleChoice:
-        int pos;
-        char ref;
-        char alt;
+        int pos
+        char ref
+        char alt
 
 cdef class WeightedChoice:
     cpdef Chooser *thisptr  # hold a C++ instance which we're wrapping
