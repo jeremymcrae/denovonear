@@ -1,22 +1,32 @@
 
 import sys
-from setuptools import setup
-from distutils.core import Extension
-from Cython.Build import cythonize
+from setuptools import setup, Extension
 
 EXTRA_COMPILE_ARGS = ["-std=c++0x"]
 
 if sys.platform == "darwin":
     EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
 
-module1 = cythonize([
-    Extension("denovonear.weights",
+class lazy_cythonize(list):
+    def __init__(self, callback):
+        self._list, self.callback = None, callback
+    def c_list(self):
+        if self._list is None: self._list = self.callback()
+        return self._list
+    def __iter__(self):
+        for e in self.c_list(): yield e
+    def __getitem__(self, ii): return self.c_list()[ii]
+    def __len__(self): return len(self.c_list())
+
+def extensions():
+    from Cython.Build import cythonize
+    ext = Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
         sources=["denovonear/weights.pyx",
             "denovonear/weighted_choice.cpp",
             "denovonear/simulate.cpp"],
-        language="c++"),
-    ])
+        language="c++")
+    return cythonize([ext])
 
 setup (name="denovonear",
         description='Package to examine de novo clustering',
@@ -35,5 +45,5 @@ setup (name="denovonear",
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
         ],
-        ext_modules=module1,
+        ext_modules=lazy_cythonize(extensions),
         test_suite="tests")
