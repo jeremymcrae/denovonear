@@ -40,14 +40,8 @@ class SequenceMethods(object):
             for start, end in self.cds:
                 # get the positions of the exon boundaries in CDS distance from
                 # the start site
-                end_pos = end
-                start_pos = start
-                if self.strand == "-":
-                    end_pos = start
-                    start_pos = end
-                    
-                start_cds = self.get_coding_distance(self.get_cds_start(), start_pos)
-                end_cds = self.get_coding_distance(self.get_cds_start(), end_pos)
+                start_cds = self.get_coding_distance(self.get_cds_start(), start)
+                end_cds = self.get_coding_distance(self.get_cds_start(), end)
                 
                 # cache the CDS positions of the exon boundaries
                 self.exon_to_cds[start] = start_cds
@@ -55,8 +49,8 @@ class SequenceMethods(object):
         
         # quickly find the exon containing the CDS position
         for start, end in self.cds:
-            start_cds = self.exon_to_cds[start]
-            end_cds = self.exon_to_cds[end]
+            start_cds = min(self.exon_to_cds[start], self.exon_to_cds[end])
+            end_cds = max(self.exon_to_cds[end], self.exon_to_cds[end])
             
             if start_cds <= cds_position <= end_cds:
                 break
