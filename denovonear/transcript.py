@@ -69,7 +69,7 @@ class Transcript(SequenceMethods):
         
         # adjust the positions back one base pair if the transcript is on the
         # reverse strand
-        if self.strand == "-":
+        if self.get_strand() == "-":
             exon_ranges = [(x[0]-1, x[1]-1) for x in exon_ranges]
         
         return exon_ranges
@@ -82,7 +82,7 @@ class Transcript(SequenceMethods):
         
         # adjust the positions back one base pair if the transcript is on the
         # reverse strand
-        if self.strand == "-":
+        if self.get_strand() == "-":
             cds = [(x[0]-1, x[1]-1) for x in cds]
         
         self.cds_min = int(cds[0][0])
@@ -140,7 +140,7 @@ class Transcript(SequenceMethods):
         
         return (start, end)
         
-    def convert_chrom_to_int(self, chrom):
+    def chrom_to_int(self, chrom):
         """ converts a chromosome string to an int (if possible) for sorting.
         
         Args:
@@ -166,6 +166,9 @@ class Transcript(SequenceMethods):
         """
         return self.chrom
     
+    def get_strand(self):
+        return self.strand
+    
     def get_name(self):
         """ returns the transcript ID for the transcript
         """
@@ -187,23 +190,23 @@ class Transcript(SequenceMethods):
         """ returns the cds start position for the transcript
         """
         
-        if self.strand == "+":
+        if self.get_strand() == "+":
             return self.cds_min
-        elif self.strand == "-":
+        elif self.get_strand() == "-":
             return self.cds_max
         else:
-            raise ValueError("unknown strand type {0}".format(self.strand))
+            raise ValueError("unknown strand type {0}".format(self.get_strand()))
     
     def get_cds_end(self):
         """ returns the cds end position for the transcript
         """
         
-        if self.strand == "+":
+        if self.get_strand() == "+":
             return self.cds_max
-        elif self.strand == "-":
+        elif self.get_strand() == "-":
             return self.cds_min
         else:
-            raise ValueError("unknown strand type {0}".format(self.strand))
+            raise ValueError("unknown strand type {0}".format(self.get_strand()))
     
     def __eq__(self, other):
         return self.get_chrom() == other.get_chrom() and \
@@ -216,9 +219,9 @@ class Transcript(SequenceMethods):
             self.get_end() != other.get_end()
     
     def __lt__(self, other):
-        return (self.convert_chrom_to_int(self.get_chrom()), self.get_start(), \
+        return (self.chrom_to_int(self.get_chrom()), self.get_start(), \
                 self.get_end()) < \
-                (other.convert_chrom_to_int(other.get_chrom()), \
+                (other.chrom_to_int(other.get_chrom()), \
                 other.get_start(), other.get_end())
     
     def __repr__(self):

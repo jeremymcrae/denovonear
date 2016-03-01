@@ -105,20 +105,20 @@ class TestTranscriptPy(unittest.TestCase):
             self.gene.fix_out_of_exon_cds_boundary(1105)
         
     
-    def test_convert_chrom_to_int(self):
-        """ test that convert_chrom_to_int() works correctly
+    def test_chrom_to_int(self):
+        """ test that chrom_to_int() works correctly
         """
         
-        self.assertEqual(self.gene.convert_chrom_to_int("1"), 1)
-        self.assertEqual(self.gene.convert_chrom_to_int("2"), 2)
-        self.assertEqual(self.gene.convert_chrom_to_int("X"), 23)
-        self.assertEqual(self.gene.convert_chrom_to_int("chrx"), 23)
-        self.assertEqual(self.gene.convert_chrom_to_int("chrX"), 23)
-        self.assertEqual(self.gene.convert_chrom_to_int("y"), 24)
-        self.assertEqual(self.gene.convert_chrom_to_int("chry"), 24)
-        self.assertEqual(self.gene.convert_chrom_to_int("mt"), 25)
-        self.assertEqual(self.gene.convert_chrom_to_int("chrmt"), 25)
-        self.assertRaises(KeyError, self.gene.convert_chrom_to_int, "Z")
+        self.assertEqual(self.gene.chrom_to_int("1"), 1)
+        self.assertEqual(self.gene.chrom_to_int("2"), 2)
+        self.assertEqual(self.gene.chrom_to_int("X"), 23)
+        self.assertEqual(self.gene.chrom_to_int("chrx"), 23)
+        self.assertEqual(self.gene.chrom_to_int("chrX"), 23)
+        self.assertEqual(self.gene.chrom_to_int("y"), 24)
+        self.assertEqual(self.gene.chrom_to_int("chry"), 24)
+        self.assertEqual(self.gene.chrom_to_int("mt"), 25)
+        self.assertEqual(self.gene.chrom_to_int("chrmt"), 25)
+        self.assertRaises(KeyError, self.gene.chrom_to_int, "Z")
     
     def test___add__(self):
         """ test that __add__() works correctly
