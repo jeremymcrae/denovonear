@@ -92,17 +92,17 @@ class TestSequenceMethodsPy(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.gene.add_genomic_sequence("AAA")
         
-        gdna = "AAAGGCCTTT"
-        self.gene.cds_sequence = "AGGCTT"
+        gdna = "AGAGGCCTAT"
+        self.gene.cds_sequence = "AGGCTA"
         
         self.gene.add_genomic_sequence(gdna)
-        self.assertEqual(self.gene.cds_sequence, "AGGCTT")
+        self.assertEqual(self.gene.cds_sequence, "AGGCTA")
         
         # now check for a gene on the reverse strand
         self.gene.strand = "-"
-        self.gene.cds_sequence = "AAGCCT"
+        self.gene.cds_sequence = "GAGCCT"
         self.gene.add_genomic_sequence(gdna)
-        self.assertEqual(self.gene.cds_sequence, "AAGCCT")
+        self.assertEqual(self.gene.cds_sequence, "GAGCCT")
         
         self.gene.cds_sequence = "TTTTTT"
         with self.assertRaises(ValueError):
@@ -197,10 +197,52 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.add_genomic_sequence("AAAGGCCTTT", offset=1)
         self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
     
+    def test_get_trinucleotide_minus_strand(self):
+        """ test that get_trinucleotide() works correctly on the minus strand
+        """
+        
+        self.gene.strand = "-"
+        self.gene.start = 0
+        self.gene.end = 10
+        self.gene.exons = [(0, 4), (6, 10)]
+        self.gene.cds = [(2, 4), (6, 8)]
+        self.gene.cds_min = 2
+        self.gene.cds_max = 8
+        self.gene.gdna_offset = 0
+        self.gene.genomic_sequence = "AAAGGCCTTT"
+        
+        # test CDS positions: start, end, and spanning the exon boundaries
+        self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
+        self.assertEqual(self.gene.get_trinucleotide(3), "AGG")
+    
     def test_get_codon_sequence(self):
         """ test that get_codon_sequence() works correctly
         """
         
+        self.gene.start = 0
+        self.gene.end = 10
+        self.gene.exons = [(0, 4), (6, 10)]
+        self.gene.cds = [(2, 4), (6, 8)]
+        self.gene.cds_min = 2
+        self.gene.cds_max = 8
+        self.gene.upstream_sequence = "A"
+        self.gene.cds_sequence = "AGGCTT"
+        self.gene.downstream_sequence = "T"
+        
+        self.assertEqual(self.gene.get_codon_sequence(0), "AGG")
+        self.assertEqual(self.gene.get_codon_sequence(1), "CTT")
+        
+        # check that codon positions outside the CDS region raise errors
+        with self.assertRaises(AssertionError):
+            self.gene.get_codon_sequence(-1)
+        with self.assertRaises(AssertionError):
+            self.gene.get_codon_sequence(3)
+    
+    def test_get_codon_sequence_minus_strand(self):
+        """ test that get_codon_sequence() works correctly
+        """
+        
+        self.gene.strand = '-'
         self.gene.start = 0
         self.gene.end = 10
         self.gene.exons = [(0, 4), (6, 10)]
@@ -232,8 +274,3 @@ class TestSequenceMethodsPy(unittest.TestCase):
         # raise an error for non-IUPAC base containing codons
         with self.assertRaises(KeyError):
             self.gene.translate_codon("FFF")
-        
-        
-
-# if __name__ == '__main__':
-#     unittest.main()
