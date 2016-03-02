@@ -216,7 +216,7 @@ class Transcript(SequenceMethods):
     
     def __repr__(self):
         return "{0}({1} {2}:{3}-{4})".format(self.__class__.__name__, \
-            self.name, self.get_chrom(), self.get_start(), self.get_end())
+            self.get_name(), self.get_chrom(), self.get_start(), self.get_end())
     
     def __str__(self):
         return self.__repr__()
