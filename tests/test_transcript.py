@@ -32,7 +32,7 @@ class TestTranscriptPy(unittest.TestCase):
         self.assertEqual(self.gene.__add_exons__(exons, cds), [(0, 200), (800, 1000)])
         
         self.gene.strand = "-"
-        self.assertEqual(self.gene.__add_exons__(exons, cds), [(-1, 199), (799, 999)])
+        self.assertEqual(self.gene.__add_exons__(exons, cds), [(0, 200), (800, 1000)])
         
     
     def test___add_exons___missing_exon(self):
@@ -75,7 +75,7 @@ class TestTranscriptPy(unittest.TestCase):
         
         # check that positions on the minus strand are adjusted back one base
         self.gene.strand = "-"
-        self.assertEqual(self.gene.__add_cds__(cds), [(99, 199), (799, 899)])
+        self.assertEqual(self.gene.__add_cds__(cds), [(100, 200), (800, 900)])
         
         self.gene.strand = "+"
         self.assertEqual(self.gene.__add_cds__(cds), cds)

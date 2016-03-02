@@ -17,6 +17,8 @@ else:
 
 class SequenceMethods(object):
     
+    transdict = maketrans("acgtuACGTU", "tgcaaTGCAA")
+    
     def get_position_in_cds(self, chr_position):
         """ figure out the coding position relative to the CDS start site
         """
@@ -83,19 +85,23 @@ class SequenceMethods(object):
         """ add and process the genomic sequence into a CDS sequence
         """
         
+        # if the genomic DNA was for a transcript on the reverse strand, reorient
+        # it to the plus strand.
+        if self.get_strand() == '-':
+            gdna = self.reverse_complement(gdna)
+        
         self.gdna_offset = offset
         self.genomic_sequence = gdna
         
         cds_seq = ""
         for start, end in self.cds:
+            start_bp = abs(start - self.get_start()) + offset
+            end_bp = abs(end - self.get_start()) + 1 + offset
+            bases = self.genomic_sequence[start_bp:end_bp]
             if self.strand == "+":
-                start_bp = abs(start - self.get_start()) + offset
-                end_bp = abs(end - self.get_start()) + 1 + offset
-                cds_seq += self.genomic_sequence[start_bp:end_bp]
+                cds_seq += bases
             else:
-                start_bp = abs(self.get_end() - end) - 1 + offset
-                end_bp = abs(self.get_end() - start) + offset
-                cds_seq = self.genomic_sequence[start_bp:end_bp] + cds_seq
+                cds_seq = self.reverse_complement(bases) + cds_seq
         
         if cds_seq[0:50] == self.cds_sequence[1:51]:
             self.fix_transcript_off_by_one_bp()
@@ -106,10 +112,13 @@ class SequenceMethods(object):
         # fails for at least one gene (CCDC18), which begins with a N, and
         # throws the coordinates off
         if cds_seq != self.cds_sequence:
-            raise ValueError("Coding sequence from gene coordinates doesn't match coding sequence obtained from Ensembl.\nTranscript: {0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq, self.cds_sequence))
+            raise ValueError("Coding sequence from gene coordinates doesn't"
+                "match coding sequence obtained from Ensembl.\nTranscript:"
+                "{0}\n{1}\n\nshould be\n{2}\n".format(self.get_name(), cds_seq,
+                self.cds_sequence))
     
     def fix_transcript_off_by_one_bp(self):
-        """ This fixes ACTL7A, which has  the CDS start and end off by a bp.
+        """ This fixes ACTL7A, which has the CDS start and end off by a bp.
         """
         
         offset = 1
@@ -153,7 +162,7 @@ class SequenceMethods(object):
                 self.cds[0] = (self.cds[0][0] - diff, self.cds[0][1])
                 start_bp = abs(self.get_end() - end) + self.gdna_offset
                 end_bp = abs(self.get_end() - end) + diff + self.gdna_offset
-                self.cds_sequence += self.genomic_sequence[start_bp:end_bp]
+                self.cds_sequence += self.reverse_complement(self.genomic_sequence[start_bp:end_bp])
         
         self.cds_min = int(self.cds[0][0])
         self.cds_max = int(self.cds[-1][-1])
@@ -162,22 +171,24 @@ class SequenceMethods(object):
         """ reverse complement a DNA or RNA sequence
         """
         
-        transdict = maketrans("acgtuACGTU", "tgcaaTGCAA")
-        
-        return seq.translate(transdict)[::-1]
+        return str(seq).translate(self.transdict)[::-1]
     
     def get_trinucleotide(self, pos):
         """ obtains the trinucleotide sequence around a position
+        
+        Args:
+            pos: integer for chromosomal nucleotide position.
+        
+        Returns:
+            trinucleotide e.g. 'TCC', centered around the required position,
+            given with respect to the plus strand.
         """
         
         assert pos >= 0
         assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
         
         offset = self.get_start()
-        if self.strand == "-":
-            offset = self.get_end() - 1
-        
-        sequence_pos = abs(pos - offset) + self.gdna_offset
+        sequence_pos = pos - offset + self.gdna_offset
         tri = self.genomic_sequence[sequence_pos - 1:sequence_pos + 2]
         
         return tri

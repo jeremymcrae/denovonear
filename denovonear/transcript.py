@@ -67,11 +67,6 @@ class Transcript(SequenceMethods):
                 # haven't hit this yet, deal with it when it happens.
                 raise ValueError("{} lacks exon coordinates".format(self.name))
         
-        # adjust the positions back one base pair if the transcript is on the
-        # reverse strand
-        if self.get_strand() == "-":
-            exon_ranges = [(x[0]-1, x[1]-1) for x in exon_ranges]
-        
         return exon_ranges
     
     def __add_cds__(self, cds_ranges):
@@ -79,11 +74,6 @@ class Transcript(SequenceMethods):
         """
         
         cds = sorted(cds_ranges)
-        
-        # adjust the positions back one base pair if the transcript is on the
-        # reverse strand
-        if self.get_strand() == "-":
-            cds = [(x[0]-1, x[1]-1) for x in cds]
         
         self.cds_min = int(cds[0][0])
         self.cds_max = int(cds[-1][-1])
