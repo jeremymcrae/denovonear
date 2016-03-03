@@ -212,6 +212,9 @@ class SiteRates(object):
         seq = self.gene.get_trinucleotide(bp)
         self.boundary_dist = get_boundary_distance(self.gene, bp)
         
+        if self.gene.get_strand() == "-":
+            seq = self.gene.reverse_complement(seq)
+        
         try:
             codon = get_codon_info(self.gene, bp, self.boundary_dist)
         except IndexError:
@@ -243,7 +246,7 @@ class SiteRates(object):
             # the + strand.
             ref_base = seq[1]
             alt = base
-            if self.gene.strand == "-":
+            if self.gene.get_strand() == "-":
                 ref_base = self.transdict[ref_base]
                 alt = self.transdict[alt]
             self.rates[category].add_choice(cds_pos, rate, ref_base, alt)
