@@ -52,16 +52,16 @@ class SequenceMethods(object):
         # quickly find the exon containing the CDS position
         for start, end in self.cds:
             start_cds = min(self.exon_to_cds[start], self.exon_to_cds[end])
-            end_cds = max(self.exon_to_cds[end], self.exon_to_cds[end])
+            end_cds = max(self.exon_to_cds[start], self.exon_to_cds[end])
             
             if start_cds <= cds_position <= end_cds:
                 break
         
         # convert the CDS position to a chromosomal coordinate
-        if self.strand == "+":
+        if self.get_strand() == "+":
             return start + (cds_position - start_cds)
         else:
-            return end - (cds_position - start_cds)
+            return start + (end_cds - cds_position)
     
     def get_codon_number_for_cds_position(self, cds_position):
         """ figure out the codon position for a position
