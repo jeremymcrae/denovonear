@@ -56,6 +56,23 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.assertEqual(self.gene.get_position_on_chrom(1), 189)
         self.assertEqual(self.gene.get_position_on_chrom(10), 180)
         self.assertEqual(self.gene.get_position_on_chrom(11), 120)
+        
+        # run through all the CDS positions, and make sure that converting
+        # between coordinates gives the same position as original
+        for pos in range(self.gene.get_start(), self.gene.get_end()):
+            if self.gene.in_coding_region(pos):
+                cds = self.gene.get_position_in_cds(pos)
+                converted = self.gene.get_position_on_chrom(cds)
+                self.assertEqual(pos, converted)
+        
+        # now try converting for a gene on the plus strand
+        self.gene.strand = '+'
+        del self.gene.exon_to_cds
+        for pos in range(self.gene.get_start(), self.gene.get_end()):
+            if self.gene.in_coding_region(pos):
+                cds = self.gene.get_position_in_cds(pos)
+                converted = self.gene.get_position_on_chrom(cds)
+                self.assertEqual(pos, converted)
     
     def test_get_codon_number_for_cds_position(self):
         """ test that get_codon_number_for_cds_position() works correctly
