@@ -18,7 +18,6 @@ else:
 class SequenceMethods(object):
     
     transdict = maketrans("acgtuACGTU", "tgcaaTGCAA")
-    
     aa_code = {"AAA": "K", "AAC": "N", "AAG": "K", "AAT": "N",
         "ACA": "T", "ACC": "T", "ACG": "T", "ACT": "T",
         "AGA": "R", "AGC": "S", "AGG": "R", "AGT": "S",
@@ -36,11 +35,31 @@ class SequenceMethods(object):
         "TGA": "*", "TGC": "C", "TGG": "W", "TGT": "C",
         "TTA": "L", "TTC": "F", "TTG": "L", "TTT": "F"}
     
+    def cache_exon_cds_positions(self):
+        """ cache the exon boundary positions as CDS coordinates.
+        
+        Rather than recalculate the CDS positions each time we want to convert a
+        chromosome position to a CDS position, we calculate them once and cache
+        the coordinates in a dictionary for rapid access.
+        """
+        
+        self.exon_to_cds = {}
+        
+        for start, end in self.cds:
+            # get the positions of the exon boundaries in CDS distance from
+            # the start site
+            start_cds = self.get_coding_distance(self.get_cds_start(), start)
+            end_cds = self.get_coding_distance(self.get_cds_start(), end)
+            
+            # cache the CDS positions of the exon boundaries
+            self.exon_to_cds[start] = start_cds
+            self.exon_to_cds[end] = end_cds
+    
     def get_position_on_chrom(self, cds_position):
         """ figure out the chromosome position of a CDS site
         
         Args:
-            cds_position:  position of a variant in CDS
+            cds_position:  position of a variant in CDS.
         
         Returns:
             chromosome bp position of the CDS site
@@ -48,17 +67,7 @@ class SequenceMethods(object):
         
         # cache the exon boundaries in CDS distances
         if not hasattr(self, "exon_to_cds"):
-            self.exon_to_cds = {}
-            
-            for start, end in self.cds:
-                # get the positions of the exon boundaries in CDS distance from
-                # the start site
-                start_cds = self.get_coding_distance(self.get_cds_start(), start)
-                end_cds = self.get_coding_distance(self.get_cds_start(), end)
-                
-                # cache the CDS positions of the exon boundaries
-                self.exon_to_cds[start] = start_cds
-                self.exon_to_cds[end] = end_cds
+            self.cache_exon_cds_positions()
         
         # quickly find the exon containing the CDS position
         for start, end in self.cds:
@@ -198,11 +207,9 @@ class SequenceMethods(object):
         assert pos >= 0
         assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
         
-        offset = self.get_start()
-        sequence_pos = pos - offset + self.gdna_offset
-        tri = self.genomic_sequence[sequence_pos - 1:sequence_pos + 2]
+        sequence_pos = pos - self.get_start() + self.gdna_offset
         
-        return tri
+        return self.genomic_sequence[sequence_pos - 1:sequence_pos + 2]
     
     def get_codon_sequence(self, codon_number):
         """ get the codon sequence for a given codon_number
