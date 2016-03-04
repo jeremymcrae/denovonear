@@ -154,11 +154,11 @@ class Consequences(object):
         
         distance = min(abs(end - pos), abs(start - pos))
         if pos < start:
-            cds_pos = self.transcript.get_position_in_cds(start)
+            cds_pos = self.transcript.chrom_pos_to_cds(start)
             separator = "-"
         else:
             separator = "+"
-            cds_pos = self.transcript.get_position_in_cds(end)
+            cds_pos = self.transcript.chrom_pos_to_cds(end)
         
         cds_pos += 1
         if self.transcript.strand == "-":

@@ -19,12 +19,6 @@ class SequenceMethods(object):
     
     transdict = maketrans("acgtuACGTU", "tgcaaTGCAA")
     
-    def get_position_in_cds(self, chr_position):
-        """ figure out the coding position relative to the CDS start site
-        """
-        
-        return self.get_coding_distance(self.get_cds_start(), chr_position)
-    
     def get_position_on_chrom(self, cds_position):
         """ figure out the chromosome position of a CDS site
         

@@ -283,9 +283,9 @@ class TestTranscriptPy(unittest.TestCase):
         self.gene.strand = "+"
         
         # note that all of these chr positions are 0-based (ie pos - 1)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1099), 0)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1100), 1)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1199), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1100), 0)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1101), 1)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1199), 99)
         
         # check that outside exon boundaries gets the closest exon position, if
         # the variant is close enough
@@ -296,9 +296,9 @@ class TestTranscriptPy(unittest.TestCase):
         
         # check that sites sufficiently distant from an exon raise an error, or
         # sites upstream of a gene, just outside the CDS, but within an exon
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AssertionError):
             self.gene.chrom_pos_to_cds(1215)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(AssertionError):
             self.gene.chrom_pos_to_cds(1098)
         
         # check that sites in a different exon are counted correctly
@@ -306,17 +306,9 @@ class TestTranscriptPy(unittest.TestCase):
         
         # check that sites on the reverse strand still give the correct CDS
         self.gene.strand = "-"
-        self.assertEqual(self.gene.chrom_pos_to_cds(1899), 0)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1890), 9)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1900), 0)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1890), 10)
         self.assertEqual(self.gene.chrom_pos_to_cds(1799), 100)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1790), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1792), 100)
         
         self.assertEqual(self.gene.chrom_pos_to_cds(1200), 101)
-        
-        
-    
-    
-
-
-# if __name__ == '__main__':
-#     unittest.main()

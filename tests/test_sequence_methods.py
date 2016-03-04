@@ -25,22 +25,6 @@ class TestSequenceMethodsPy(unittest.TestCase):
         
         self.gene = Transcript(name, start, end, strand, chrom, exons, cds)
     
-    def test_get_position_in_cds(self):
-        """ test get_position_in_cds() works correctly
-        """
-        
-        self.assertEqual(self.gene.get_position_in_cds(110), 0)
-        self.assertEqual(self.gene.get_position_in_cds(120), 10)
-        self.assertEqual(self.gene.get_position_in_cds(190), 21)
-        
-        self.gene.strand = "-"
-        self.assertEqual(self.gene.get_position_in_cds(190), 0)
-        self.assertEqual(self.gene.get_position_in_cds(180), 10)
-        self.assertEqual(self.gene.get_position_in_cds(110), 21)
-        
-        self.gene.strand = "1"
-        self.assertRaises(ValueError, self.gene.get_position_in_cds, 110)
-    
     def test_get_position_on_chrom(self):
         """ test that get_position_on_chrom() works correctly
         """
@@ -61,7 +45,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         # between coordinates gives the same position as original
         for pos in range(self.gene.get_start(), self.gene.get_end()):
             if self.gene.in_coding_region(pos):
-                cds = self.gene.get_position_in_cds(pos)
+                cds = self.gene.chrom_pos_to_cds(pos)
                 converted = self.gene.get_position_on_chrom(cds)
                 self.assertEqual(pos, converted)
         
@@ -70,7 +54,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         del self.gene.exon_to_cds
         for pos in range(self.gene.get_start(), self.gene.get_end()):
             if self.gene.in_coding_region(pos):
-                cds = self.gene.get_position_in_cds(pos)
+                cds = self.gene.chrom_pos_to_cds(pos)
                 converted = self.gene.get_position_on_chrom(cds)
                 self.assertEqual(pos, converted)
     

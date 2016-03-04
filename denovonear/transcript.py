@@ -454,36 +454,25 @@ class Transcript(SequenceMethods):
         # need to convert the de novo event positions into CDS positions
         cds_start = self.get_cds_start()
         
-        pos += 1 # offset from zero based chrom
         try:
-            dist = self.get_coding_distance(cds_start, pos)
+            return self.get_coding_distance(cds_start, pos)
         except AssertionError:
             # catch the splice site functional mutations
-            (exon_start, exon_end) = self.find_closest_exon(pos)
+            exon = self.find_closest_exon(pos)
             
-            start_dist = abs(exon_start - pos)
-            end_dist = abs(exon_end - pos)
-            
-            # use the closest end of the exon
-            if start_dist <= end_dist:
-                exon_dist = start_dist
-                exon_pos = exon_start
-            else:
-                exon_dist = end_dist
-                exon_pos = exon_end
+            distances = [ abs(x - pos) for x in exon ]
+            distance = min(distances)
+            site = exon[distances.index(distance)]
             
             # catch the few variants that lie near an exon, but that exon isn't
             # part of the coding sequence
-            try:
-                self.get_coding_distance(cds_start, exon_pos)
-            except AssertionError:
-                raise ValueError("Not near coding exon: {0} in transcript {1}".format(pos, self.get_name()))
+            if not self.in_coding_region(site):
+                raise AssertionError("Not near coding exon: {0} in transcript"
+                    " {1}".format(pos, self.get_name()))
             
-            # if the var is outside the exon, but might affect a splice site,
-            # swap it to using the splice site location
-            if exon_dist < 10:
-                dist = self.get_coding_distance(cds_start, exon_pos)
-            else:
-                raise ValueError("distance to exon ({0}) > 10 bp for {1} in transcript {2}".format(min(start_dist, end_dist), pos, self.get_name()))
-        
-        return dist
+            # ignore positions outside the exons that are too distant from a boundary
+            if distance >= 9:
+                raise AssertionError("distance to exon ({0}) > 8 bp for {1}"
+                    " in transcript {2}".format(distance, pos, self.get_name()))
+            
+            return self.get_coding_distance(cds_start, site)

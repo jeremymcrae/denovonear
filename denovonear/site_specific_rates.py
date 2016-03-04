@@ -25,15 +25,14 @@ def get_codon_info(transcript, bp, boundary_dist):
         raise IndexError
     
     if in_coding:
-        cds_pos = transcript.get_position_in_cds(bp)
+        cds_pos = transcript.chrom_pos_to_cds(bp)
         codon_number = transcript.get_codon_number_for_cds_position(cds_pos)
         intra_codon = transcript.get_position_within_codon(cds_pos)
         codon_seq = transcript.get_codon_sequence(codon_number)
         initial_aa = transcript.translate_codon(codon_seq)
     else:
         # for non-exonic positions, use the nearest exon boundary
-        site = [x for x in [exon_start, exon_end] if abs(x - bp) == boundary_dist]
-        cds_pos = transcript.get_position_in_cds(site[0])
+        cds_pos = transcript.chrom_pos_to_cds(bp)
         codon_number = None
         intra_codon = None
         codon_seq = None
