@@ -275,3 +275,12 @@ class TestSequenceMethodsPy(unittest.TestCase):
         # raise an error for non-IUPAC base containing codons
         with self.assertRaises(KeyError):
             self.gene.translate("FFF")
+        
+        # can translate multicodon sequences
+        self.assertEqual(self.gene.translate("AAAAAC"), "KN")
+        
+        # raise an error if we translate sequence with an incomplete codon
+        with self.assertRaises(KeyError):
+            self.assertEqual(self.gene.translate("AA"), "KN")
+            self.assertEqual(self.gene.translate("AAAAA"), "KN")
+        
