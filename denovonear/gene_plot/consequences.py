@@ -189,6 +189,6 @@ class Consequences(object):
         mutated_codon = list(codon["codon_seq"])
         mutated_codon[codon["intra_codon"]] = alt
         mutated_codon = "".join(mutated_codon)
-        mutated_aa = self.transcript.translate_codon(mutated_codon)
+        mutated_aa = self.transcript.translate(mutated_codon)
         
         return "{}{}{}".format(codon["initial_aa"], codon["codon_number"], mutated_aa)

@@ -24,15 +24,13 @@ def get_codon_info(transcript, bp, boundary_dist):
     if boundary_dist >= 9 and not in_coding:
         raise IndexError
     
+    cds_pos = transcript.chrom_pos_to_cds(bp)
     if in_coding:
-        cds_pos = transcript.chrom_pos_to_cds(bp)
         codon_number = transcript.get_codon_number_for_cds_position(cds_pos)
         intra_codon = transcript.get_position_within_codon(cds_pos)
         codon_seq = transcript.get_codon_sequence(codon_number)
-        initial_aa = transcript.translate_codon(codon_seq)
+        initial_aa = transcript.translate(codon_seq)
     else:
-        # for non-exonic positions, use the nearest exon boundary
-        cds_pos = transcript.chrom_pos_to_cds(bp)
         codon_number = None
         intra_codon = None
         codon_seq = None
@@ -118,7 +116,7 @@ class SiteRates(object):
         mutated_codon[intra_codon] = base
         mutated_codon = "".join(mutated_codon)
         
-        return self.gene.translate_codon(mutated_codon)
+        return self.gene.translate(mutated_codon)
     
     def splice_lof_check(self, initial_aa, mutated_aa, position):
         """ checks if a variant has a splice_donor or splice_acceptor consequence

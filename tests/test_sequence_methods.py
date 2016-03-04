@@ -263,15 +263,15 @@ class TestSequenceMethodsPy(unittest.TestCase):
         with self.assertRaises(AssertionError):
             self.gene.get_codon_sequence(3)
     
-    def test_translate_codon(self):
-        """ test that translate_codon() works correctly
+    def test_translate(self):
+        """ test that translate() works correctly
         """
         
         # check a couple of codons, including the stop codon
-        self.assertEqual(self.gene.translate_codon("AAA"), "K")
-        self.assertEqual(self.gene.translate_codon("AAC"), "N")
-        self.assertEqual(self.gene.translate_codon("TAG"), "*")
+        self.assertEqual(self.gene.translate("AAA"), "K")
+        self.assertEqual(self.gene.translate("AAC"), "N")
+        self.assertEqual(self.gene.translate("TAG"), "*")
         
         # raise an error for non-IUPAC base containing codons
         with self.assertRaises(KeyError):
-            self.gene.translate_codon("FFF")
+            self.gene.translate("FFF")
