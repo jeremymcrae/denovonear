@@ -103,7 +103,6 @@ class TestTranscriptPy(unittest.TestCase):
         # raise an error if the position is within the exons
         with self.assertRaises(AssertionError):
             self.gene.fix_out_of_exon_cds_boundary(1105)
-        
     
     def test_chrom_to_int(self):
         """ test that chrom_to_int() works correctly
@@ -119,6 +118,26 @@ class TestTranscriptPy(unittest.TestCase):
         self.assertEqual(self.gene.chrom_to_int("mt"), 25)
         self.assertEqual(self.gene.chrom_to_int("chrmt"), 25)
         self.assertRaises(KeyError, self.gene.chrom_to_int, "Z")
+    
+    def test_get_cds_range(self):
+        """ unit test checking the CDS end points by strand
+        """
+        
+        self.gene.cds_min = 100
+        self.gene.cds_max = 200
+        
+        self.gene.strand = '+'
+        self.assertEqual(self.gene.get_cds_start(), 100)
+        self.assertEqual(self.gene.get_cds_end(), 200)
+        
+        self.gene.strand = '-'
+        self.assertEqual(self.gene.get_cds_start(), 200)
+        self.assertEqual(self.gene.get_cds_end(), 100)
+        
+        with self.assertRaises(ValueError):
+            self.gene.strand = 'x'
+            self.gene.get_cds_start()
+            self.gene.get_cds_end()
     
     def test___add__(self):
         """ test that __add__() works correctly
@@ -233,8 +252,6 @@ class TestTranscriptPy(unittest.TestCase):
     def test_get_exon_containing_position(self):
         """ test that get_exon_containing_position() works correctly
         """
-        
-        
         
         exons = [(1000, 1200), (1800, 2000)]
         
