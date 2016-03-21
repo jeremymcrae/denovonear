@@ -86,8 +86,6 @@ class EnsemblRequest(object):
             # if we get a http error, we still process the status code, since a
             # later step deals with different status codes differently.
             pass
-        except URLError as handler:
-            raise handler
         
         status_code = handler.getcode()
         response = handler.read()
