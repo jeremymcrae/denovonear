@@ -33,7 +33,7 @@ class TestEnsemblRequestPy(unittest.TestCase):
             ',"havana_version":"1","seq_region_name":"11","havana_gene":'
             '"OTTHUMG00000167339","strand":1,"id":"ENSG00000172320","gene_id":'
             '"ENSG00000172320","version":2,"assembly_name":"GRCh38","description"'
-            ':"olfactory receptor, family 5, subfamily A, member 1 [Source:HGNC'
+            ':"olfactory receptor family 5 subfamily A member 1 [Source:HGNC'
             ' Symbol;Acc:HGNC:8319]","end":59444194,"biotype":"protein_coding",'
             '"start":59443144}]')
     

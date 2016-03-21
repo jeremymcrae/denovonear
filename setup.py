@@ -20,7 +20,7 @@ module1 = cythonize([
 
 setup (name="denovonear",
         description='Package to examine de novo clustering',
-        version="0.1.2",
+        version="0.1.3",
         author="Jeremy McRae",
         author_email="jeremy.mcrae@sanger.ac.uk",
         license="MIT",
