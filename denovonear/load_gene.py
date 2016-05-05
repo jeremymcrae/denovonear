@@ -101,20 +101,18 @@ def get_de_novos_in_transcript(transcript, de_novos):
     
     return in_transcript
     
-def get_transcript_ids_sorted_by_length(ensembl, gene_id):
-    """ gets transcript IDs for a gene, sorted by coding sequence length
+def get_transcript_ids(ensembl, gene_id):
+    """ gets transcript IDs for a gene.
     
     Args:
         ensembl: EnsemblRequest object to request data from ensembl
         gene_id: HGNC symbol for gene
     
     Returns:
-        list of (transcript ID, length) tuples for each protein coding
-        transcript for a gene. The transcripts are sorted by transcript length,
-        with longest first.
+        dictionary of transcript ID: transcript lengths for all transcripts
+        for a given HGNC symbol.
     """
     
-    print("loading: {0}".format(gene_id))
     ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
     transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, [gene_id])
     
@@ -131,13 +129,7 @@ def get_transcript_ids_sorted_by_length(ensembl, gene_id):
         
         transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, symbols)
     
-    transcripts = get_transcript_lengths(ensembl, transcript_ids)
-    
-    # # sort by transcript length
-    # transcripts = sorted(transcripts.items(), key=lambda x: x[1])
-    # transcripts = list(reversed(transcripts))
-    
-    return transcripts
+    return get_transcript_lengths(ensembl, transcript_ids)
 
 def load_gene(ensembl, gene_id, de_novos=[]):
     """ sort out all the necessary sequences and positions for a gene
@@ -177,7 +169,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
         dictionary of lengths and de novo counts, indexed by transcript IDs.
     """
     
-    transcripts = get_transcript_ids_sorted_by_length(ensembl, gene_id)
+    transcripts = get_transcript_ids(ensembl, gene_id)
     
     # TODO: allow for genes without any coding sequence.
     if len(transcripts) == 0:

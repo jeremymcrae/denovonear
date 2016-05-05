@@ -22,7 +22,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import unittest
 
 from denovonear.load_gene import get_transcript_lengths, construct_gene_object, \
-    get_de_novos_in_transcript, get_transcript_ids_sorted_by_length, load_gene, \
+    get_de_novos_in_transcript, get_transcript_ids, load_gene, \
     count_de_novos_per_transcript, minimise_transcripts
 from denovonear.transcript import Transcript
 from denovonear.ensembl_requester import EnsemblRequest
@@ -134,12 +134,12 @@ class TestLoadGenePy(unittest.TestCase):
         # check if we pass in an empty list, we get one back
         self.assertEqual(get_de_novos_in_transcript(tx, []), [])
     
-    def test_get_transcript_ids_sorted_by_length(self):
+    def test_get_transcript_ids(self):
         """
         """
         
         hgnc = "DYNLL1"
-        lengths = get_transcript_ids_sorted_by_length(self.ensembl, hgnc)
+        lengths = get_transcript_ids(self.ensembl, hgnc)
         
         expected = {'ENST00000548342': 89,
             'ENST00000549989': 89, 'ENST00000392509': 89,
