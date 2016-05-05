@@ -52,14 +52,6 @@ class Transcript(SequenceMethods):
         # when adding the CDS coordinates for the transcript.
         if exon_ranges == []:
             if len(cds) == 1 and min(cds[0]) >= self.start and max(cds[0]) <= self.end:
-                # if the CDS coordinates are the same as the gene coordinates,
-                # then extend the gene coordinates so that we capture an extra
-                # base pair of genomic sequenc (for the trionucleotides at
-                # the matching end).
-                if min(cds[0]) == self.start:
-                    self.start -= 1
-                if max(cds[0]) == self.end:
-                    self.end += 1
                 exon_ranges = [(self.start, self.end)]
             else:
                 # We can figure out the exon coordinates given a single CDS
