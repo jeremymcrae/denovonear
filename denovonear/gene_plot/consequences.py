@@ -20,7 +20,7 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 from denovonear.site_specific_rates import get_boundary_distance, \
-    get_codon_info
+    get_codon_info, get_mutated_aa
 
 class Consequences(object):
     """ class to identify HGVS-like codes for variants
@@ -186,9 +186,7 @@ class Consequences(object):
         # change the codon number from being 0-based to 1-based
         codon["codon_number"] += 1
         
-        mutated_codon = list(codon["codon_seq"])
-        mutated_codon[codon["intra_codon"]] = alt
-        mutated_codon = "".join(mutated_codon)
-        mutated_aa = self.transcript.translate(mutated_codon)
+        mutated_aa = get_mutated_aa(self.transcript, alt, codon["codon_seq"],
+            codon["intra_codon"])
         
         return "{}{}{}".format(codon["initial_aa"], codon["codon_number"], mutated_aa)
