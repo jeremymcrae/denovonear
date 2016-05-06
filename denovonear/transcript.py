@@ -3,7 +3,7 @@
 
 import copy
 
-from denovonear.transcript_sequence_methods import SequenceMethods
+from denovonear.transcript_sequence import SequenceMethods
 
 class Transcript(SequenceMethods):
     """ Class to define transcript regions.
