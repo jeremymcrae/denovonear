@@ -74,21 +74,21 @@ class TestTranscriptPy(unittest.TestCase):
         cds = [(298, 400), (800, 1000)]
         self.assertEqual(self.gene.__add_cds__(cds), [(198, 200), (300, 400), (800, 1000)])
     
-    def test_fix_out_of_exon_cds_boundary(self):
-        """ test that fix_out_of_exon_cds_boundary() works correctly
+    def test__fix_out_of_exon_cds_boundary(self):
+        """ test that _fix_out_of_exon_cds_boundary() works correctly
         """
         
         self.gene.exons = [(1100, 1200), (1300, 1400), (1800, 1900)]
         
-        self.assertEqual(self.gene.fix_out_of_exon_cds_boundary(1295), (1195, 1200))
-        self.assertEqual(self.gene.fix_out_of_exon_cds_boundary(1205), (1300, 1305))
+        self.assertEqual(self.gene._fix_out_of_exon_cds_boundary(1295), (1195, 1200))
+        self.assertEqual(self.gene._fix_out_of_exon_cds_boundary(1205), (1300, 1305))
         
-        self.assertEqual(self.gene.fix_out_of_exon_cds_boundary(1402), (1800, 1802))
-        self.assertEqual(self.gene.fix_out_of_exon_cds_boundary(1798), (1398, 1400))
+        self.assertEqual(self.gene._fix_out_of_exon_cds_boundary(1402), (1800, 1802))
+        self.assertEqual(self.gene._fix_out_of_exon_cds_boundary(1798), (1398, 1400))
         
         # raise an error if the position is within the exons
         with self.assertRaises(AssertionError):
-            self.gene.fix_out_of_exon_cds_boundary(1105)
+            self.gene._fix_out_of_exon_cds_boundary(1105)
     
     def test_chrom_to_int(self):
         """ test that chrom_to_int() works correctly
@@ -145,47 +145,47 @@ class TestTranscriptPy(unittest.TestCase):
         # check that adding previously unknown exons works
         self.assertEqual((a + d).cds, [(30, 40), (55, 60), (90, 100)])
     
-    def test_region_overlaps_cds(self):
-        """ check that region_overlaps_cds() works correctly
+    def test___region_overlaps_cds__(self):
+        """ check that __region_overlaps_cds__() works correctly
         """
         
         # the cds regions are at [(1100, 1200), (1800, 1900)], so check regions
         # that do and do not intersect with those
         
-        self.assertTrue(self.gene.region_overlaps_cds((1050, 1150)))
+        self.assertTrue(self.gene.__region_overlaps_cds__((1050, 1150)))
         
         # check exons surrounding, and within the genes exons
-        self.assertTrue(self.gene.region_overlaps_cds((1050, 1250)))
-        self.assertTrue(self.gene.region_overlaps_cds((1150, 1160)))
+        self.assertTrue(self.gene.__region_overlaps_cds__((1050, 1250)))
+        self.assertTrue(self.gene.__region_overlaps_cds__((1150, 1160)))
         
         # check that non overlapping region fails
-        self.assertFalse(self.gene.region_overlaps_cds((1050, 1090)))
+        self.assertFalse(self.gene.__region_overlaps_cds__((1050, 1090)))
         
         # check the boundaries of the exons
-        self.assertTrue(self.gene.region_overlaps_cds((1050, 1100)))
-        self.assertFalse(self.gene.region_overlaps_cds((1050, 1099)))
+        self.assertTrue(self.gene.__region_overlaps_cds__((1050, 1100)))
+        self.assertFalse(self.gene.__region_overlaps_cds__((1050, 1099)))
     
-    def test_in_exons(self):
-        """ test that in_exons() works correctly
+    def test__in_exons(self):
+        """ test that _in_exons() works correctly
         """
         
         self.gene.exons = [(1000, 1200), (1800, 2000)]
         
         # check for positions inside the exon ranges
-        self.assertTrue(self.gene.in_exons(1000))
-        self.assertTrue(self.gene.in_exons(1001))
-        self.assertTrue(self.gene.in_exons(1200))
-        self.assertTrue(self.gene.in_exons(1800))
-        self.assertTrue(self.gene.in_exons(1801))
-        self.assertTrue(self.gene.in_exons(1999))
-        self.assertTrue(self.gene.in_exons(2000))
+        self.assertTrue(self.gene._in_exons(1000))
+        self.assertTrue(self.gene._in_exons(1001))
+        self.assertTrue(self.gene._in_exons(1200))
+        self.assertTrue(self.gene._in_exons(1800))
+        self.assertTrue(self.gene._in_exons(1801))
+        self.assertTrue(self.gene._in_exons(1999))
+        self.assertTrue(self.gene._in_exons(2000))
         
         # check positions outside the exon ranges
-        self.assertFalse(self.gene.in_exons(999))
-        self.assertFalse(self.gene.in_exons(1201))
-        self.assertFalse(self.gene.in_exons(1799))
-        self.assertFalse(self.gene.in_exons(2001))
-        self.assertFalse(self.gene.in_exons(-1100))
+        self.assertFalse(self.gene._in_exons(999))
+        self.assertFalse(self.gene._in_exons(1201))
+        self.assertFalse(self.gene._in_exons(1799))
+        self.assertFalse(self.gene._in_exons(2001))
+        self.assertFalse(self.gene._in_exons(-1100))
     
     def test_find_closest_exon(self):
         """ test that find_closest_exon() works correctly

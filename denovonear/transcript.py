@@ -75,14 +75,14 @@ class Transcript(SequenceMethods):
         # offset to the closest exon boundary, and use that to place the
         # position within the up or downstream exon, and correct the initial
         # cds boundaries
-        if not self.in_exons(self.cds_min):
-            (start, end) = self.fix_out_of_exon_cds_boundary(self.cds_min)
+        if not self._in_exons(self.cds_min):
+            (start, end) = self._fix_out_of_exon_cds_boundary(self.cds_min)
             cds[0] = (cds[0][0] + abs(end - start), cds[0][1])
             self.cds_min = start
             cds.insert(0, (start, end))
         
-        if not self.in_exons(self.cds_max):
-            (start, end) = self.fix_out_of_exon_cds_boundary(self.cds_max)
+        if not self._in_exons(self.cds_max):
+            (start, end) = self._fix_out_of_exon_cds_boundary(self.cds_max)
             cds[-1] = (cds[-1][0], cds[-1][1] - abs(end - start))
             self.cds_max = end
             cds.append((start, end))
@@ -99,7 +99,7 @@ class Transcript(SequenceMethods):
         '''
         return self.exons
     
-    def fix_out_of_exon_cds_boundary(self, position):
+    def _fix_out_of_exon_cds_boundary(self, position):
         """ fix cds start and ends which occur outside exons.
         
         The main cause is when the stop codon overlaps an exon boundary. In
@@ -114,7 +114,7 @@ class Transcript(SequenceMethods):
             adjusted chromosome position
         """
         
-        assert not self.in_exons(position)
+        assert not self._in_exons(position)
         
         (start, end) = self.find_closest_exon(position)
         
@@ -260,7 +260,7 @@ class Transcript(SequenceMethods):
             # check non-coding exons
             if not other.in_coding_region(start) and not other.in_coding_region(end):
                 # ignore exons that don't contain any coding sequence regions
-                if not other.region_overlaps_cds((start, end)):
+                if not other.__region_overlaps_cds__((start, end)):
                     continue
                 else:
                     # this is an exon where the start and end positions are
@@ -287,7 +287,7 @@ class Transcript(SequenceMethods):
             
             # figure out if the cds to be added intersects with the CDS of the
             # alternative transcript
-            if not altered.region_overlaps_cds((start, end)):
+            if not altered.__region_overlaps_cds__((start, end)):
                 altered.cds.append((start, end))
             else:
                 # if the transcripts overlap, find the overlapping exon and
@@ -307,7 +307,7 @@ class Transcript(SequenceMethods):
         
         return altered
     
-    def region_overlaps_cds(self, exon, exon_ranges=None):
+    def __region_overlaps_cds__(self, exon, exon_ranges=None):
         """ checks if a region intersects any part of the CDS
         """
         
@@ -318,12 +318,12 @@ class Transcript(SequenceMethods):
         # alternative transcript
         overlap = False
         for cds_exon in exon_ranges:
-            if self.has_overlap(cds_exon, exon):
+            if self.__has_overlap__(cds_exon, exon):
                 overlap = True
         
         return overlap
     
-    def has_overlap(self, range_1, range_2):
+    def __has_overlap__(self, range_1, range_2):
         """ checks if two ranges overlaps
         
         Args:
@@ -336,7 +336,7 @@ class Transcript(SequenceMethods):
         
         return range_1[0] <= range_2[1] and range_1[1] >= range_2[0]
     
-    def in_exons(self, position):
+    def _in_exons(self, position):
         """ determines if a nucleotide position lies within the exons
         """
         
