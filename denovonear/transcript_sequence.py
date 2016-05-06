@@ -45,7 +45,7 @@ class SequenceMethods(object):
         
         self.exon_to_cds = {}
         
-        for start, end in self.cds:
+        for start, end in self.get_cds():
             # get the positions of the exon boundaries in CDS distance from
             # the start site
             start_cds = self.get_coding_distance(self.get_cds_start(), start)
@@ -70,7 +70,7 @@ class SequenceMethods(object):
             self.cache_exon_cds_positions()
         
         # quickly find the exon containing the CDS position
-        for start, end in self.cds:
+        for start, end in self.get_cds():
             start_cds = min(self.exon_to_cds[start], self.exon_to_cds[end])
             end_cds = max(self.exon_to_cds[start], self.exon_to_cds[end])
             
@@ -114,7 +114,7 @@ class SequenceMethods(object):
         self.genomic_sequence = gdna
         
         cds_seq = ""
-        for start, end in self.cds:
+        for start, end in self.get_cds():
             start_bp = abs(start - self.get_start()) + offset
             end_bp = abs(end - self.get_start()) + 1 + offset
             bases = self.genomic_sequence[start_bp:end_bp]
@@ -141,17 +141,20 @@ class SequenceMethods(object):
         """ This fixes ACTL7A, which has the CDS start and end off by a bp.
         """
         
+        cds = self.get_cds()
+        exons = self.get_exons()
+        
         offset = 1
         if self.strand == "+":
-            self.cds[0] = (self.cds[0][0] - offset, self.cds[0][-1])
-            self.cds[-1] = (self.cds[-1][0], self.cds[-1][-1] - offset)
-            self.exons[0] = (self.exons[0][0] - offset, self.exons[0][-1])
-            self.exons[-1] = (self.exons[-1][0], self.exons[-1][-1] - offset)
+            self.cds[0] = (cds[0][0] - offset, cds[0][-1])
+            self.cds[-1] = (cds[-1][0], cds[-1][-1] - offset)
+            self.exons[0] = (exons[0][0] - offset, exons[0][-1])
+            self.exons[-1] = (exons[-1][0], exons[-1][-1] - offset)
         else:
-            self.cds[0] = (self.cds[0][0] + offset, self.cds[0][-1])
-            self.cds[-1] = (self.cds[-1][0], self.cds[-1][-1] + offset)
-            self.exons[0] = (self.exons[0][0] + offset, self.exons[0][-1])
-            self.exons[-1] = (self.exons[-1][0], self.exons[-1][-1] + offset)
+            self.cds[0] = (cds[0][0] + offset, cds[0][-1])
+            self.cds[-1] = (cds[-1][0], cds[-1][-1] + offset)
+            self.exons[0] = (exons[0][0] + offset, exons[0][-1])
+            self.exons[-1] = (exons[-1][0], exons[-1][-1] + offset)
     
     def fix_coding_sequence_length(self):
         """ correct the coding sequence of a transcript, if it misses bases.

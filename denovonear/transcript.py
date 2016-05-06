@@ -79,6 +79,7 @@ class Transcript(SequenceMethods):
             cds[0] = (cds[0][0] + abs(end - start), cds[0][1])
             self.cds_min = start
             cds.insert(0, (start, end))
+        
         if not self.in_exons(self.cds_max):
             (start, end) = self.fix_out_of_exon_cds_boundary(self.cds_max)
             cds[-1] = (cds[-1][0], cds[-1][1] - abs(end - start))
@@ -86,7 +87,13 @@ class Transcript(SequenceMethods):
             cds.append((start, end))
         
         return cds
-        
+    
+    def get_cds(self):
+        return self.cds
+    
+    def get_exons(self):
+        return self.exons
+    
     def fix_out_of_exon_cds_boundary(self, position):
         """ fix cds start and ends which occur outside exons.
         
@@ -111,13 +118,13 @@ class Transcript(SequenceMethods):
         
         # if we are closer to the start, then we go back an exon
         if start_dist < end_dist:
-            before = self.get_exon_containing_position(start, self.exons) - 1
-            end = self.exons[before][1]
+            before = self.get_exon_containing_position(start, self.get_exons()) - 1
+            end = self.get_exons()[before][1]
             start = end - start_dist
         # if we are closer to the end, then we go forward an exon
         elif start_dist > end_dist:
-            after = self.get_exon_containing_position(end, self.exons) + 1
-            start = self.exons[after][0]
+            after = self.get_exon_containing_position(end, self.get_exons()) + 1
+            start = self.get_exons()[after][0]
             end = start + end_dist
         
         return (start, end)
@@ -298,7 +305,7 @@ class Transcript(SequenceMethods):
         """
         
         if exon_ranges is None:
-            exon_ranges = self.cds
+            exon_ranges = self.get_cds()
         
         # figure out if the cds to be added intersects with the CDS of the
         # alternative transcript
@@ -328,7 +335,7 @@ class Transcript(SequenceMethods):
         
         position = int(position)
         
-        for start, end in self.exons:
+        for start, end in self.get_exons():
             if start <= position <= end:
                 return True
         
@@ -342,7 +349,7 @@ class Transcript(SequenceMethods):
         """
         
         if exons is None:
-            exons = self.exons
+            exons = self.get_exons()
         
         max_distance = 1e10
         ref_start = 0
@@ -376,7 +383,7 @@ class Transcript(SequenceMethods):
         
         position = int(position)
         
-        for start, end in self.cds:
+        for start, end in self.get_cds():
             if start <= position <= end:
                 return True
         
@@ -424,18 +431,18 @@ class Transcript(SequenceMethods):
         min_pos = min(pos_1, pos_2)
         max_pos = max(pos_1, pos_2)
         
-        exon_1 = self.get_exon_containing_position(min_pos, self.cds)
-        exon_2 = self.get_exon_containing_position(max_pos, self.cds)
+        exon_1 = self.get_exon_containing_position(min_pos, self.get_cds())
+        exon_2 = self.get_exon_containing_position(max_pos, self.get_cds())
         
         if exon_1 == exon_2:
             distance = max_pos - min_pos
         else:
-            exon_1_distance = (self.cds[exon_1][1] - min_pos)
-            exon_2_distance = (max_pos - self.cds[exon_2][0]) + 1
+            exon_1_distance = (self.get_cds()[exon_1][1] - min_pos)
+            exon_2_distance = (max_pos - self.get_cds()[exon_2][0]) + 1
             
             distance = exon_1_distance + exon_2_distance
             for exon in range(exon_1 + 1, exon_2):
-                distance += (self.cds[exon][1] - self.cds[exon][0]) + 1
+                distance += (self.get_cds()[exon][1] - self.get_cds()[exon][0]) + 1
         
         return distance
     
