@@ -24,7 +24,7 @@ import unittest
 import itertools
 
 from denovonear.site_specific_rates import get_codon_info, \
-    get_boundary_distance, SiteRates
+    get_boundary_distance, get_gene_range, get_mutated_aa, SiteRates
 from denovonear.weights import WeightedChoice
 from denovonear.transcript import Transcript
 
@@ -91,7 +91,7 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertEqual(get_boundary_distance(self.transcript, 200), 21)
     
     def test_get_codon_info(self):
-        """
+        """ check the function that checks the codon information for a position
         """
         
         # make sure a site well outside the gene raises an error
@@ -203,15 +203,15 @@ class TestSiteRatesPy(unittest.TestCase):
         """
         
         # check some codon mutations, including a stop mutation
-        self.assertEqual(self.weights.get_mutated_aa("C", "AAA", 2), "N")
-        self.assertEqual(self.weights.get_mutated_aa("A", "TGG", 2), "*")
+        self.assertEqual(get_mutated_aa(self.transcript, "C", "AAA", 2), "N")
+        self.assertEqual(get_mutated_aa(self.transcript, "A", "TGG", 2), "*")
         
         # a codon mutated to itself gives the expected amino acid
-        self.assertEqual(self.weights.get_mutated_aa("A", "AAA", 2), "K")
+        self.assertEqual(get_mutated_aa(self.transcript, "A", "AAA", 2), "K")
         
         # non-DNA codons raise errors
         with self.assertRaises(KeyError):
-            self.weights.get_mutated_aa("C", "RRR", 2)
+            get_mutated_aa(self.transcript, "C", "RRR", 2)
     
     def test_splice_lof_check(self):
         """ check that splice_lof_check() works correctly
@@ -314,7 +314,7 @@ class TestSiteRatesPy(unittest.TestCase):
         """ check that get_gene_range() works correctly
         """
         
-        self.assertEqual(self.weights.get_gene_range(), (110, 171))
+        self.assertEqual(get_gene_range(self.transcript), (110, 171))
     
     def clear_weighted_choices(self):
         """ clear the WeightedChoice samplers for each consequence

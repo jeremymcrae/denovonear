@@ -61,6 +61,47 @@ def get_boundary_distance(transcript, bp):
     
     return distance
 
+def get_gene_range(transcript):
+    """ get the lowest and highest positions of a transcripts coding sequence
+    
+    Args:
+        transcript: Transcript object for a gene.
+    
+    Returns:
+        tuple of start and end coordinates
+    """
+    
+    boundary_1 = transcript.get_cds_start()
+    boundary_2 = transcript.get_cds_end()
+    
+    start = min(boundary_1, boundary_2)
+    end = max(boundary_1, boundary_2)
+    
+    # shift the end position out by one, to use in python ranges
+    end += 1
+    
+    return (start, end)
+
+def get_mutated_aa(transcript, base, codon, intra_codon):
+    """ find the amino acid resulting from a base change to a codon
+    
+    Args:
+        transcript: Transcript object for a gene
+        base: alternate base (e.g. 'G') to introduce
+        codon: DNA sequence of a single codon
+        intra_codon: position within the codon to be altered (0-based)
+    
+    Returns:
+        single character amino acid code translated from the altered codon.
+    """
+      
+    # figure out what the mutated codon is
+    mutated_codon = list(codon)
+    mutated_codon[intra_codon] = base
+    mutated_codon = "".join(mutated_codon)
+    
+    return transcript.translate(mutated_codon)
+
 class SiteRates(object):
     """ class to build weighted choice random samplers for nonsense, missense,
     and functional classes of variants, using site specific mutation rates
@@ -85,9 +126,7 @@ class SiteRates(object):
         for cq in self.categories:
             self.rates[cq] = WeightedChoice()
         
-        range_start, range_end = self.get_gene_range()
-        
-        for bp in range(range_start, range_end):
+        for bp in range(*get_gene_range(self.gene)):
             self.check_position(bp)
     
     def __getitem__(self, category):
@@ -106,17 +145,6 @@ class SiteRates(object):
         """
         
         return self.rates[category]
-    
-    def get_mutated_aa(self, base, codon, intra_codon):
-        """ find the amino acid resulting from a base change to a codon
-        """
-          
-        # figure out what the mutated codon is
-        mutated_codon = list(codon)
-        mutated_codon[intra_codon] = base
-        mutated_codon = "".join(mutated_codon)
-        
-        return self.gene.translate(mutated_codon)
     
     def splice_lof_check(self, initial_aa, mutated_aa, position):
         """ checks if a variant has a splice_donor or splice_acceptor consequence
@@ -174,21 +202,6 @@ class SiteRates(object):
             and not self.missense_check(initial_aa, mutated_aa, position) \
             and not self.splice_region_check(initial_aa, mutated_aa, position)
     
-    def get_gene_range(self):
-        """ get the lowest and highest base positions of a genes CDS
-        """
-        
-        boundary_1 = self.gene.get_cds_start()
-        boundary_2 = self.gene.get_cds_end()
-        
-        start = min(boundary_1, boundary_2)
-        end = max(boundary_1, boundary_2)
-        
-        # shift the en position out by one, to use in python ranges
-        end += 1
-        
-        return (start, end)
-    
     def check_position(self, bp):
         """ add the consequence specific rates for the alternates for a variant
         
@@ -226,7 +239,7 @@ class SiteRates(object):
             alt_base = seq[0] + base + seq[2]
             rate = self.mut_dict[seq][alt_base]
             if initial_aa is not None:
-                mutated_aa = self.get_mutated_aa(base, codon["codon_seq"], codon["intra_codon"])
+                mutated_aa = get_mutated_aa(self.gene, base, codon["codon_seq"], codon["intra_codon"])
             
             if self.nonsense_check(initial_aa, mutated_aa, bp):
                 category = "nonsense"
