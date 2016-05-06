@@ -115,17 +115,17 @@ class TestSequenceMethodsPy(unittest.TestCase):
         
         self.gene.start = 0
         self.gene.end = 70
-        self.gene.exons = [(5, 60)]
-        self.gene.cds = [(5, 60)]
+        self.gene.exons = [(5, 61)]
+        self.gene.cds = [(5, 61)]
         self.gene.cds_min = 6
-        self.gene.cds_max = 61
+        self.gene.cds_max = 62
         
-        self.gene.cds_sequence =           "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAA"
+        self.gene.cds_sequence =           "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAAC"
         self.gene.add_genomic_sequence("GGGGATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAACCAGGCCCC")
-        self.assertEqual(self.gene.cds_sequence, "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAA")
+        self.assertEqual(self.gene.cds_sequence, "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAAC")
     
-    def test_fix_transcript_off_by_one_bp(self):
-        """ test that fix_transcript_off_by_one_bp is correct
+    def test__fix_transcript_off_by_one_bp(self):
+        """ test that _fix_transcript_off_by_one_bp is correct
         """
         
         self.gene.start = 0
@@ -135,11 +135,11 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.cds_min = 6
         self.gene.cds_max = 61
         
-        self.gene.fix_transcript_off_by_one_bp()
+        self.gene._fix_transcript_off_by_one_bp()
         self.assertEqual(self.gene.cds, [(4, 59)])
         
         self.gene.strand = "-"
-        self.gene.fix_transcript_off_by_one_bp()
+        self.gene._fix_transcript_off_by_one_bp()
         self.assertEqual(self.gene.cds, [(5, 60)])
         
     

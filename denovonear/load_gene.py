@@ -71,7 +71,6 @@ def construct_gene_object(ensembl, transcript_id):
     transcript = Transcript(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
-    transcript.fix_coding_sequence_length()
     
     return transcript
 
