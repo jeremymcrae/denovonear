@@ -13,10 +13,10 @@ IS_PYTHON3 = sys.version_info[0] == 3
  
 if IS_PYTHON3:
     import urllib.request as request
-    from urllib.error import HTTPError, URLError
+    from urllib.error import HTTPError
 else:
     import urllib2 as request
-    from urllib2 import HTTPError, URLError
+    from urllib2 import HTTPError
 
 from denovonear.ensembl_cache import EnsemblCache
 
