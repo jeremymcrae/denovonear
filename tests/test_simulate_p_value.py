@@ -102,9 +102,11 @@ class TestGetPValuePy(unittest.TestCase):
         tx2 = self.construct_gene()
         rates2 = self.get_rates(tx2)
         
-        # make sure we can use the string 'lof' to get loss-of-function rates
+        # make sure we can use the string 'lof' to get loss-of-function rates.
+        # NOTE: due to randomly sampling, this will fail ~0.1% of the time,
+        # purely by chance. If this fails, first try rerunning the tests.
         iterations = 10000
         cq = 'lof'
         (obs_2, p_2) = get_p_value(tx2, rates2, iterations, cq, de_novos)
         self.assertEqual(obs_1, obs_2)
-        self.assertTrue(abs(p_1 - p_2) < 0.01)
+        self.assertTrue(abs(p_1 - p_2) < 0.017)
