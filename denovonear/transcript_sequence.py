@@ -146,15 +146,18 @@ class SequenceMethods(object):
         
         offset = 1
         if self.strand == "+":
-            self.cds[0] = (cds[0][0] - offset, cds[0][-1])
-            self.cds[-1] = (cds[-1][0], cds[-1][-1] - offset)
-            self.exons[0] = (exons[0][0] - offset, exons[0][-1])
-            self.exons[-1] = (exons[-1][0], exons[-1][-1] - offset)
+            cds[0] = (cds[0][0] - offset, cds[0][-1])
+            cds[-1] = (cds[-1][0], cds[-1][-1] - offset)
+            exons[0] = (exons[0][0] - offset, exons[0][-1])
+            exons[-1] = (exons[-1][0], exons[-1][-1] - offset)
         else:
-            self.cds[0] = (cds[0][0] + offset, cds[0][-1])
-            self.cds[-1] = (cds[-1][0], cds[-1][-1] + offset)
-            self.exons[0] = (exons[0][0] + offset, exons[0][-1])
-            self.exons[-1] = (exons[-1][0], exons[-1][-1] + offset)
+            cds[0] = (cds[0][0] + offset, cds[0][-1])
+            cds[-1] = (cds[-1][0], cds[-1][-1] + offset)
+            exons[0] = (exons[0][0] + offset, exons[0][-1])
+            exons[-1] = (exons[-1][0], exons[-1][-1] + offset)
+        
+        self.exons = exons
+        self.cds = cds
     
     def fix_coding_sequence_length(self):
         """ correct the coding sequence of a transcript, if it misses bases.

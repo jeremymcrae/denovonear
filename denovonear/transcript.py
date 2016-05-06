@@ -14,7 +14,8 @@ class Transcript(SequenceMethods):
     two positions in the CDS.
     """
     
-    def __init__(self, transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges):
+    def __init__(self, transcript_id, start, end, strand, chrom, exon_ranges,
+            cds_ranges):
         """ initiate the class with details for a transcript
         
         Args:
@@ -89,9 +90,13 @@ class Transcript(SequenceMethods):
         return cds
     
     def get_cds(self):
+        ''' get list of cds coordinates
+        '''
         return self.cds
     
     def get_exons(self):
+        ''' get list of exon coordinates
+        '''
         return self.exons
     
     def fix_out_of_exon_cds_boundary(self, position):
@@ -156,6 +161,8 @@ class Transcript(SequenceMethods):
         return self.chrom
     
     def get_strand(self):
+        ''' returns the strand for the transcript
+        '''
         return self.strand
     
     def get_name(self):
