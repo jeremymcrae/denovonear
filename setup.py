@@ -13,6 +13,7 @@ module1 = cythonize([
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
         sources=["denovonear/weights.pyx",
+            "denovonear/transcript.pyx",
             "denovonear/weighted_choice.cpp",
             "denovonear/simulate.cpp"],
         language="c++"),
