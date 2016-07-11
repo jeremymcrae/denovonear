@@ -68,7 +68,10 @@ def construct_gene_object(ensembl, transcript_id):
     exon_ranges = ensembl.get_exon_ranges_for_transcript(transcript_id)
     
     # start a Transcript object with the locations and sequence
-    transcript = Transcript(transcript_id, start, end, strand, chrom, exon_ranges, cds_ranges)
+    transcript = Transcript(transcript_id, chrom, start, end, strand)
+    transcript.set_exons(exon_ranges, cds_ranges)
+    transcript.set_cds(cds_ranges)
+    
     transcript.add_cds_sequence(cds_sequence)
     transcript.add_genomic_sequence(genomic_sequence, offset=10)
     
@@ -95,7 +98,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
         try:
             transcript.chrom_pos_to_cds(de_novo)
             in_transcript.append(de_novo)
-        except AssertionError:
+        except ValueError:
             continue
     
     return in_transcript

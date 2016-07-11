@@ -23,7 +23,9 @@ class TestSequenceMethodsPy(unittest.TestCase):
         exons = [(100, 120), (180, 200)]
         cds = [(110, 120), (180, 190)]
         
-        self.gene = Transcript(name, start, end, strand, chrom, exons, cds)
+        self.gene = Transcript(name, chrom, start, end, strand)
+        self.gene.set_exons(exons, cds)
+        self.gene.set_cds(cds)
     
     def test_get_position_on_chrom(self):
         """ test that get_position_on_chrom() works correctly

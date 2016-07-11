@@ -55,7 +55,9 @@ class TestSiteRatesPy(unittest.TestCase):
         exons = [(100, 119), (160, 179)]
         cds = [(110, 119), (160, 170)]
         
-        self.transcript = Transcript(name, start, end, strand, chrom, exons, cds)
+        self.transcript = Transcript(name, chrom, start, end, strand)
+        self.transcript.set_exons(exons, cds)
+        self.transcript.set_cds(cds)
         
         cds = "ATGTCCATAACCAAAGCCTGA"
         genomic = "CCTCCAGATTCACGGGAAGCATGTCCATAAGTAGGGAGATATTTGGTGCTCTCATTTG" \

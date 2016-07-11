@@ -37,10 +37,14 @@ class TestLoadGenePy(unittest.TestCase):
         """ construct a transcript for a known gene
         """
         
-        expected = Transcript("ENST00000242577", 120933859, 120936296, "+", "12",
-            exon_ranges=[(120933859, 120934019), (120934219, 120934356),
-                (120935876, 120936296)],
-            cds_ranges=[(120934225, 120934356), (120935876, 120936013)])
+        exon_ranges=[(120933859, 120934019), (120934219, 120934356),
+            (120935876, 120936296)],
+        cds_ranges=[(120934225, 120934356), (120935876, 120936013)]
+        
+        
+        expected = Transcript("ENST00000242577", '12', 120933859, 120936296, "+")
+        expected.set_exons(exon_ranges, cds_ranges)
+        expected.set_cds(cds_ranges)
         
         cds = "ATGTGCGACCGAAAGGCCGTGATCAAAAATGCGGACATGTCGGAAGAGATGCAACAGGACTC" \
             "GGTGGAGTGCGCTACTCAGGCGCTGGAGAAATACAACATAGAGAAGGACATTGCGGCTCATATC" \
@@ -118,10 +122,13 @@ class TestLoadGenePy(unittest.TestCase):
         """ test that we can identify de novos within the CDS of a transcript
         """
         
+        exon_ranges = [(10, 20), (30, 40), (90, 100)]
+        cds_ranges = [(30, 40), (90, 95)]
+        
         # define a simple transcript
-        tx = Transcript("test1", 10, 100, "+", "1",
-            exon_ranges=[(10, 20), (30, 40), (90, 100)],
-            cds_ranges=[(30, 40), (90, 95)])
+        tx = Transcript("test1", '1', 10, 100, "+")
+        tx.set_exons(exon_ranges, cds_ranges)
+        tx.set_cds(cds_ranges)
         
         # check that only the site in the CDS is returned
         sites = [15, 35, 100]

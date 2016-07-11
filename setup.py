@@ -9,14 +9,19 @@ EXTRA_COMPILE_ARGS = ["-std=c++0x"]
 if sys.platform == "darwin":
     EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
 
-module1 = cythonize([
+weights = cythonize([
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
         sources=["denovonear/weights.pyx",
-            "denovonear/transcript.pyx",
             "denovonear/weighted_choice.cpp",
             "denovonear/simulate.cpp"],
         language="c++"),
+    Extension("denovonear.transcript",
+        extra_compile_args=EXTRA_COMPILE_ARGS,
+        sources=[
+            "denovonear/transcript.pyx",
+            "denovonear/tx.cpp"],
+        language="c++")
     ])
 
 setup (name="denovonear",
@@ -35,5 +40,5 @@ setup (name="denovonear",
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
         ],
-        ext_modules=module1,
+        ext_modules=weights,
         test_suite="tests")

@@ -29,7 +29,9 @@ class TestGetPValuePy(unittest.TestCase):
         end = 70
         exons = [(5, 58)]
         cds = [(5, 58)]
-        transcript = Transcript(name, start, end, strand, chrom, exons, cds)
+        transcript = Transcript(name, chrom, start, end, strand)
+        transcript.set_exons(exons, cds)
+        transcript.set_cds(cds)
         
         cds = "ATGTGGGCTCCACCAGCAGCAATCATGGGATGGGCCCACCAAGAAGGTGGGTAA"
         gdna = "GGGGGATGTGGGCTCCACCAGCAGCAATCATGGGATGGGCCCACCAAGAAGGTGGGTAACCAGGCCCC"
