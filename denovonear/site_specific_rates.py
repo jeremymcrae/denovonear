@@ -50,8 +50,8 @@ def get_boundary_distance(transcript, bp):
         distance in base-pairs to the nearest exon boundary.
     """
     
-    exon_start, exon_end = transcript.find_closest_exon(bp)
-    distance = min(abs(exon_start - bp), abs(exon_end - bp))
+    exon = transcript.find_closest_exon(bp)
+    distance = min(abs(exon['start'] - bp), abs(exon['end'] - bp))
     
     # sites within the coding region are actually one bp further away,
     # since we are measuring the distance to the base inside the exon

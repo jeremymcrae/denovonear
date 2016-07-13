@@ -38,9 +38,8 @@ class TestLoadGenePy(unittest.TestCase):
         """
         
         exon_ranges=[(120933859, 120934019), (120934219, 120934356),
-            (120935876, 120936296)],
+            (120935876, 120936296)]
         cds_ranges=[(120934225, 120934356), (120935876, 120936013)]
-        
         
         expected = Transcript("ENST00000242577", '12', 120933859, 120936296, "+")
         expected.set_exons(exon_ranges, cds_ranges)
@@ -115,8 +114,8 @@ class TestLoadGenePy(unittest.TestCase):
         expected = self.set_transcript()
         
         self.assertEqual(transcript, expected)
-        self.assertEqual(transcript.genomic_sequence, expected.genomic_sequence)
-        self.assertEqual(transcript.cds_sequence, expected.cds_sequence)
+        self.assertEqual(transcript.get_genomic_sequence(), expected.get_genomic_sequence())
+        self.assertEqual(transcript.get_cds_sequence(), expected.get_cds_sequence())
     
     def test_get_de_novos_in_transcript(self):
         """ test that we can identify de novos within the CDS of a transcript

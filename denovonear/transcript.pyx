@@ -48,6 +48,21 @@ cdef extern from "tx.h":
         int get_exon_containing_position(int, vector[Region]) except +
         int get_coding_distance(int, int) except +
         int chrom_pos_to_cds(int) except +
+        
+        int get_position_on_chrom(int) except +
+        int get_codon_number_for_cds_position(int)
+        int get_position_within_codon(int)
+        void add_cds_sequence(string)
+        void add_genomic_sequence(string, int) except +
+        string get_cds_sequence()
+        string get_genomic_sequence()
+        
+        void _fix_transcript_off_by_one_bp();
+        
+        string reverse_complement(string)
+        string get_trinucleotide(int) except +
+        string get_codon_sequence(int) except +
+        string translate(string) except +
     
     cdef struct Region:
         int start
@@ -71,6 +86,14 @@ cdef class Transcript:
     def __hash__(self):
         return hash((self.thisptr.get_chrom(), self.thisptr.get_start(),
             self.thisptr.get_end()))
+    
+    def __richcmp__(self, other, op):
+        
+        if op == 2:
+            return self.__hash__() == other.__hash__()
+        else:
+            err_msg = "op {0} isn't implemented yet".format(op)
+            raise NotImplementedError(err_msg)
     
     def set_exons(self, exon_ranges, cds_ranges):
         ''' add exon ranges
@@ -162,3 +185,39 @@ cdef class Transcript:
         
     def chrom_pos_to_cds(self, pos_1):
         return self.thisptr.chrom_pos_to_cds(pos_1)
+    
+    def get_position_on_chrom(self, pos):
+        return self.thisptr.get_position_on_chrom(pos)
+    
+    def get_codon_number_for_cds_position(self, pos):
+        return self.thisptr.get_codon_number_for_cds_position(pos)
+    
+    def get_position_within_codon(self, pos):
+        return self.thisptr.get_position_within_codon(pos)
+    
+    def add_cds_sequence(self, text):
+        self.thisptr.add_cds_sequence(text)
+        
+    def get_cds_sequence(self):
+        return self.thisptr.get_cds_sequence()
+    
+    def add_genomic_sequence(self, text, offset=0):
+        self.thisptr.add_genomic_sequence(text, offset)
+    
+    def get_genomic_sequence(self):
+        self.thisptr.get_genomic_sequence()
+    
+    def _fix_transcript_off_by_one_bp(self):
+        self.thisptr._fix_transcript_off_by_one_bp()
+    
+    def reverse_complement(self, text):
+        return self.thisptr.reverse_complement(text)
+    
+    def get_trinucleotide(self, pos):
+        return self.thisptr.get_trinucleotide(pos)
+    
+    def get_codon_sequence(self, pos):
+        return self.thisptr.get_codon_sequence(pos)
+    
+    def translate(self, text):
+        return self.thisptr.translate(text)

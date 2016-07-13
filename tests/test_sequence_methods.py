@@ -15,17 +15,17 @@ class TestSequenceMethodsPy(unittest.TestCase):
         """ construct a Transcript object to add sequence to
         """
         
-        chrom = "1"
-        start = 100
-        end = 200
-        name = "TEST"
-        strand = "+"
-        exons = [(100, 120), (180, 200)]
-        cds = [(110, 120), (180, 190)]
+        self.gene = self.construct_gene()
+    
+    def construct_gene(self, name='TEST', chrom='1', start=100, end=200,
+            strand='+', exons=[(100, 120), (180, 200)],
+            cds=[(110, 120), (180, 190)]):
         
-        self.gene = Transcript(name, chrom, start, end, strand)
-        self.gene.set_exons(exons, cds)
-        self.gene.set_cds(cds)
+        tx = Transcript(name, chrom, start, end, strand)
+        tx.set_exons(exons, cds)
+        tx.set_cds(cds)
+        
+        return tx
     
     def test_get_position_on_chrom(self):
         """ test that get_position_on_chrom() works correctly
@@ -37,8 +37,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.assertEqual(self.gene.get_position_on_chrom(11), 180)
         
         # check CDS positions for gene on the reverse strand
-        self.gene.strand = "-"
-        del self.gene.exon_to_cds
+        self.gene = self.construct_gene(strand='-')
         self.assertEqual(self.gene.get_position_on_chrom(1), 189)
         self.assertEqual(self.gene.get_position_on_chrom(10), 180)
         self.assertEqual(self.gene.get_position_on_chrom(11), 120)
@@ -52,8 +51,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
                 self.assertEqual(pos, converted)
         
         # now try converting for a gene on the plus strand
-        self.gene.strand = '+'
-        del self.gene.exon_to_cds
+        self.gene = self.construct_gene()
         for pos in range(self.gene.get_start(), self.gene.get_end()):
             if self.gene.in_coding_region(pos):
                 cds = self.gene.chrom_pos_to_cds(pos)
@@ -84,30 +82,27 @@ class TestSequenceMethodsPy(unittest.TestCase):
         """ test that add_genomic_sequence() works correctly
         """
         
-        self.gene.start = 0
-        self.gene.end = 10
-        self.gene.exons = [(0, 4), (6, 10)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_min = 2
-        self.gene.cds_max = 8
+        self.gene = self.construct_gene(start=0, end=10, exons=[(0, 4), (6, 10)],
+            cds=[(2, 4), (6, 8)])
         
         # check that we get an error if we haven't got any reference CDS to check
-        with self.assertRaises(AttributeError):
+        with self.assertRaises(IndexError):
             self.gene.add_genomic_sequence("AAA")
         
         gdna = "AGAGGCCTAT"
-        self.gene.cds_sequence = "AGGCTA"
+        self.gene.add_cds_sequence("AGGCTA")
         
         self.gene.add_genomic_sequence(gdna)
-        self.assertEqual(self.gene.cds_sequence, "AGGCTA")
+        self.assertEqual(self.gene.get_cds_sequence(), "AGGCTA")
         
         # now check for a gene on the reverse strand
-        self.gene.strand = "-"
-        self.gene.cds_sequence = "GAGCCT"
+        self.gene = self.construct_gene(start=0, end=10, exons=[(0, 4), (6, 10)],
+            cds=[(2, 4), (6, 8)], strand='-')
+        self.gene.add_cds_sequence("GAGCCT")
         self.gene.add_genomic_sequence(gdna)
-        self.assertEqual(self.gene.cds_sequence, "GAGCCT")
+        self.assertEqual(self.gene.get_cds_sequence(), "GAGCCT")
         
-        self.gene.cds_sequence = "TTTTTT"
+        self.gene.add_cds_sequence("TTTTTT")
         with self.assertRaises(ValueError):
             self.gene.add_genomic_sequence(gdna)
     
@@ -115,34 +110,27 @@ class TestSequenceMethodsPy(unittest.TestCase):
         """ test that add_genomic_sequence() works when the seq is off by one
         """
         
-        self.gene.start = 0
-        self.gene.end = 70
-        self.gene.exons = [(5, 61)]
-        self.gene.cds = [(5, 61)]
-        self.gene.cds_min = 6
-        self.gene.cds_max = 62
+        self.gene = self.construct_gene(start=0, end=70, exons=[(5, 61)],
+            cds=[(6, 62)])
         
-        self.gene.cds_sequence =           "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAAC"
+        self.gene.add_cds_sequence(        "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAAC")
         self.gene.add_genomic_sequence("GGGGATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAACCAGGCCCC")
-        self.assertEqual(self.gene.cds_sequence, "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAAC")
+        self.assertEqual(self.gene.get_cds_sequence(), "ATGTGGGCTCCACCAGCAGCAATCATGGGGGATGGGCCCACCAAGAAGGTGGGCAAC")
     
     def test__fix_transcript_off_by_one_bp(self):
         """ test that _fix_transcript_off_by_one_bp is correct
         """
         
-        self.gene.start = 0
-        self.gene.end = 70
-        self.gene.exons = [(5, 60)]
-        self.gene.cds = [(5, 60)]
-        self.gene.cds_min = 6
-        self.gene.cds_max = 61
+        self.gene = self.construct_gene(start=0, end=70, exons=[(5, 60)],
+            cds=[(6, 61)])
         
         self.gene._fix_transcript_off_by_one_bp()
-        self.assertEqual(self.gene.cds, [(4, 59)])
+        self.assertEqual(self.gene.get_cds(), [{'start': 4, 'end': 59}])
         
-        self.gene.strand = "-"
+        self.gene = self.construct_gene(start=0, end=70, exons=[(5, 60)],
+            cds=[(6, 61)], strand='-')
         self.gene._fix_transcript_off_by_one_bp()
-        self.assertEqual(self.gene.cds, [(5, 60)])
+        self.assertEqual(self.gene.get_cds(), [{'start': 5, 'end': 60}])
         
     
     def test_add_genomic_sequence_expanded(self):
@@ -150,31 +138,31 @@ class TestSequenceMethodsPy(unittest.TestCase):
         """
         
         # now check when the 5' and 3' sequence is extended beyond the gene
-        self.gene.start = 1
-        self.gene.end = 9
-        self.gene.exons = [(1, 4), (6, 9)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_min = 2
-        self.gene.cds_max = 8
+        start = 1
+        end = 9
+        exons = [(1, 4), (6, 9)]
+        cds = [(2, 4), (6, 8)]
+        self.gene = self.construct_gene(start=start, end=end, exons=exons, cds=cds)
         
         gdna = "AAAGGCCTTT"
-        self.gene.cds_sequence = "AGGCTT"
+        self.gene.add_cds_sequence("AGGCTT")
         
         self.gene.add_genomic_sequence(gdna, offset=1)
-        self.assertEqual(self.gene.cds_sequence, "AGGCTT")
+        self.assertEqual(self.gene.get_cds_sequence(), "AGGCTT")
     
     def test_get_trinucleotide(self):
         """ test that get_trinucleotide() works correctly
         """
         
-        self.gene.start = 0
-        self.gene.end = 10
-        self.gene.exons = [(0, 4), (6, 10)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_min = 2
-        self.gene.cds_max = 8
-        self.gene.gdna_offset = 0
-        self.gene.genomic_sequence = "AAAGGCCTTT"
+        start = 0
+        end = 10
+        exons = [(0, 4), (6, 10)]
+        cds = [(2, 4), (6, 8)]
+        self.gene = self.construct_gene(start=start, end=end, exons=exons, cds=cds)
+        
+        gdna = "AAAGGCCTTT"
+        self.gene.add_cds_sequence("AGGCTT")
+        self.gene.add_genomic_sequence(gdna, offset=0)
         
         # test CDS positions: start, end, and spanning the exon boundaries
         self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
@@ -185,34 +173,27 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.assertEqual(self.gene.get_trinucleotide(8), "TTT")
         
         # test that positions outside the CDS raise errors
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             self.gene.get_trinucleotide(-1)
-            
-        with self.assertRaises(AssertionError):
-            self.gene.get_trinucleotide(10)
         
-        # test when we define the sequence by the add_genomic_sequence method
-        self.gene.start = 1
-        self.gene.end = 9
-        self.gene.exons = [(1, 4), (6, 9)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_sequence = "AGGCTT"
-        self.gene.add_genomic_sequence("AAAGGCCTTT", offset=1)
-        self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
+        with self.assertRaises(ValueError):
+            self.gene.get_trinucleotide(10)
     
     def test_get_trinucleotide_minus_strand(self):
         """ test that get_trinucleotide() works correctly on the minus strand
         """
         
-        self.gene.strand = "-"
-        self.gene.start = 0
-        self.gene.end = 10
-        self.gene.exons = [(0, 4), (6, 10)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_min = 2
-        self.gene.cds_max = 8
-        self.gene.gdna_offset = 0
-        self.gene.genomic_sequence = "AAAGGCCTTT"
+        strand = '-'
+        start = 0
+        end = 10
+        exons = [(0, 4), (6, 10)]
+        cds = [(2, 4), (6, 8)]
+        self.gene = self.construct_gene(start=start, end=end, exons=exons,
+            cds=cds, strand=strand)
+        
+        gdna = "AAAGGCCTTT"
+        self.gene.add_cds_sequence("AGGCTT")
+        self.gene.add_genomic_sequence(gdna, offset=0)
         
         # test CDS positions: start, end, and spanning the exon boundaries
         self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
@@ -222,39 +203,62 @@ class TestSequenceMethodsPy(unittest.TestCase):
         """ test that get_codon_sequence() works correctly
         """
         
-        self.gene.start = 0
-        self.gene.end = 10
-        self.gene.exons = [(0, 4), (6, 10)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_min = 2
-        self.gene.cds_max = 8
-        self.gene.upstream_sequence = "A"
-        self.gene.cds_sequence = "AGGCTT"
-        self.gene.downstream_sequence = "T"
+        start = 0
+        end = 10
+        exons = [(0, 4), (6, 10)]
+        cds = [(2, 4), (6, 8)]
+        self.gene = self.construct_gene(start=start, end=end, exons=exons,
+            cds=cds)
+        
+        gdna = "AAAGGCCTTT"
+        self.gene.add_cds_sequence("AGGCTT")
+        self.gene.add_genomic_sequence(gdna, offset=0)
+        
+        # self.gene.start = 0
+        # self.gene.end = 10
+        # self.gene.exons = [(0, 4), (6, 10)]
+        # self.gene.cds = [(2, 4), (6, 8)]
+        # self.gene.cds_min = 2
+        # self.gene.cds_max = 8
+        # self.gene.upstream_sequence = "A"
+        # self.gene.cds_sequence = "AGGCTT"
+        # self.gene.downstream_sequence = "T"
         
         self.assertEqual(self.gene.get_codon_sequence(0), "AGG")
         self.assertEqual(self.gene.get_codon_sequence(1), "CTT")
         
         # check that codon positions outside the CDS region raise errors
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             self.gene.get_codon_sequence(-1)
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(ValueError):
             self.gene.get_codon_sequence(3)
     
     def test_get_codon_sequence_minus_strand(self):
         """ test that get_codon_sequence() works correctly
         """
         
-        self.gene.strand = '-'
-        self.gene.start = 0
-        self.gene.end = 10
-        self.gene.exons = [(0, 4), (6, 10)]
-        self.gene.cds = [(2, 4), (6, 8)]
-        self.gene.cds_min = 2
-        self.gene.cds_max = 8
-        self.gene.upstream_sequence = "A"
-        self.gene.cds_sequence = "AGGCTT"
-        self.gene.downstream_sequence = "T"
+        strand = '-'
+        start = 0
+        end = 10
+        exons = [(0, 4), (6, 10)]
+        cds = [(2, 4), (6, 8)]
+        self.gene = self.construct_gene(start=start, end=end, exons=exons,
+            cds=cds, strand=strand)
+        
+        gdna = "AAAGGCCTTT"
+        self.gene.add_cds_sequence("AGGCTT")
+        self.gene.add_genomic_sequence(gdna, offset=0)
+        
+        # self.gene.strand = '-'
+        # self.gene.start = 0
+        # self.gene.end = 10
+        # self.gene.exons = [(0, 4), (6, 10)]
+        # self.gene.cds = [(2, 4), (6, 8)]
+        # self.gene.cds_min = 2
+        # self.gene.cds_max = 8
+        # self.gene.upstream_sequence = "A"
+        # self.gene.cds_sequence = "AGGCTT"
+        # self.gene.downstream_sequence = "T"
         
         self.assertEqual(self.gene.get_codon_sequence(0), "AGG")
         self.assertEqual(self.gene.get_codon_sequence(1), "CTT")
@@ -275,14 +279,14 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.assertEqual(self.gene.translate("TAG"), "*")
         
         # raise an error for non-IUPAC base containing codons
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             self.gene.translate("FFF")
         
         # can translate multicodon sequences
         self.assertEqual(self.gene.translate("AAAAAC"), "KN")
         
         # raise an error if we translate sequence with an incomplete codon
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             self.assertEqual(self.gene.translate("AA"), "KN")
             self.assertEqual(self.gene.translate("AAAAA"), "KN")
         

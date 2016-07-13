@@ -3,6 +3,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 struct Region {
     int start;
@@ -19,6 +20,36 @@ class Tx {
     int cds_max;
     std::vector<Region> exons;
     std::vector<Region> cds;
+    std::string cds_sequence;
+    int gdna_offset;
+    std::string genomic_sequence;
+    
+    std::map<char, char> transdict = {
+        {'a', 't'}, {'c', 'g'}, {'g', 'c'}, {'t', 'a'}, {'u', 'a'},
+        {'A', 'T'}, {'C', 'G'}, {'G', 'C'}, {'T', 'A'}, {'U', 'A'}};
+    
+    std::map<std::string, std::string> aa_code = {
+        {"AAA", "K"}, {"AAC", "N"}, {"AAG", "K"}, {"AAT", "N"},
+        {"ACA", "T"}, {"ACC", "T"}, {"ACG", "T"}, {"ACT", "T"},
+        {"AGA", "R"}, {"AGC", "S"}, {"AGG", "R"}, {"AGT", "S"},
+        {"ATA", "I"}, {"ATC", "I"}, {"ATG", "M"}, {"ATT", "I"},
+        {"CAA", "Q"}, {"CAC", "H"}, {"CAG", "Q"}, {"CAT", "H"},
+        {"CCA", "P"}, {"CCC", "P"}, {"CCG", "P"}, {"CCT", "P"},
+        {"CGA", "R"}, {"CGC", "R"}, {"CGG", "R"}, {"CGT", "R"},
+        {"CTA", "L"}, {"CTC", "L"}, {"CTG", "L"}, {"CTT", "L"},
+        {"GAA", "E"}, {"GAC", "D"}, {"GAG", "E"}, {"GAT", "D"},
+        {"GCA", "A"}, {"GCC", "A"}, {"GCG", "A"}, {"GCT", "A"},
+        {"GGA", "G"}, {"GGC", "G"}, {"GGG", "G"}, {"GGT", "G"},
+        {"GTA", "V"}, {"GTC", "V"}, {"GTG", "V"}, {"GTT", "V"},
+        {"TAA", "*"}, {"TAC", "Y"}, {"TAG", "*"}, {"TAT", "Y"},
+        {"TCA", "S"}, {"TCC", "S"}, {"TCG", "S"}, {"TCT", "S"},
+        {"TGA", "*"}, {"TGC", "C"}, {"TGG", "W"}, {"TGT", "C"},
+        {"TTA", "L"}, {"TTC", "F"}, {"TTG", "L"}, {"TTT", "F"}};
+    
+    std::map<int, int> exon_to_cds;
+    void _cache_exon_cds_positions();
+    
+    void _fix_cds_length();
 
  public:
     Tx(std::string transcript_id, std::string chromosome, int start_pos,
@@ -45,6 +76,21 @@ class Tx {
     int get_exon_containing_position(int position, std::vector<Region> ranges);
     int get_coding_distance(int pos_1, int pos_2);
     int chrom_pos_to_cds(int pos_1);
+    
+    int get_position_on_chrom(int cds_position);
+    int get_codon_number_for_cds_position(int cds_position);
+    int get_position_within_codon(int cds_position);
+    void add_cds_sequence(std::string cds_dna);
+    void add_genomic_sequence(std::string gdna, int offset);
+    std::string get_cds_sequence() { return cds_sequence; }
+    std::string get_genomic_sequence() { return genomic_sequence; }
+    
+    void _fix_transcript_off_by_one_bp();
+    
+    std::string reverse_complement(std::string seq);
+    std::string get_trinucleotide(int pos);
+    std::string get_codon_sequence(int codon_number);
+    std::string translate(std::string seq);
     
 };
 

@@ -104,7 +104,7 @@ class TestSiteRatesPy(unittest.TestCase):
         
         # a position near the start site, but upstream of the CDS will raise a
         # different error
-        with self.assertRaises(AssertionError):
+        with self.assertRaises(RuntimeError):
             pos = 95
             dist = get_boundary_distance(self.transcript, pos)
             get_codon_info(self.transcript, pos, dist)
@@ -212,7 +212,7 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertEqual(get_mutated_aa(self.transcript, "A", "AAA", 2), "K")
         
         # non-DNA codons raise errors
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ValueError):
             get_mutated_aa(self.transcript, "C", "RRR", 2)
     
     def test_splice_lof_check(self):
@@ -370,12 +370,12 @@ class TestSiteRatesPy(unittest.TestCase):
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # an upstream site won't alter the summed rates
-        self.weights.check_position(self.transcript.start - 1)
+        self.weights.check_position(self.transcript.get_start() - 1)
         for x in self.weights.categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # a downstream site won't alter the summed rates
-        self.weights.check_position(self.transcript.end + 1)
+        self.weights.check_position(self.transcript.get_end() + 1)
         for x in self.weights.categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         

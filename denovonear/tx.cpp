@@ -55,7 +55,7 @@ void Tx::set_exons(std::vector<std::vector<int>> exon_ranges,
             Region region {tx_start, tx_end};
             exons.push_back(region);
         } else {
-            std::string msg = "%s lacks exon coordinates", get_name();
+            std::string msg = get_name() + " lacks exon coordinates";
             throw std::invalid_argument( msg );
         }
     }
@@ -153,8 +153,8 @@ Region Tx::fix_cds_boundary(int position) {
 
 int Tx::get_cds_start() {
     
-    char x = '+';
-    if (get_strand() == x) {
+    char fwd = '+';
+    if (get_strand() == fwd) {
         return cds_min;
     } else {
         return cds_max;
@@ -163,8 +163,8 @@ int Tx::get_cds_start() {
 
 int Tx::get_cds_end() {
     
-    char x = '+';
-    if (get_strand() == x) {
+    char fwd = '+';
+    if (get_strand() == fwd) {
         return cds_max;
     } else {
         return cds_min;
@@ -346,16 +346,308 @@ int Tx::chrom_pos_to_cds(int pos) {
         
         // catch variants near an exon, but where the exon isn't in the CDS
         if (!in_coding_region(site)) {
-            std::string msg = "Not near coding exon: %i in transcript %s", pos, get_name();
+            std::string msg = "Not near coding exon: " + std::to_string(pos) +
+                " in transcript " + get_name();
             throw std::logic_error(msg);
         }
         
         // ignore positions outside the exons that are too distant from a boundary
         if (distance >= 9) {
-            std::string msg = "distance to exon (%i) > 8 bp for %i in transcript %s", distance, pos, get_name();
+            std::string msg = "distance to exon (" + std::to_string(distance) +
+                ") > 8 bp for " + std::to_string(pos) + " in transcript "+ get_name();
             throw std::logic_error(msg);
         }
         
         return get_coding_distance(cds_start, site);
     }
+}
+
+void Tx::_cache_exon_cds_positions() {
+    /**
+        cache the exon boundary positions as CDS coordinates.
+        
+        Rather than recalculate the CDS positions each time we want to convert a
+        chromosome position to a CDS position, we calculate them once and cache
+        the coordinates in a dictionary for rapid access.
+    */
+    
+    exon_to_cds.clear();
+    int len = cds.size();
+    
+    for (int i=0; i < len; i++) {
+        Region region = cds[i];
+        // get the positions of the exon boundaries in CDS distance from
+        // the start site
+        int start_cds = get_coding_distance(get_cds_start(), region.start);
+        int end_cds = get_coding_distance(get_cds_start(), region.end);
+        
+        // cache the CDS positions of the exon boundaries
+        exon_to_cds[region.start] = start_cds;
+        exon_to_cds[region.end] = end_cds;
+    }
+}
+
+int Tx::get_position_on_chrom(int cds_position) {
+    /**
+        figure out the chromosome position of a CDS site
+    
+        @cds_position position of a variant in CDS.
+        @returns chromosome bp position of the CDS site
+    */
+    
+    // cache the exon boundaries in CDS distances
+    if (exon_to_cds.empty()) { _cache_exon_cds_positions(); }
+    
+    int len = cds.size();
+    int start;
+    int end;
+    int start_cds;
+    int end_cds;
+    
+    // quickly find the exon containing the CDS position
+    for (int i=0; i < len; i++) {
+        Region region = cds[i];
+        start = region.start;
+        end = region.end;
+        
+        start_cds = std::min(exon_to_cds[start], exon_to_cds[end]);
+        end_cds = std::max(exon_to_cds[start], exon_to_cds[end]);
+        
+        if (start_cds <= cds_position && cds_position <= end_cds) {
+            // convert the CDS position to a chromosomal coordinate
+            char fwd = '+';
+            if (get_strand() == fwd) {
+                return start + (cds_position - start_cds);
+            } else {
+                return start + (end_cds - cds_position);
+            }
+        }
+    }
+    
+    // const char msg = "position %i not in CDS", cds_position ;
+    throw std::invalid_argument( "position not in CDS" );
+}
+
+int Tx::get_codon_number_for_cds_position(int cds_position) {
+    /**
+        figure out the codon position for a position
+    */
+    
+    return floor((float)cds_position / 3);
+}
+
+int Tx::get_position_within_codon(int cds_position) {
+    /**
+        get the position within a codon (in 0 based format eg 0, 1, 2)
+    */
+    
+    return cds_position % 3;
+}
+
+void Tx::add_cds_sequence(std::string cds_dna) {
+    /**
+        add the CDS sequence
+    */
+    
+    cds_sequence = cds_dna;
+}
+
+void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
+    /**
+        add and process the genomic sequence into a CDS sequence
+    */
+    
+    char fwd = '+';
+    if (get_strand() != fwd) {
+        gdna = reverse_complement(gdna);
+    }
+    
+    gdna_offset = offset;
+    genomic_sequence = gdna;
+    int len = cds.size();
+    
+    std::string cds_seq;
+    for (int i=0; i < len; i++) {
+        Region region = cds[i];
+        int start_bp = abs(region.start - get_start()) + offset;
+        int end_bp = abs(region.end - get_start()) + 1 + offset;
+        
+        // printf("\nstart: %i gene_start: %i offset: %i", region.start, get_start(), offset);
+        // printf("\nseq pos: %i gdna length: %i \n", start_bp, genomic_sequence.size());
+        
+        std::string bases = genomic_sequence.substr(start_bp, end_bp - start_bp);
+        if (get_strand() == fwd) {
+            cds_seq += bases;
+        } else {
+            cds_seq = reverse_complement(bases) + cds_seq;
+        }
+    }
+    
+    if (cds_seq.substr(0, 50) == cds_sequence.substr(1, 50)) {
+        _fix_transcript_off_by_one_bp();
+        add_genomic_sequence(gdna, offset);
+        cds_seq = cds_sequence;
+    }
+    
+    // do a sanity check to check that we've got the right cds sequence, this
+    // fails for at least one gene (CCDC18), which begins with a N, and
+    // throws the coordinates off
+    if (cds_seq != cds_sequence) {
+        std::string msg = "Coding sequence from gene coordinates doesn't match "
+            "coding sequence obtained from Ensembl.\nTranscript:" + get_name() +
+            "\n" + cds_seq + "\n\nshould be\n" + cds_sequence + "\n";
+        throw std::invalid_argument(msg);
+    }
+    
+    _fix_cds_length();
+}
+
+void Tx::_fix_transcript_off_by_one_bp() {
+    /**
+        This fixes ACTL7A, which has the CDS start and end off by a bp.
+    */
+    
+    int last = cds.size() - 1;
+    int offset = 1;
+    
+    printf("\nsize: %i last: %i\n", cds.size(), last);
+    
+    char fwd = '+';
+    if (get_strand() == fwd) {
+        cds[0] = Region {cds[0].start - offset, cds[0].end};
+        cds[last] = Region {cds[last].start, cds[last].end - offset};
+        exons[0] = Region {exons[0].start - offset, exons[0].end};
+        exons[last] = Region {exons[last].start, exons[last].end - offset};
+    } else {
+        cds[0] = Region {cds[0].start + offset, cds[0].end};
+        cds[last] = Region {cds[last].start, cds[last].end + offset};
+        exons[0] = Region {exons[0].start + offset, exons[0].end};
+        exons[last] = Region {exons[last].start, exons[last].end + offset};
+    }
+}
+void Tx::_fix_cds_length() {
+    /**
+        correct the coding sequence of a transcript, if it misses bases.
+        
+        Some transcripts don't cover the full length of a gene, they terminate
+        in the middle of an amino acid. This is rare, and it is rarer that we
+        select these transcripts for analysis. TNS3 is an example, where the
+        de novos in the gene can only be contained within a transcript that is
+        incomplete at the 3' end. This causes problems when we try to translate
+        the final codon.
+        
+        We simply extend the coding sequence 1-2 bases to make a complete codon.
+    */
+    
+    int diff = cds_sequence.size() % 3;
+    int end = get_cds_end();
+    
+    int last = cds.size() - 1;
+    
+    if (diff != 0) {
+        diff = 3 - diff;
+        
+        char fwd = '+';
+        if (get_strand() == fwd) {
+            cds[last] = Region {cds[last].start, cds[last].end + diff};
+            int start_bp = abs(end - get_start()) + gdna_offset;
+            cds_sequence += genomic_sequence.substr(start_bp, diff);
+        } else {
+            cds[0] = Region {cds[0].start - diff, cds[0].end};
+            int start_bp = abs(get_end() - end) + gdna_offset;
+            cds_sequence += reverse_complement(genomic_sequence.substr(start_bp, diff));
+        }
+    }
+    
+    cds_min = cds[0].start;
+    cds_max = cds[last].end;
+}
+
+std::string Tx::reverse_complement(std::string seq) {
+    /**
+        reverse complement a DNA or RNA sequence
+    */
+    
+    std::reverse(seq.begin(), seq.end());
+    std::string complement;
+    
+    int len = seq.size();
+    for ( int i=0; i < len; i++ ) {
+        complement += transdict[seq[i]];
+    }
+    
+    return complement;
+}
+
+std::string Tx::get_trinucleotide(int pos) {
+    /**
+        obtains the trinucleotide sequence around a position
+        
+        @pos integer for chromosomal nucleotide position.
+        
+        @returns trinucleotide e.g. 'TCC', centered around the required position,
+            given with respect to the fwd strand.
+    */
+    
+    // printf("\npos: %i start: %i end: %i offset: %i\n", pos, get_start(), get_end(), gdna_offset);
+    //
+    // pos: 10 start: 0 end: 10 offset: 0
+    // assert pos >= 0
+    // assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
+    //
+    if (pos < 0) {
+        throw std::invalid_argument( "trinucleotide position < 0" );
+    }
+    if (pos <= get_start() - gdna_offset || pos >= get_end() + gdna_offset) {
+        throw std::invalid_argument( "trinucleotide position not in gene range" );
+    }
+    
+    int sequence_pos = pos - get_start() + gdna_offset - 1;
+    
+    return genomic_sequence.substr(sequence_pos, 3);
+}
+
+std::string Tx::get_codon_sequence(int codon) {
+    /**
+        get the codon sequence for a given codon_number
+    */
+    
+    if (codon < 0) {
+        throw std::invalid_argument( "codon position < 0" );
+    }
+    if (codon > (int)cds_sequence.size() / 3) {
+        throw std::invalid_argument( "codon position not in gene range" );
+    }
+    
+    return cds_sequence.substr(codon * 3, 3);
+}
+
+std::string Tx::translate(std::string seq) {
+    /**
+        translate a DNA codon to a single character amino acid
+        
+        @seq codon sequence, or longer DNA sequences.
+        
+        @returns translated amino acid sequence as single character codes.
+    */
+    
+    std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
+    
+    std::string protein;
+    int n = 3;
+    int len = seq.size();
+    std::string codon;
+    
+    for ( int i=0; i < len; i=i+n ) {
+        codon = seq.substr(i, n);
+        
+        if (aa_code.count(codon) == 0) {
+            std::string msg = "cannot translate codon: " + codon;
+            throw std::invalid_argument( msg );
+        }
+        
+        protein += aa_code[codon];
+    }
+    
+    return protein;
 }

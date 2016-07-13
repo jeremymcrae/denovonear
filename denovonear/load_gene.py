@@ -98,7 +98,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
         try:
             transcript.chrom_pos_to_cds(de_novo)
             in_transcript.append(de_novo)
-        except ValueError:
+        except RuntimeError:
             continue
     
     return in_transcript
@@ -187,7 +187,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
                 counts[key] = {}
                 counts[key]["n"] = total
                 counts[key]["len"] = transcripts[key]
-        except ValueError:
+        except RuntimeError:
             pass
     
     return counts
