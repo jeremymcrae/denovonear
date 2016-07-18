@@ -57,8 +57,6 @@ cdef extern from "tx.h":
         string get_cds_sequence()
         string get_genomic_sequence()
         
-        void _fix_transcript_off_by_one_bp();
-        
         string reverse_complement(string)
         string get_trinucleotide(int) except +
         string get_codon_sequence(int) except +
@@ -205,10 +203,7 @@ cdef class Transcript:
         self.thisptr.add_genomic_sequence(text, offset)
     
     def get_genomic_sequence(self):
-        self.thisptr.get_genomic_sequence()
-    
-    def _fix_transcript_off_by_one_bp(self):
-        self.thisptr._fix_transcript_off_by_one_bp()
+        return self.thisptr.get_genomic_sequence()
     
     def reverse_complement(self, text):
         return self.thisptr.reverse_complement(text)

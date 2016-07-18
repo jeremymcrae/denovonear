@@ -187,7 +187,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
                 counts[key] = {}
                 counts[key]["n"] = total
                 counts[key]["len"] = transcripts[key]
-        except RuntimeError:
+        except ValueError:
             pass
     
     return counts

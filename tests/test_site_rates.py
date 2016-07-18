@@ -47,17 +47,7 @@ class TestSiteRatesPy(unittest.TestCase):
         """ construct a Transcript object to add sequence to
         """
         
-        chrom = "1"
-        start = 100
-        end = 179
-        name = "TEST"
-        strand = "+"
-        exons = [(100, 119), (160, 179)]
-        cds = [(110, 119), (160, 170)]
-        
-        self.transcript = Transcript(name, chrom, start, end, strand)
-        self.transcript.set_exons(exons, cds)
-        self.transcript.set_cds(cds)
+        self.transcript = self.construct_gene()
         
         cds = "ATGTCCATAACCAAAGCCTGA"
         genomic = "CCTCCAGATTCACGGGAAGCATGTCCATAAGTAGGGAGATATTTGGTGCTCTCATTTG" \
@@ -67,6 +57,16 @@ class TestSiteRatesPy(unittest.TestCase):
         self.transcript.add_genomic_sequence(genomic, offset=10)
         
         self.weights = SiteRates(self.transcript, self.rates)
+    
+    def construct_gene(self, name='TEST', chrom='1', start=100, end=179,
+            strand='+', exons=[(100, 119), (160, 179)],
+            cds=[(110, 119), (160, 170)]):
+        
+        tx = Transcript(name, chrom, start, end, strand)
+        tx.set_exons(exons, cds)
+        tx.set_cds(cds)
+        
+        return tx
     
     def test_get_boundary_distance(self):
         """ check the function to get distances to the nearest intron/exon boundary

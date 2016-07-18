@@ -3,6 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
 #include "tx.h"
 
@@ -424,7 +425,6 @@ int Tx::get_position_on_chrom(int cds_position) {
         }
     }
     
-    // const char msg = "position %i not in CDS", cds_position ;
     throw std::invalid_argument( "position not in CDS" );
 }
 
@@ -455,10 +455,15 @@ void Tx::add_cds_sequence(std::string cds_dna) {
 void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     /**
         add and process the genomic sequence into a CDS sequence
+        
+        @gdna string for genomic sequence. If the transcript strand is '-',
+            then the DNA sequence will be for the - strand, so we need to
+            reorient the DNA to the + strand.
     */
     
     char fwd = '+';
     if (get_strand() != fwd) {
+        // orient the DNA sequence to the + strand.
         gdna = reverse_complement(gdna);
     }
     
@@ -469,24 +474,15 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     std::string cds_seq;
     for (int i=0; i < len; i++) {
         Region region = cds[i];
-        int start_bp = abs(region.start - get_start()) + offset;
-        int end_bp = abs(region.end - get_start()) + 1 + offset;
+        int x = abs(region.start - get_start()) + offset;
+        int len = (region.end - region.start) + 1;
+        std::string bases = genomic_sequence.substr(x, len);
         
-        // printf("\nstart: %i gene_start: %i offset: %i", region.start, get_start(), offset);
-        // printf("\nseq pos: %i gdna length: %i \n", start_bp, genomic_sequence.size());
-        
-        std::string bases = genomic_sequence.substr(start_bp, end_bp - start_bp);
         if (get_strand() == fwd) {
             cds_seq += bases;
         } else {
             cds_seq = reverse_complement(bases) + cds_seq;
         }
-    }
-    
-    if (cds_seq.substr(0, 50) == cds_sequence.substr(1, 50)) {
-        _fix_transcript_off_by_one_bp();
-        add_genomic_sequence(gdna, offset);
-        cds_seq = cds_sequence;
     }
     
     // do a sanity check to check that we've got the right cds sequence, this
@@ -502,29 +498,6 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     _fix_cds_length();
 }
 
-void Tx::_fix_transcript_off_by_one_bp() {
-    /**
-        This fixes ACTL7A, which has the CDS start and end off by a bp.
-    */
-    
-    int last = cds.size() - 1;
-    int offset = 1;
-    
-    printf("\nsize: %i last: %i\n", cds.size(), last);
-    
-    char fwd = '+';
-    if (get_strand() == fwd) {
-        cds[0] = Region {cds[0].start - offset, cds[0].end};
-        cds[last] = Region {cds[last].start, cds[last].end - offset};
-        exons[0] = Region {exons[0].start - offset, exons[0].end};
-        exons[last] = Region {exons[last].start, exons[last].end - offset};
-    } else {
-        cds[0] = Region {cds[0].start + offset, cds[0].end};
-        cds[last] = Region {cds[last].start, cds[last].end + offset};
-        exons[0] = Region {exons[0].start + offset, exons[0].end};
-        exons[last] = Region {exons[last].start, exons[last].end + offset};
-    }
-}
 void Tx::_fix_cds_length() {
     /**
         correct the coding sequence of a transcript, if it misses bases.
@@ -555,7 +528,7 @@ void Tx::_fix_cds_length() {
         } else {
             cds[0] = Region {cds[0].start - diff, cds[0].end};
             int start_bp = abs(get_end() - end) + gdna_offset;
-            cds_sequence += reverse_complement(genomic_sequence.substr(start_bp, diff));
+            cds_sequence += genomic_sequence.substr(start_bp, diff);
         }
     }
     
@@ -589,12 +562,6 @@ std::string Tx::get_trinucleotide(int pos) {
             given with respect to the fwd strand.
     */
     
-    // printf("\npos: %i start: %i end: %i offset: %i\n", pos, get_start(), get_end(), gdna_offset);
-    //
-    // pos: 10 start: 0 end: 10 offset: 0
-    // assert pos >= 0
-    // assert pos > self.get_start() - self.gdna_offset and pos < self.get_end() + self.gdna_offset
-    //
     if (pos < 0) {
         throw std::invalid_argument( "trinucleotide position < 0" );
     }
