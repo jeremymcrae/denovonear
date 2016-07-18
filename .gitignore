@@ -7,5 +7,6 @@ build/
 dist/
 results/
 denovonear/weights.cpp
+denovonear/transcript.cpp
 *.egg-info/
 *.so
