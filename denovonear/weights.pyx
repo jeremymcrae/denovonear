@@ -23,21 +23,6 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 from cython.operator cimport dereference as deref
 
-cdef extern from "weighted_choice.h":
-    cdef cppclass Chooser:
-        Chooser() except +
-        void add_choice(int, double, char, char)
-        AlleleChoice choice()
-        double get_summed_rate()
-        int len()
-        AlleleChoice iter(int)
-    
-    cdef struct AlleleChoice:
-        int pos
-        char ref
-        char alt
-        double prob
-
 cdef class WeightedChoice:
     cpdef Chooser *thisptr  # hold a C++ instance which we're wrapping
     cpdef int pos

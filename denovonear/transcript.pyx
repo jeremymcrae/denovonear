@@ -19,53 +19,6 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
-from libcpp.vector cimport vector
-from libcpp.string cimport string
-from libcpp cimport bool
-
-cdef extern from "tx.h":
-    cdef cppclass Tx:
-        Tx(string, string, int, int, char) except +
-        
-        void set_exons(vector[vector[int]], vector[vector[int]]) except +
-        void set_cds(vector[vector[int]]) except +
-        Region fix_cds_boundary(int) except +
-        
-        vector[Region] get_exons()
-        vector[Region] get_cds()
-        string get_name()
-        string get_chrom()
-        int get_start()
-        int get_end()
-        char get_strand()
-        int get_cds_start()
-        int get_cds_end()
-        
-        bool in_exons(int)
-        Region find_closest_exon(int)
-        Region find_closest_exon(int, vector[Region])
-        bool in_coding_region(int)
-        int get_exon_containing_position(int, vector[Region]) except +
-        int get_coding_distance(int, int) except +
-        int chrom_pos_to_cds(int) except +
-        
-        int get_position_on_chrom(int) except +
-        int get_codon_number_for_cds_position(int)
-        int get_position_within_codon(int)
-        void add_cds_sequence(string)
-        void add_genomic_sequence(string, int) except +
-        string get_cds_sequence()
-        string get_genomic_sequence()
-        
-        string reverse_complement(string)
-        string get_trinucleotide(int) except +
-        string get_codon_sequence(int) except +
-        string translate(string) except +
-    
-    cdef struct Region:
-        int start
-        int end
-
 cdef class Transcript:
     cpdef Tx *thisptr  # hold a C++ instance which we're wrapping
     def __cinit__(self, transcript_id, chrom, start, end, strand):
