@@ -21,7 +21,13 @@ weights = cythonize([
         sources=[
             "denovonear/transcript.pyx",
             "denovonear/tx.cpp"],
-        language="c++")
+        language="c++"),
+    Extension("denovonear.site_specific_rates",
+        extra_compile_args=EXTRA_COMPILE_ARGS,
+        sources=[
+            "denovonear/site_specific_rates.pyx",
+            "denovonear/site_rates.cpp"],
+        language="c++"),
     ])
 
 setup (name="denovonear",

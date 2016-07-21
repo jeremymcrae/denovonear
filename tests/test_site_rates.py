@@ -23,8 +23,7 @@ import os
 import unittest
 import itertools
 
-from denovonear.site_specific_rates import get_codon_info, \
-    get_boundary_distance, get_gene_range, get_mutated_aa, SiteRates
+from denovonear.site_specific_rates import get_gene_range, get_mutated_aa, SiteRates
 from denovonear.weights import WeightedChoice
 from denovonear.transcript import Transcript
 
@@ -73,75 +72,61 @@ class TestSiteRatesPy(unittest.TestCase):
         """
         
         # check a site upstream of the gene
-        self.assertEqual(get_boundary_distance(self.transcript, 50), 50)
+        self.assertEqual(self.transcript.get_boundary_distance(50), 50)
         
         # check a site at the start of a gene
-        self.assertEqual(get_boundary_distance(self.transcript, 100), 0)
+        self.assertEqual(self.transcript.get_boundary_distance(100), 0)
         
         # check some sites within the first exon
-        self.assertEqual(get_boundary_distance(self.transcript, 110), 10)
-        self.assertEqual(get_boundary_distance(self.transcript, 115), 5)
+        self.assertEqual(self.transcript.get_boundary_distance(110), 10)
+        self.assertEqual(self.transcript.get_boundary_distance(115), 5)
         
         # check sites in the first intron
-        self.assertEqual(get_boundary_distance(self.transcript, 125), 6)
-        self.assertEqual(get_boundary_distance(self.transcript, 140), 20)
+        self.assertEqual(self.transcript.get_boundary_distance(125), 6)
+        self.assertEqual(self.transcript.get_boundary_distance(140), 20)
         
         # check a site in the first exon, as it becomes closer to the next intron
-        self.assertEqual(get_boundary_distance(self.transcript, 141), 19)
+        self.assertEqual(self.transcript.get_boundary_distance(141), 19)
         
         # check a site downstream of the gene
-        self.assertEqual(get_boundary_distance(self.transcript, 200), 21)
+        self.assertEqual(self.transcript.get_boundary_distance(200), 21)
     
     def test_get_codon_info(self):
         """ check the function that checks the codon information for a position
         """
         
         # make sure a site well outside the gene raises an error
-        with self.assertRaises(IndexError):
-            pos = 50
-            dist = get_boundary_distance(self.transcript, pos)
-            get_codon_info(self.transcript, pos, dist)
+        with self.assertRaises(ValueError):
+            self.transcript.get_codon_info(50)
         
         # a position near the start site, but upstream of the CDS will raise a
         # different error
         with self.assertRaises(RuntimeError):
-            pos = 95
-            dist = get_boundary_distance(self.transcript, pos)
-            get_codon_info(self.transcript, pos, dist)
+            self.transcript.get_codon_info(95)
         
         # check the first base of the CDS
-        pos = 110
-        dist = get_boundary_distance(self.transcript, pos)
-        self.assertEqual(get_codon_info(self.transcript, pos, dist),
+        self.assertEqual(self.transcript.get_codon_info(110),
             {'cds_pos': 0, 'codon_seq': 'ATG', 'intra_codon': 0,
                 "codon_number": 0, 'initial_aa': 'M'})
         
         # check the second base of the CDS
-        pos = 111
-        dist = get_boundary_distance(self.transcript, pos)
-        self.assertEqual(get_codon_info(self.transcript, pos, dist),
+        self.assertEqual(self.transcript.get_codon_info(111),
             {'cds_pos': 1, 'codon_seq': 'ATG', 'intra_codon': 1,
                 "codon_number": 0, 'initial_aa': 'M'})
         
         # check the third base of the CDS
-        pos = 112
-        dist = get_boundary_distance(self.transcript, pos)
-        self.assertEqual(get_codon_info(self.transcript, pos, dist),
+        self.assertEqual(self.transcript.get_codon_info(112),
             {'cds_pos': 2, 'codon_seq': 'ATG', 'intra_codon': 2,
                 "codon_number": 0, 'initial_aa': 'M'})
         
         # check the fourth base of the CDS
-        pos = 113
-        dist = get_boundary_distance(self.transcript, pos)
-        self.assertEqual(get_codon_info(self.transcript, pos, dist),
+        self.assertEqual(self.transcript.get_codon_info(113),
             {'cds_pos': 3, 'codon_seq': 'TCC', 'intra_codon': 0,
                 "codon_number": 1, 'initial_aa': 'S'})
         
         # check a site 2 bp into the first intron. We assign this as the
         # position of the closest exon boundary, but without any codon info
-        pos = 122
-        dist = get_boundary_distance(self.transcript, pos)
-        self.assertEqual(get_codon_info(self.transcript, pos, dist),
+        self.assertEqual(self.transcript.get_codon_info(122),
             {'cds_pos': 9, 'codon_seq': None, 'intra_codon': None,
                 "codon_number": None, 'initial_aa': None})
     
