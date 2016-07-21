@@ -8,6 +8,7 @@ struct AlleleChoice {
     int pos;
     char ref;
     char alt;
+    double prob;
 };
 
 class Chooser {
@@ -21,6 +22,8 @@ class Chooser {
     void add_choice(int site, double prob, char ref='N', char alt='N');
     AlleleChoice choice();
     double get_summed_rate();
+    int len() { return sites.size() ;};
+    AlleleChoice iter(int pos) { return sites[pos]; };
 };
 
 #endif  // DENOVONEAR_WEIGHTED_CHOICE_H_

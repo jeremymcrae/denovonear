@@ -32,7 +32,7 @@ void Chooser::add_choice(int site, double prob, char ref, char alt) {
     double cumulative_sum = get_summed_rate() + prob;
     cumulative.push_back(cumulative_sum);
     
-    sites.push_back(AlleleChoice {site, ref, alt});
+    sites.push_back(AlleleChoice {site, ref, alt, prob});
     
     // any time we add another choice, reset the sampler, so we can sample
     // from all the possible entries.
@@ -48,7 +48,7 @@ AlleleChoice Chooser::choice() {
     */
     
     if (cumulative.empty()) {
-        return AlleleChoice {-1, 'N', 'N'};
+        return AlleleChoice {-1, 'N', 'N', 0.0};
     }
     
     // get a random float between 0 and the cumulative sum

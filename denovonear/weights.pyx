@@ -29,18 +29,40 @@ cdef extern from "weighted_choice.h":
         void add_choice(int, double, char, char)
         AlleleChoice choice()
         double get_summed_rate()
+        int len()
+        AlleleChoice iter(int)
     
     cdef struct AlleleChoice:
         int pos
         char ref
         char alt
+        double prob
 
 cdef class WeightedChoice:
     cpdef Chooser *thisptr  # hold a C++ instance which we're wrapping
+    cpdef int pos
     def __cinit__(self):
         self.thisptr = new Chooser()
+        self.pos = 0
     def __dealloc__(self):
         del self.thisptr
+    
+    def __len__(self):
+        return self.thisptr.len()
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        if self.pos >= len(self):
+            self.pos = 0
+            raise StopIteration
+        
+        iter = self.thisptr.iter(self.pos)
+        self.pos += 1
+        
+        return {"pos": iter.pos, "ref": chr(iter.ref), "alt": chr(iter.alt), 'prob': iter.prob}
+    
     def add_choice(self, site, prob, ref='N', alt='N'):
         """ add another possible choice for selection
         
