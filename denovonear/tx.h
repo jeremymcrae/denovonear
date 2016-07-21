@@ -10,6 +10,14 @@ struct Region {
     int end;
 };
 
+struct Codon {
+    int cds_pos;
+    std::string codon_seq;
+    int intra_codon;
+    int codon_number;
+    std::string initial_aa;
+};
+
 class Tx {
     std::string name;
     std::string chrom;
@@ -91,6 +99,9 @@ class Tx {
     std::string get_trinucleotide(int pos);
     std::string get_codon_sequence(int codon_number);
     std::string translate(std::string seq);
+    
+    Codon get_codon_info(int bp);
+    int get_boundary_distance(int bp);
     
 };
 

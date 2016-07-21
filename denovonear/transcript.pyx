@@ -169,3 +169,17 @@ cdef class Transcript:
     
     def translate(self, text):
         return self.thisptr.translate(text)
+    
+    def get_codon_info(self, pos):
+        codon = dict(self.thisptr.get_codon_info(pos))
+        
+        if codon['codon_number'] == -1:
+            codon['codon_number'] = None
+            codon['intra_codon'] = None
+            codon['codon_seq'] = None
+            codon['initial_aa'] = None
+        
+        return codon
+    
+    def get_boundary_distance(self, pos):
+        return self.thisptr.get_boundary_distance(pos)

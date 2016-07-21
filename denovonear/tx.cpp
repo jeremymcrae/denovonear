@@ -618,3 +618,60 @@ std::string Tx::translate(std::string seq) {
     
     return protein;
 }
+
+Codon Tx::get_codon_info(int bp) {
+    /**
+        get the details of the codon which a variant resides in
+        
+        @bp nucleotide position of the variant (within the transcript gene range)
+    
+        @returns dictionary of codon sequence, cds position, amino acid that the
+            codon translates to, and position within the codon.
+    */
+    
+    int boundary_dist = get_boundary_distance(bp);
+    bool in_coding = in_coding_region(bp);
+    
+    // ignore positions outside the exons that are too distant from a boundary
+    if (boundary_dist >= 9 and not in_coding) {
+        throw std::invalid_argument( "position too distant from an exon" );
+    }
+    
+    // define the default values for the codon positions. We check these later
+    // in python and convert to None if they are still the defaults.
+    int codon_number = -1;
+    int intra_codon = -1;
+    std::string codon_seq = "";
+    std::string initial_aa = "";
+    
+    int cds_pos = chrom_pos_to_cds(bp);
+    if (in_coding) {
+        codon_number = get_codon_number_for_cds_position(cds_pos);
+        intra_codon = get_position_within_codon(cds_pos);
+        codon_seq = get_codon_sequence(codon_number);
+        initial_aa = translate(codon_seq);
+    }
+    
+    return Codon {cds_pos, codon_seq, intra_codon, codon_number, initial_aa};
+}
+
+int Tx::get_boundary_distance(int bp) {
+    /**
+        get the distance in bp for a variant to the nearest exon boundary
+        
+        @bp nucleotide position of the variant (within the transcript gene range)
+        @returns distance in base-pairs to the nearest exon boundary.
+    */
+    
+    Region exon = find_closest_exon(bp);
+    int distance = std::min(abs(exon.start - bp), abs(exon.end - bp));
+    
+    // sites within the coding region are actually one bp further away,
+    // since we are measuring the distance to the base inside the exon
+    // boundary
+    if ( in_coding_region(bp) ) {
+        distance += 1;
+    }
+    
+    return distance;
+}
