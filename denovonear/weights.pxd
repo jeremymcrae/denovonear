@@ -19,6 +19,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from libcpp cimport string
+
 cdef extern from "weighted_choice.h":
     cdef cppclass Chooser:
         Chooser() except +
@@ -30,5 +32,6 @@ cdef extern from "weighted_choice.h":
     
     cdef struct AlleleChoice:
         int pos
-        char ref
-        char alt
+        string ref
+        string alt
+        double prob

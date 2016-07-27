@@ -18,7 +18,7 @@ Chooser::Chooser() {
     generator.seed(random_seed);
 }
 
-void Chooser::add_choice(int site, double prob, char ref, char alt) {
+void Chooser::add_choice(int site, double prob, std::string ref, std::string alt) {
      /**
         adds another choice to the class object
         
@@ -48,7 +48,7 @@ AlleleChoice Chooser::choice() {
     */
     
     if (cumulative.empty()) {
-        return AlleleChoice {-1, 'N', 'N', 0.0};
+        return AlleleChoice {-1, "N", "N"};
     }
     
     // get a random float between 0 and the cumulative sum
