@@ -61,7 +61,7 @@ cdef class WeightedChoice:
         if len(ref) > 1 or len(alt) > 1:
             raise TypeError("requires single base alleles: {}, {}".format(ref, alt))
         
-        self.thisptr.add_choice(site, prob, ord(ref), ord(alt))
+        self.thisptr.add_choice(site, prob, ref, alt)
     
     def choice(self):
         """ chooses a random element using a set of probability weights
@@ -82,7 +82,7 @@ cdef class WeightedChoice:
         
         choice = self.thisptr.choice()
         
-        return {"pos": choice.pos, "ref": chr(choice.ref), "alt": chr(choice.alt)}
+        return {"pos": choice.pos, "ref": choice.ref, "alt": choice.alt}
     
     def get_summed_rate(self):
         """ return the cumulative probability for the object

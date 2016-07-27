@@ -20,7 +20,6 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
 cdef class Transcript:
-    cpdef Tx *thisptr  # hold a C++ instance which we're wrapping
     def __cinit__(self, transcript_id, chrom, start, end, strand):
         self.thisptr = new Tx(transcript_id, chrom, start, end, ord(strand))
     def __dealloc__(self):

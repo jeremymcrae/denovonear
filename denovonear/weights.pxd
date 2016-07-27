@@ -19,12 +19,12 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from libcpp cimport string
+from libcpp.string cimport string
 
 cdef extern from "weighted_choice.h":
     cdef cppclass Chooser:
         Chooser() except +
-        void add_choice(int, double, char, char)
+        void add_choice(int, double, string, string)
         AlleleChoice choice()
         double get_summed_rate()
         int len()
@@ -35,3 +35,6 @@ cdef extern from "weighted_choice.h":
         string ref
         string alt
         double prob
+
+cdef class WeightedChoice:
+    cdef Chooser *thisptr # hold a C++ instance which we're wrapping

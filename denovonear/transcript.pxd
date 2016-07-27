@@ -75,3 +75,6 @@ cdef extern from "tx.h":
         int intra_codon
         int codon_number
         string initial_aa
+
+cdef class Transcript:
+    cdef Tx *thisptr # hold a C++ instance which we're wrapping
