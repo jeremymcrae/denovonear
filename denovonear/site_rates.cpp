@@ -5,7 +5,8 @@
 #include <stdexcept>
 
 #include "tx.h"
-#include "weighted_choice.h"
+#include "site_rates.h"
+
 
 Region get_gene_range(Tx tx) {
     /**
@@ -15,10 +16,10 @@ Region get_gene_range(Tx tx) {
     int boundary_1 = tx.get_cds_start();
     int boundary_2 = tx.get_cds_end();
     
-    int start = min(boundary_1, boundary_2);
-    int end = max(boundary_1, boundary_2);
+    int start = std::min(boundary_1, boundary_2);
+    int end = std::max(boundary_1, boundary_2);
     
-    return Region {start, end}
+    return Region {start, end};
 }
 
 std::string get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon) {
@@ -40,31 +41,26 @@ std::string get_mutated_aa(Tx tx, std::string base, std::string codon, int intra
     return tx.translate(codon);
 }
 
-void SitesChecks::SitesChecks(Tx tx, std::vector<std::vector<std::string>> rates,
-    Tx masked_sites) {
-    
-    _tx = tx;
-    masked = masked_sites;
+void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
     
     // convert the rates data to a nested map
-    int len = rates.size();
-    for (int i=1; i < len, i++) {
-        std::vector<std::string> line = rates[i];
-        rates[line[0]][line[1]] = std::stod(line[2]);
+    int len = mut.size();
+    for (int i=0; i < len; i++) {
+        std::vector<std::string> line = mut[i];
+        mut_dict[line[0]][line[1]] = std::stod(line[2]);
     }
     
     // initialise a WeightedChoice object for each consequence category
     len = categories.size();
-    std::map<std::string, WeightedChoice> rates;
-    for (int i=1; i < len, i++) {
+    for (int i=0; i < len; i++) {
         std::string cq = categories[i];
-        rates[cq] = WeightedChoice();
+        rates[cq] = Chooser();
     }
     
     // check the consequence alternates for each base in the coding sequence
-    Region region = get_gene_range(tx);
+    Region region = get_gene_range(_tx);
     for (int i=region.start; i < region.end + 1; i++ ) {
-        check_position(i)
+        check_position(i);
     }
 }
 
@@ -84,7 +80,7 @@ bool SitesChecks::nonsense_check(std::string initial_aa, std::string mutated_aa,
         checks if two amino acids are a nonsense (eg stop_gained) mutation
     */
     
-    return initial_aa != "*" & mutated_aa == "*";
+    return (initial_aa != "*") & (mutated_aa == "*");
 }
 
 bool SitesChecks::missense_check(std::string initial_aa, std::string mutated_aa, int position) {
@@ -100,7 +96,7 @@ bool SitesChecks::missense_check(std::string initial_aa, std::string mutated_aa,
     }
     
     // include the site if it mutates to a different amino acid.
-    return initial_aa != mutated_aa;
+    return (initial_aa != mutated_aa);
 }
 
 bool SitesChecks::splice_region_check(std::string initial_aa, std::string mutated_aa, int position) {
@@ -131,13 +127,13 @@ bool SitesChecks::synonymous_check(std::string initial_aa, std::string mutated_a
         checks if two amino acids are synonymous
     */
     
-    return !nonsense_check(initial_aa, mutated_aa, position)
-        && !splice_lof_check(initial_aa, mutated_aa, position)
-        && !missense_check(initial_aa, mutated_aa, position)
-        && !splice_region_check(initial_aa, mutated_aa, position));
+    return !nonsense_check(initial_aa, mutated_aa, position) && \
+         !splice_lof_check(initial_aa, mutated_aa, position) && \
+         !missense_check(initial_aa, mutated_aa, position) && \
+         !splice_region_check(initial_aa, mutated_aa, position);
 }
 
-void SitesChecks::check_position(bp) {
+void SitesChecks::check_position(int bp) {
     /**
         add the consequence specific rates for the alternates for a variant
         
@@ -146,27 +142,28 @@ void SitesChecks::check_position(bp) {
     
     // ignore sites within masked regions (typically masked because the
     // site has been picked up on alternative transcript)
-    if ( masked != None and masked.in_coding_region(bp) ) {
+    if ( has_masked && masked.in_coding_region(bp) ) {
         return ;
     }
     
     // ignore sites outside the CDS region
-    if (bp < min(_tx.get_cds_start(), _tx.get_cds_end()) ||
-        bp > max(_tx.get_cds_start(), _tx.get_cds_end())) {
+    if (bp < std::min(_tx.get_cds_start(), _tx.get_cds_end()) ||
+        bp > std::max(_tx.get_cds_start(), _tx.get_cds_end())) {
         return ;
     }
     
     std::string seq = _tx.get_trinucleotide(bp);
     boundary_dist = _tx.get_boundary_distance(bp);
     
-    char fwd = "+";
+    char fwd = '+';
     if (_tx.get_strand() == fwd) {
         seq = _tx.reverse_complement(seq);
     }
     
+    Codon codon;
     try {
-        Codon codon = _tx.get_codon_info(bp);
-    } catch {
+        codon = _tx.get_codon_info(bp);
+    } catch ( const std::invalid_argument& e ) {
         return ;
     }
     
@@ -175,15 +172,15 @@ void SitesChecks::check_position(bp) {
     
     // drop the initial base, since we want to mutate to other bases
     std::vector<std::string> alts = bases;
-    bases.erase(std::find(seq[1]));
+    alts.erase(std::find(alts.begin(), alts.end(), seq.substr(1, 1)));
     
-    for (int i=1; i < 4; i++) {
-        std::string base = alts[i];
+    for (int i=0; i < 4; i++) {
+        std::string alt = alts[i];
         std::string mutated_aa = initial_aa;
-        std::string alt_base = seq[0] + base + seq[2];
-        rate = mut_dict[seq][alt_base]
+        std::string alt_seq = seq[0] + alt + seq[2];
+        double rate = mut_dict[seq][alt_seq];
         if ( initial_aa != "" ) {
-            std::string mutated_aa = get_mutated_aa(_tx, base, codon.codon_seq, codon.intra_codon)
+            mutated_aa = get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
         
         std::string category = "";
@@ -201,17 +198,16 @@ void SitesChecks::check_position(bp) {
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
-        std::string ref_base = seq[1];
-        std::string alt = base;
+        std::string ref = seq.substr(1, 1);
         if (_tx.get_strand() != fwd) {
-            ref_base = transdict[ref_base];
+            ref = transdict[ref];
             alt = transdict[alt];
         }
         
-        rates[category].add_choice(cds_pos, rate, ref_base, alt);
+        rates[category].add_choice(cds_pos, rate, ref, alt);
         
-        if (category == "nonsense" || category == "splice_lof"]){
-            rates["loss_of_function"].add_choice(cds_pos, rate, ref_base, alt);
+        if (category == "nonsense" || category == "splice_lof"){
+            rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt);
         }
     }
 }

@@ -1,15 +1,12 @@
-#ifndef DENOVONEAR_SITERATES_H_
-#define DENOVONEAR_SITERATES_H_
+#ifndef DENOVONEAR_SITESCHECKS_H_
+#define DENOVONEAR_SITESCHECKS_H_
 
 #include <string>
 #include <vector>
 #include <map>
 
-#include <tx.h>
-#include <weighted_choice.h>
-
-// Region get_gene_range(Tx tx);
-// std::string get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon);
+#include "tx.h"
+#include "weighted_choice.h"
 
 class SitesChecks {
     /**
@@ -22,20 +19,29 @@ class SitesChecks {
     */
     
     Tx _tx;
-    std::map<std::string std::map<std::string double>> mut_dict;
     Tx masked;
+    bool has_masked = false;
+    std::map<std::string, std::map<std::string, double>> mut_dict;
+    std::map<std::string, Chooser> rates;
     int boundary_dist;
     
-    std::map<char, char> transdict = {
-        {'A', 'T'}, {'T', 'A'}, {'G', 'C'}, {'C', 'G'};
+    std::map<std::string, std::string> transdict = {
+        {"A", "T"}, {"T", "A"}, {"G", "C"}, {"C", "G"}};
     
     std::vector<std::string> bases = {"A", "C", "T", "G"};
     std::vector<std::string> categories = {"missense", "nonsense", "synonymous",
         "splice_lof", "splice_region", "loss_of_function"};
 
  public:
-    SitesChecks(Tx tx, std::vector<std::vector<std::string>> rates, Tx masked_sites);
-    WeightedChoice __getitem__(std::string) { return rates[category]; };
+    // SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut) : _tx(tx) {
+    //     init(mut);
+    // };
+    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut,
+        Tx masked_sites) : _tx(tx), masked(masked_sites) {
+            has_masked = true;
+            init(mut);
+        };
+    Chooser __getitem__(std::string category) { return rates[category]; };
     bool splice_lof_check(std::string initial_aa, std::string mutated_aa, int position);
     bool nonsense_check(std::string initial_aa, std::string mutated_aa, int position);
     bool missense_check(std::string initial_aa, std::string mutated_aa, int position);
@@ -44,6 +50,11 @@ class SitesChecks {
     
     void check_position(int bp);
     
+ private:
+    void init(std::vector<std::vector<std::string>> mut);
 };
 
-#endif  // DENOVONEAR_SITERATES_H_
+Region get_gene_range(Tx tx);
+std::string get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon);
+
+#endif  // DENOVONEAR_SITESCHECKS_H_

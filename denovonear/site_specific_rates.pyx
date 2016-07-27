@@ -4,15 +4,15 @@
 from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp cimport bool
+from cython.operator cimport dereference as deref
 
-from denovonear.weights cimport Chooser
-from denovonear.transcript cimport Tx
-from denovonear.weights import WeightedChoice
-from denovonear.transcript import Transcript
+from denovonear.weights cimport Chooser, WeightedChoice
+from denovonear.transcript cimport Tx, Transcript, Region
 
 cdef extern from "site_rates.h":
-    cdef cppclass SiteChecks:
-        SiteChecks(Tx, vector[vector[string]], Tx) except +
+    cdef cppclass SitesChecks:
+        SitesChecks(Tx, vector[vector[string]], Tx) except +
+        SitesChecks(Tx, vector[vector[string]]) except +
         
         Chooser __getitem__(string) except +
         
@@ -22,12 +22,20 @@ cdef extern from "site_rates.h":
         bool splice_region_check(string, string, int)
         bool synonymous_check(string, string, int)
         
-        bool check_position(int bp)
+        void check_position(int bp)
+    
+    cdef Region get_gene_range(Tx)
+    cdef string get_mutated_aa(Tx, string, string, int)
 
 cdef class SiteRates:
-    cpdef SiteChecks *_checks  # hold a C++ instance which we're wrapping
-    def __cinit__(self, Tx transcript, vector[vector[string]] rates, Tx masked_sites):
-        self._checks = new SiteChecks(transcript, rates, masked_sites)
+    cdef SitesChecks *_checks  # hold a C++ instance which we're wrapping
+    def __cinit__(self, Transcript transcript, vector[vector[string]] rates, Transcript masked_sites):
+        self._checks = new SitesChecks(deref(transcript.thisptr), rates, deref(masked_sites.thisptr))
+        # self._checks = new SitesChecks(deref(transcript.thisptr), rates)
+        # if masked is None:
+        #     self._checks = new SitesChecks(deref(transcript.thisptr), rates)
+        # else:
+        #     self._checks = new SitesChecks(deref(transcript.thisptr), rates, deref(masked_sites.thisptr))
     def __dealloc__(self):
         del self._checks
     def __getitem__(self, category):
@@ -44,7 +52,7 @@ cdef class SiteRates:
             CDS WeightedChoice object according to the probability of each site
             being mutated to the specific consequence type.
         '''
-        chooser = self._checks.__getitem__(category)
+        cdef Chooser chooser = self._checks.__getitem__(category)
         # return WeightedChoice(chooser)
     
     def splice_lof_check(self, initial_aa, mutated_aa, position):
@@ -63,5 +71,5 @@ cdef class SiteRates:
         return self._checks.synonymous_check(initial_aa, mutated_aa, position)
     
     def check_position(self, bp):
-        return self._checks.check_position(bp)
+        self._checks.check_position(bp)
         
