@@ -45,7 +45,7 @@ cdef class WeightedChoice:
         iter = self.thisptr.iter(self.pos)
         self.pos += 1
         
-        return {"pos": iter.pos, "ref": chr(iter.ref), "alt": chr(iter.alt), 'prob': iter.prob}
+        return {"pos": iter.pos, "ref": iter.ref, "alt": iter.alt, 'prob': iter.prob}
     
     def add_choice(self, site, prob, ref='N', alt='N'):
         """ add another possible choice for selection
