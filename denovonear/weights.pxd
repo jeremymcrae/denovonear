@@ -37,4 +37,5 @@ cdef extern from "weighted_choice.h":
         double prob
 
 cdef class WeightedChoice:
+    cdef int pos
     cdef Chooser *thisptr # hold a C++ instance which we're wrapping

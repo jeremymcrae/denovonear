@@ -24,7 +24,6 @@ from libcpp cimport bool
 from cython.operator cimport dereference as deref
 
 cdef class WeightedChoice:
-    cpdef int pos
     def __cinit__(self):
         self.thisptr = new Chooser()
         self.pos = 0
