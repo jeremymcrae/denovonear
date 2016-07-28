@@ -11,10 +11,10 @@ from denovonear.transcript cimport Tx, Transcript, Region
 
 cdef extern from "site_rates.h":
     cdef cppclass SitesChecks:
-        SitesChecks(Tx, vector[vector[string]], Tx) except +
         SitesChecks(Tx, vector[vector[string]]) except +
         
-        Chooser __getitem__(string) except +
+        # void set_mask(Tx)
+        Chooser * __getitem__(string) except +
         
         bool splice_lof_check(string, string, int)
         bool nonsense_check(string, string, int)
@@ -24,20 +24,29 @@ cdef extern from "site_rates.h":
         
         void check_position(int bp)
     
-    cdef Region get_gene_range(Tx)
-    cdef string get_mutated_aa(Tx, string, string, int)
+    cdef Region _get_gene_range(Tx)
+    cdef string _get_mutated_aa(Tx, string, string, int) except +
 
 cdef class SiteRates:
     cdef SitesChecks *_checks  # hold a C++ instance which we're wrapping
-    def __cinit__(self, Transcript transcript, vector[vector[string]] rates, Transcript masked_sites):
-        self._checks = new SitesChecks(deref(transcript.thisptr), rates, deref(masked_sites.thisptr))
+    cdef dict categories
+    def __cinit__(self, Transcript transcript, vector[vector[string]] rates):
+        self._checks = new SitesChecks(deref(transcript.thisptr), rates)
+        self.categories = {}
+        
+        # self._checks.set_mask(deref(masked_sites.thisptr))
         # self._checks = new SitesChecks(deref(transcript.thisptr), rates)
         # if masked is None:
         #     self._checks = new SitesChecks(deref(transcript.thisptr), rates)
         # else:
         #     self._checks = new SitesChecks(deref(transcript.thisptr), rates, deref(masked_sites.thisptr))
+    
     def __dealloc__(self):
         del self._checks
+        for x in self.categories:
+            self.categories[x].__dealloc__()
+            del self.categories[x]
+    
     def __getitem__(self, category):
         ''' get site-specific mutation rates for each CDS base
     
@@ -52,8 +61,16 @@ cdef class SiteRates:
             CDS WeightedChoice object according to the probability of each site
             being mutated to the specific consequence type.
         '''
-        cdef Chooser chooser = self._checks.__getitem__(category)
-        # return WeightedChoice(chooser)
+        
+        cdef Chooser * chooser
+        
+        if category not in self.categories:
+            chooser = self._checks.__getitem__(category)
+            choices = WeightedChoice()
+            choices.thisptr = chooser
+            self.categories[category] = choices
+        
+        return self.categories[category]
     
     def splice_lof_check(self, initial_aa, mutated_aa, position):
         return self._checks.splice_lof_check(initial_aa, mutated_aa, position)
@@ -72,4 +89,10 @@ cdef class SiteRates:
     
     def check_position(self, bp):
         self._checks.check_position(bp)
-        
+
+def get_gene_range(Transcript tx):
+    region = _get_gene_range(deref(tx.thisptr))
+    return {"start": region.start, "end": region.end}
+
+def get_mutated_aa(Transcript tx,  base, string codon, int intra_codon):
+    return _get_mutated_aa(deref(tx.thisptr), base, codon, intra_codon)

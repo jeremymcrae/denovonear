@@ -19,6 +19,8 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from __future__ import print_function
+
 import os
 import unittest
 import itertools
@@ -33,14 +35,15 @@ class TestSiteRatesPy(unittest.TestCase):
     
     bases = set(["A", "T", "G", "C"])
     
-    rates = {}
+    rates = []
     for initial in itertools.product("".join(bases), repeat=3):
         trinuc = "".join(initial)
-        rates[trinuc] = {}
         
         for base in bases - set(initial[1]):
             changed = "{}{}{}".format(initial[0], base, initial[2])
-            rates[trinuc][changed] = 5e-7
+            rate = '5e-7'
+            
+            rates.append([trinuc, changed,  '5e-7'])
     
     def setUp(self):
         """ construct a Transcript object to add sequence to
@@ -156,27 +159,42 @@ class TestSiteRatesPy(unittest.TestCase):
         wts = self.weights
         n = 10000
         
+        i = 15
+        print("\n")
+        print('missense: ', sorted(set([ wts["missense"].choice() for x in range(n) ])))
+        print('nonsense: ', sorted(set([ wts["nonsense"].choice() for x in range(n) ])))
+        print('synonymous: ', sorted(set([ wts["synonymous"].choice() for x in range(n) ])))
+        print('splice_lof: ', sorted(set([ wts["splice_lof"].choice() for x in range(n) ])))
+        print('loss_of_function: ', sorted(set([ wts["loss_of_function"].choice() for x in range(n) ])))
+        print('splice_region: ', sorted(set([ wts["splice_region"].choice() for x in range(n) ])))
+        
+        
         # there are numerous sites for mutating to a missense change
         self.assertEqual(set([ wts["missense"].choice() for x in range(n) ]),
             set([0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 18, 19, 20]))
+        print('passed missense')
         
         # the transcript only has one position where we can get a stop_gained
         self.assertEqual(set([ wts["nonsense"].choice() for x in range(n) ]),
             set([12]))
+        print('passed nonsense')
         
         # the transcript only has a few positions where we can get synonymous changes
         self.assertEqual(set([ wts["synonymous"].choice() for x in range(n) ]),
             set([5, 14, 17, 19]))
+        print('passed synonymous')
         
         # the transcript only has one splice donor site and one splice acceptor
         # site. The splice lof sites are shifted to the nearest exon coordinate
         # in order to be able to check CDS proximity.
         self.assertEqual(set([ wts["splice_lof"].choice() for x in range(n) ]),
             set([9, 10]))
+        print('passed splice_lof')
         
         # loss-of-function sites are the union of nonsense and splice_lof sites
         self.assertEqual(set([ wts["loss_of_function"].choice() for x in range(n) ]),
             set([9, 10, 12]))
+        print('passed loss_of_function')
         
         # splice region variants can occur at the two bp inside the exon, or
         # within 8 bp of the intron/exon boundary (but beyond the splice lof
@@ -184,6 +202,7 @@ class TestSiteRatesPy(unittest.TestCase):
         # coordinate for CDS proximity checking.
         self.assertEqual(set([ wts["splice_region"].choice() for x in range(n) ]),
             set([8, 9, 10, 11]))
+        print('passed splice_region')
     
     def test_get_mutated_aa(self):
         """ check that mutating a codon gives the expected amino acids
@@ -206,22 +225,23 @@ class TestSiteRatesPy(unittest.TestCase):
         
         # check a site within the intron, but only 2 bp away from the
         # intron/exon boundary
-        self.weights.boundary_dist = 2
-        self.assertTrue(self.weights.splice_lof_check(None, None, 121))
+        self.weights.check_position(121)
+        self.assertTrue(self.weights.splice_lof_check('', '', 121))
         
         # check a site within the exon, and also 2 bp away from the intron/exon
         # boundary
-        self.assertFalse(self.weights.splice_lof_check(None, None, 117))
+        self.weights.check_position(117)
+        self.assertFalse(self.weights.splice_lof_check('', '', 117))
         
         # check a intron site outside the splice lof positions
-        self.weights.boundary_dist = 3
-        self.assertFalse(self.weights.splice_lof_check(None, None, 122))
+        self.weights.check_position(122)
+        self.assertFalse(self.weights.splice_lof_check('', '', 122))
     
     def test_nonsense_check(self):
         """ check that nonsense_check() works correctly
         """
         
-        self.weights.boundary_dist = 1
+        self.weights.check_position(161)
         self.assertTrue(self.weights.nonsense_check("N", "*", 161))
         self.assertFalse(self.weights.nonsense_check("N", "G", 161))
         self.assertFalse(self.weights.nonsense_check("*", "G", 161))
@@ -234,7 +254,7 @@ class TestSiteRatesPy(unittest.TestCase):
         # missense mutations can either be where the amino acids differ, or a
         # stop site changes to coding an amino acid (technically these are
         # stop_lost, but they carry a missense-like severity).
-        self.weights.boundary_dist = 1
+        self.weights.check_position(161)
         self.assertTrue(self.weights.missense_check("N", "G", 161))
         self.assertTrue(self.weights.missense_check("*", "G", 161))
         
@@ -245,46 +265,47 @@ class TestSiteRatesPy(unittest.TestCase):
         # the case below shouldn't occur, where the site is in the intron and
         # within the splice lof positions, but somehow the initial and modified
         # amino acids differ, but check this anyway.
-        self.weights.boundary_dist = 2
+        # self.weights.boundary_dist = 2
+        self.weights.check_position(121)
         self.assertFalse(self.weights.missense_check("N", "G", 121))
     
     def test_splice_region_check(self):
         """ check that splice_region_check() works correctly
         """
         
-        self.weights.boundary_dist = 3
-        self.assertTrue(self.weights.splice_region_check(None, None, 123))
+        self.weights.check_position(123)
+        self.assertTrue(self.weights.splice_region_check("", "", 123))
         
         # check a site in the splice lof positions
-        self.weights.boundary_dist = 2
-        self.assertFalse(self.weights.splice_region_check(None, None, 121))
+        self.weights.check_position(121)
+        self.assertFalse(self.weights.splice_region_check("", "", 121))
         
         # check a site just inside the splice region positions
-        self.weights.boundary_dist = 8
-        self.assertTrue(self.weights.splice_region_check(None, None, 128))
+        self.weights.check_position(128)
+        self.assertTrue(self.weights.splice_region_check("", "", 128))
         
         # check a site just outside the splice region positions
-        self.weights.boundary_dist = 9
-        self.assertFalse(self.weights.splice_region_check(None, None, 130))
+        self.weights.check_position(130)
+        self.assertFalse(self.weights.splice_region_check("", "", 130))
         
         # check an exonic splice region position
-        self.weights.boundary_dist = 3
+        self.weights.check_position(116)
         self.assertTrue(self.weights.splice_region_check("N", "N", 116))
         
         # check an exonic site just beyond the splice region positions
-        self.weights.boundary_dist = 4
+        self.weights.check_position(115)
         self.assertFalse(self.weights.splice_region_check("N", "N", 115))
         
         # check an exonic site inside the splice region positions, but with
         # mutated amino acids aren't splice region variants
-        self.weights.boundary_dist = 3
+        self.weights.check_position(116)
         self.assertFalse(self.weights.splice_region_check("N", "K", 116))
     
     def test_synonymous_check(self):
         """ check that synonymous_check() works correctly
         """
         
-        self.weights.boundary_dist = 5
+        self.weights.check_position(115)
         self.assertTrue(self.weights.synonymous_check("N", "N", 115))
         self.assertTrue(self.weights.synonymous_check("*", "*", 115))
         
@@ -293,23 +314,24 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertFalse(self.weights.synonymous_check("*", "N", 115))
         
         # sites in splice region or splice lof aren't synonymous
-        self.weights.boundary_dist = 2
+        self.weights.check_position(117)
         self.assertFalse(self.weights.synonymous_check("N", "N", 117))
-        self.assertFalse(self.weights.synonymous_check(None, None, 121))
+        self.weights.check_position(121)
+        self.assertFalse(self.weights.synonymous_check("", "", 121))
     
     def test_get_gene_range(self):
         """ check that get_gene_range() works correctly
         """
         
-        self.assertEqual(get_gene_range(self.transcript), (110, 171))
+        self.assertEqual(get_gene_range(self.transcript), {'start': 110, 'end': 170})
     
     def clear_weighted_choices(self):
         """ clear the WeightedChoice samplers for each consequence
         """
         
-        self.weights.rates = {}
+        self.weights.categories = {}
         for cq in self.weights.categories:
-            self.weights.rates[cq] = WeightedChoice()
+            self.weights.categories[cq] = WeightedChoice()
     
     def test_check_position_missense_only(self):
         """ check that check_position() works correctly for missense changes

@@ -3,12 +3,13 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
-#include "tx.h"
+// #include "tx.h"
+// #include "weighted_choice.h"
 #include "site_rates.h"
 
-
-Region get_gene_range(Tx tx) {
+Region _get_gene_range(Tx tx) {
     /**
         get the lowest and highest positions of a transcripts coding sequence
     */
@@ -22,7 +23,7 @@ Region get_gene_range(Tx tx) {
     return Region {start, end};
 }
 
-std::string get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon) {
+std::string _get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon) {
     /**
         find the amino acid resulting from a base change to a codon
         
@@ -58,7 +59,7 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
     }
     
     // check the consequence alternates for each base in the coding sequence
-    Region region = get_gene_range(_tx);
+    Region region = _get_gene_range(_tx);
     for (int i=region.start; i < region.end + 1; i++ ) {
         check_position(i);
     }
@@ -140,11 +141,11 @@ void SitesChecks::check_position(int bp) {
         @bp genomic position of the variant
     */
     
-    // ignore sites within masked regions (typically masked because the
-    // site has been picked up on alternative transcript)
-    if ( has_masked && masked.in_coding_region(bp) ) {
-        return ;
-    }
+    // // ignore sites within masked regions (typically masked because the
+    // // site has been picked up on alternative transcript)
+    // if ( has_mask && masked.in_coding_region(bp) ) {
+    //     return ;
+    // }
     
     // ignore sites outside the CDS region
     if (bp < std::min(_tx.get_cds_start(), _tx.get_cds_end()) ||
@@ -180,7 +181,7 @@ void SitesChecks::check_position(int bp) {
         std::string alt_seq = seq[0] + alt + seq[2];
         double rate = mut_dict[seq][alt_seq];
         if ( initial_aa != "" ) {
-            mutated_aa = get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
+            mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
         
         std::string category = "";
@@ -206,7 +207,8 @@ void SitesChecks::check_position(int bp) {
         
         rates[category].add_choice(cds_pos, rate, ref, alt);
         
-        if (category == "nonsense" || category == "splice_lof"){
+        if (category == "nonsense" || category == "splice_lof") {
+            std::cout << category + " " + std::to_string(cds_pos) + " loss-of-function\n";
             rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt);
         }
     }

@@ -26,6 +26,8 @@ weights = cythonize([
         extra_compile_args=EXTRA_COMPILE_ARGS,
         sources=[
             "denovonear/site_specific_rates.pyx",
+            "denovonear/weighted_choice.cpp",
+            "denovonear/tx.cpp",
             "denovonear/site_rates.cpp"],
         language="c++"),
     ])

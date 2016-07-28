@@ -5,7 +5,7 @@ def load_mutation_rates(filename):
     """ load mutation rates provided by Kaitlin Samocha (Broad Institute).
     """
     
-    mut_dict = {}
+    mut_dict = []
     with open(filename) as handle:
         for line in handle:
             if line.startswith("from"): # ignore the header line
@@ -14,11 +14,11 @@ def load_mutation_rates(filename):
             line = line.strip().split()
             initial = line[0]
             changed = line[1]
-            rate = float(line[2])
+            rate = line[2]
             
-            if initial not in mut_dict:
-                mut_dict[initial] = {}
+            # if initial not in mut_dict:
+            #     mut_dict[initial] = {}
             
-            mut_dict[initial][changed] = rate
+            mut_dict.append([initial, changed, rate])
     
     return mut_dict
