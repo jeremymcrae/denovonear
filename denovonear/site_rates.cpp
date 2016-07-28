@@ -51,17 +51,18 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
         mut_dict[line[0]][line[1]] = std::stod(line[2]);
     }
     
-    // initialise a WeightedChoice object for each consequence category
-    len = categories.size();
-    for (int i=0; i < len; i++) {
-        std::string cq = categories[i];
-        rates[cq] = Chooser();
-    }
-    
+    initialise_choices();
     // check the consequence alternates for each base in the coding sequence
     Region region = _get_gene_range(_tx);
     for (int i=region.start; i < region.end + 1; i++ ) {
         check_position(i);
+    }
+}
+
+void SitesChecks::initialise_choices() {
+    // initialise a WeightedChoice object for each consequence category
+    for (auto it=categories.begin(); it != categories.end(); it++) {
+        rates[*it] = Chooser();
     }
 }
 
@@ -157,7 +158,7 @@ void SitesChecks::check_position(int bp) {
     boundary_dist = _tx.get_boundary_distance(bp);
     
     char fwd = '+';
-    if (_tx.get_strand() == fwd) {
+    if (_tx.get_strand() != fwd) {
         seq = _tx.reverse_complement(seq);
     }
     
@@ -172,11 +173,12 @@ void SitesChecks::check_position(int bp) {
     int cds_pos = codon.cds_pos;
     
     // drop the initial base, since we want to mutate to other bases
-    std::vector<std::string> alts = bases;
-    alts.erase(std::find(alts.begin(), alts.end(), seq.substr(1, 1)));
+    std::string ref = seq.substr(1, 1);
+    std::vector<std::string> alts(bases);
+    alts.erase(std::find(alts.begin(), alts.end(), ref));
     
-    for (int i=0; i < 4; i++) {
-        std::string alt = alts[i];
+    for (auto it=alts.begin(); it != alts.end(); it++) {
+        std::string alt = *it;
         std::string mutated_aa = initial_aa;
         std::string alt_seq = seq[0] + alt + seq[2];
         double rate = mut_dict[seq][alt_seq];
@@ -199,7 +201,7 @@ void SitesChecks::check_position(int bp) {
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
-        std::string ref = seq.substr(1, 1);
+        ref = seq.substr(1, 1);
         if (_tx.get_strand() != fwd) {
             ref = transdict[ref];
             alt = transdict[alt];
@@ -208,7 +210,6 @@ void SitesChecks::check_position(int bp) {
         rates[category].add_choice(cds_pos, rate, ref, alt);
         
         if (category == "nonsense" || category == "splice_lof") {
-            std::cout << category + " " + std::to_string(cds_pos) + " loss-of-function\n";
             rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt);
         }
     }

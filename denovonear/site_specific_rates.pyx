@@ -13,7 +13,7 @@ cdef extern from "site_rates.h":
     cdef cppclass SitesChecks:
         SitesChecks(Tx, vector[vector[string]]) except +
         
-        # void set_mask(Tx)
+        void initialise_choices()
         Chooser * __getitem__(string) except +
         
         bool splice_lof_check(string, string, int)
@@ -71,6 +71,9 @@ cdef class SiteRates:
             self.categories[category] = choices
         
         return self.categories[category]
+    
+    def clear(self):
+        self._checks.initialise_choices()
     
     def splice_lof_check(self, initial_aa, mutated_aa, position):
         return self._checks.splice_lof_check(initial_aa, mutated_aa, position)

@@ -25,7 +25,7 @@ class SitesChecks {
     std::map<std::string, std::string> transdict = {
         {"A", "T"}, {"T", "A"}, {"G", "C"}, {"C", "G"}};
     
-    std::vector<std::string> bases = {"A", "C", "T", "G"};
+    std::vector<std::string> bases = {"A", "C", "G", "T"};
     std::vector<std::string> categories = {"missense", "nonsense", "synonymous",
         "splice_lof", "splice_region", "loss_of_function"};
 
@@ -33,6 +33,7 @@ class SitesChecks {
     SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut) : _tx(tx) { init(mut); };
     // void set_mask(Tx tx) { masked = tx; has_mask = true; };
     Chooser * __getitem__(std::string category) { return &rates[category]; };
+    void initialise_choices();
     bool splice_lof_check(std::string initial_aa, std::string mutated_aa, int position);
     bool nonsense_check(std::string initial_aa, std::string mutated_aa, int position);
     bool missense_check(std::string initial_aa, std::string mutated_aa, int position);

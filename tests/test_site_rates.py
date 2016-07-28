@@ -159,42 +159,27 @@ class TestSiteRatesPy(unittest.TestCase):
         wts = self.weights
         n = 10000
         
-        i = 15
-        print("\n")
-        print('missense: ', sorted(set([ wts["missense"].choice() for x in range(n) ])))
-        print('nonsense: ', sorted(set([ wts["nonsense"].choice() for x in range(n) ])))
-        print('synonymous: ', sorted(set([ wts["synonymous"].choice() for x in range(n) ])))
-        print('splice_lof: ', sorted(set([ wts["splice_lof"].choice() for x in range(n) ])))
-        print('loss_of_function: ', sorted(set([ wts["loss_of_function"].choice() for x in range(n) ])))
-        print('splice_region: ', sorted(set([ wts["splice_region"].choice() for x in range(n) ])))
-        
-        
         # there are numerous sites for mutating to a missense change
         self.assertEqual(set([ wts["missense"].choice() for x in range(n) ]),
             set([0, 1, 2, 3, 4, 6, 7, 8, 9, 10, 12, 13, 14, 15, 16, 18, 19, 20]))
-        print('passed missense')
         
         # the transcript only has one position where we can get a stop_gained
         self.assertEqual(set([ wts["nonsense"].choice() for x in range(n) ]),
             set([12]))
-        print('passed nonsense')
         
         # the transcript only has a few positions where we can get synonymous changes
         self.assertEqual(set([ wts["synonymous"].choice() for x in range(n) ]),
             set([5, 14, 17, 19]))
-        print('passed synonymous')
         
         # the transcript only has one splice donor site and one splice acceptor
         # site. The splice lof sites are shifted to the nearest exon coordinate
         # in order to be able to check CDS proximity.
         self.assertEqual(set([ wts["splice_lof"].choice() for x in range(n) ]),
             set([9, 10]))
-        print('passed splice_lof')
         
         # loss-of-function sites are the union of nonsense and splice_lof sites
         self.assertEqual(set([ wts["loss_of_function"].choice() for x in range(n) ]),
             set([9, 10, 12]))
-        print('passed loss_of_function')
         
         # splice region variants can occur at the two bp inside the exon, or
         # within 8 bp of the intron/exon boundary (but beyond the splice lof
@@ -202,7 +187,6 @@ class TestSiteRatesPy(unittest.TestCase):
         # coordinate for CDS proximity checking.
         self.assertEqual(set([ wts["splice_region"].choice() for x in range(n) ]),
             set([8, 9, 10, 11]))
-        print('passed splice_region')
     
     def test_get_mutated_aa(self):
         """ check that mutating a codon gives the expected amino acids
@@ -281,7 +265,7 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertFalse(self.weights.splice_region_check("", "", 121))
         
         # check a site just inside the splice region positions
-        self.weights.check_position(128)
+        self.weights.check_position(127)
         self.assertTrue(self.weights.splice_region_check("", "", 128))
         
         # check a site just outside the splice region positions
@@ -325,19 +309,11 @@ class TestSiteRatesPy(unittest.TestCase):
         
         self.assertEqual(get_gene_range(self.transcript), {'start': 110, 'end': 170})
     
-    def clear_weighted_choices(self):
-        """ clear the WeightedChoice samplers for each consequence
-        """
-        
-        self.weights.categories = {}
-        for cq in self.weights.categories:
-            self.weights.categories[cq] = WeightedChoice()
-    
     def test_check_position_missense_only(self):
         """ check that check_position() works correctly for missense changes
         """
         
-        self.clear_weighted_choices()
+        self.weights.clear()
         self.weights.check_position(110)
         
         # mutating the first base of the start codon all has three missense
@@ -354,7 +330,7 @@ class TestSiteRatesPy(unittest.TestCase):
         """ check that check_position() works correctly for mixed changes
         """
         
-        self.clear_weighted_choices()
+        self.weights.clear()
         self.weights.check_position(162)
         
         # check a position where one alternate base gives a nonsense change
@@ -369,21 +345,22 @@ class TestSiteRatesPy(unittest.TestCase):
         """ check that check_position() works correctly for noncoding changes
         """
         
-        self.clear_weighted_choices()
+        self.weights.clear()
+        categories = ['missense', 'nonsense', 'synonymous', 'splice_lof', 'splice_region']
         
         # a deep intronic site won't alter the summed rates
         self.weights.check_position(140)
-        for x in self.weights.categories:
+        for x in categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # an upstream site won't alter the summed rates
         self.weights.check_position(self.transcript.get_start() - 1)
-        for x in self.weights.categories:
+        for x in categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # a downstream site won't alter the summed rates
         self.weights.check_position(self.transcript.get_end() + 1)
-        for x in self.weights.categories:
+        for x in categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # a splice lof only affects certain rates
@@ -396,7 +373,7 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertEqual(self.weights["loss_of_function"].get_summed_rate(), 1.5e-6)
         
         # a splice region only affects certain rates
-        self.clear_weighted_choices()
+        self.weights.clear()
         self.weights.check_position(125)
         self.assertEqual(self.weights["missense"].get_summed_rate(), 0)
         self.assertEqual(self.weights["nonsense"].get_summed_rate(), 0)
