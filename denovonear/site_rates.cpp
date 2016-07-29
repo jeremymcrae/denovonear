@@ -9,7 +9,7 @@
 // #include "weighted_choice.h"
 #include "site_rates.h"
 
-Region _get_gene_range(Tx tx) {
+Region _get_gene_range(Tx & tx) {
     /**
         get the lowest and highest positions of a transcripts coding sequence
     */
@@ -23,7 +23,7 @@ Region _get_gene_range(Tx tx) {
     return Region {start, end};
 }
 
-std::string _get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon) {
+std::string _get_mutated_aa(Tx & tx, std::string base, std::string codon, int intra_codon) {
     /**
         find the amino acid resulting from a base change to a codon
         

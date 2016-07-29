@@ -48,7 +48,7 @@ class SitesChecks {
     bool has_mask = false;
 };
 
-Region _get_gene_range(Tx tx);
-std::string _get_mutated_aa(Tx tx, std::string base, std::string codon, int intra_codon);
+Region _get_gene_range(Tx & tx);
+std::string _get_mutated_aa(Tx & tx, std::string base, std::string codon, int intra_codon);
 
 #endif  // DENOVONEAR_SITESCHECKS_H_

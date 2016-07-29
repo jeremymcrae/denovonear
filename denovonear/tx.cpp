@@ -201,7 +201,7 @@ Region Tx::find_closest_exon(int position) {
     return find_closest_exon(position, exons);
 }
 
-Region Tx::find_closest_exon(int position, std::vector<Region> ranges) {
+Region Tx::find_closest_exon(int position, std::vector<Region> & ranges) {
     /**
        checks if a position lies within the exon ranges
        
@@ -254,7 +254,7 @@ bool Tx::in_coding_region(int position) {
     return false;
 }
 
-int Tx::get_exon_containing_position(int position, std::vector<Region> ranges) {
+int Tx::get_exon_containing_position(int position, std::vector<Region> & ranges) {
     /**
         find the exon number for a position within an exon
         

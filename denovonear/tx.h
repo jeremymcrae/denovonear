@@ -79,9 +79,9 @@ class Tx {
     
     bool in_exons(int position);
     Region find_closest_exon(int position);
-    Region find_closest_exon(int position, std::vector<Region> ranges);
+    Region find_closest_exon(int position, std::vector<Region> & ranges);
     bool in_coding_region(int position);
-    int get_exon_containing_position(int position, std::vector<Region> ranges);
+    int get_exon_containing_position(int position, std::vector<Region> & ranges);
     int get_coding_distance(int pos_1, int pos_2);
     int chrom_pos_to_cds(int pos_1);
     
