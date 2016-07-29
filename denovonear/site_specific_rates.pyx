@@ -16,13 +16,8 @@ cdef extern from "site_rates.h":
         void initialise_choices()
         Chooser * __getitem__(string) except +
         
-        bool splice_lof_check(string, string, int)
-        bool nonsense_check(string, string, int)
-        bool missense_check(string, string, int)
-        bool splice_region_check(string, string, int)
-        bool synonymous_check(string, string, int)
-        
-        void check_position(int bp)
+        void check_position(int)
+        string check_consequence(string, string, int)
     
     cdef Region _get_gene_range(Tx)
     cdef string _get_mutated_aa(Tx, string, string, int) except +
@@ -75,23 +70,11 @@ cdef class SiteRates:
     def clear(self):
         self._checks.initialise_choices()
     
-    def splice_lof_check(self, initial_aa, mutated_aa, position):
-        return self._checks.splice_lof_check(initial_aa, mutated_aa, position)
-    
-    def nonsense_check(self, initial_aa, mutated_aa, position):
-        return self._checks.nonsense_check(initial_aa, mutated_aa, position)
-    
-    def missense_check(self, initial_aa, mutated_aa, position):
-        return self._checks.missense_check(initial_aa, mutated_aa, position)
-        
-    def splice_region_check(self, initial_aa, mutated_aa, position):
-        return self._checks.splice_region_check(initial_aa, mutated_aa, position)
-        
-    def synonymous_check(self, initial_aa, mutated_aa, position):
-        return self._checks.synonymous_check(initial_aa, mutated_aa, position)
-    
     def check_position(self, bp):
         self._checks.check_position(bp)
+    
+    def check_consequence(self, initial_aa, mutated_aa, position):
+        return self._checks.check_consequence(initial_aa, mutated_aa, position)
 
 def get_gene_range(Transcript tx):
     region = _get_gene_range(deref(tx.thisptr))

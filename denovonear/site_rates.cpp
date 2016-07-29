@@ -66,73 +66,36 @@ void SitesChecks::initialise_choices() {
     }
 }
 
-bool SitesChecks::splice_lof_check(std::string initial_aa, std::string mutated_aa, int position) {
+std::string SitesChecks::check_consequence(std::string initial_aa,
+        std::string mutated_aa, int position) {
     /**
-        checks if a variant has a splice_donor or splice_acceptor consequence
-        
-        These variants are defined as being the two intronic base-pairs adjacent
-        to the intron/exon boundary.
-    */
+         get the consequence of an amino acid change (or not)
+     */
     
-    return (!_tx.in_coding_region(position)) && boundary_dist < 3;
-}
-
-bool SitesChecks::nonsense_check(std::string initial_aa, std::string mutated_aa, int position) {
-    /**
-        checks if two amino acids are a nonsense (eg stop_gained) mutation
-    */
+    std::string cq = "synonymous";
     
-    return (initial_aa != "*") & (mutated_aa == "*");
-}
-
-bool SitesChecks::missense_check(std::string initial_aa, std::string mutated_aa, int position) {
-    /**
-        checks if two amino acids are a missense mutation (but not nonsense)
-    */
-    
-    // trim out nonsense mutations such as stop_gained mutations, and splice
-    // site mutations
-    if (nonsense_check(initial_aa, mutated_aa, position) || \
-            splice_lof_check(initial_aa, mutated_aa, position)) {
-        return false;
-    }
-    
-    // include the site if it mutates to a different amino acid.
-    return (initial_aa != mutated_aa);
-}
-
-bool SitesChecks::splice_region_check(std::string initial_aa, std::string mutated_aa, int position) {
-    /**
-        checks if a variant has a splice_region consequence, but not
-        splice_donor or splice_acceptor
-    */
-    
-    if ( splice_lof_check(initial_aa, mutated_aa, position) || \
-            initial_aa != mutated_aa ) {
-        return false;
-    }
-    
-    // catch splice region variants within the exon, and in the appropriate
-    // region of the intron (note that loss of function splice_donor and
-    // splice_acceptor variants have been excluded when we trimmed nonsense).
-    if ( _tx.in_coding_region(position) ) {
-        // check for splice_region_variant inside exon
-        return boundary_dist < 4;
-    } else {
+    if ( initial_aa != "*" && mutated_aa == "*" ) {
+        // checks if two amino acids are a nonsense (eg stop_gained) mutation
+        cq = "nonsense";
+    } else if ( !_tx.in_coding_region(position) && boundary_dist < 3 ) {
+        // check if a variant has a splice_donor or splice_acceptor consequence
+        // These variants are defined as being the two intronic base-pairs
+        // adjacent to the intron/exon boundary.
+        cq = "splice_lof";
+    } else if ( initial_aa != mutated_aa ) {
+        // include the site if it mutates to a different amino acid.
+        cq = "missense";
+    } else if ( _tx.in_coding_region(position) && boundary_dist < 4 ) {
+        // catch splice region variants within the exon, and in the appropriate
+        // region of the intron (note that loss of function splice_donor and
+        // splice_acceptor variants have been excluded when we spotted nonsense).
+        cq = "splice_region";
+    } else if ( !_tx.in_coding_region(position) && boundary_dist < 9 ) {
         // check for splice_region_variant inside intron
-        return boundary_dist < 9;
+        cq = "splice_region";
     }
-}
-
-bool SitesChecks::synonymous_check(std::string initial_aa, std::string mutated_aa, int position) {
-    /**
-        checks if two amino acids are synonymous
-    */
     
-    return !nonsense_check(initial_aa, mutated_aa, position) && \
-         !splice_lof_check(initial_aa, mutated_aa, position) && \
-         !missense_check(initial_aa, mutated_aa, position) && \
-         !splice_region_check(initial_aa, mutated_aa, position);
+    return cq;
 }
 
 void SitesChecks::check_position(int bp) {
@@ -173,9 +136,8 @@ void SitesChecks::check_position(int bp) {
     int cds_pos = codon.cds_pos;
     
     // drop the initial base, since we want to mutate to other bases
-    std::string ref = seq.substr(1, 1);
     std::vector<std::string> alts(bases);
-    alts.erase(std::find(alts.begin(), alts.end(), ref));
+    alts.erase(std::find(alts.begin(), alts.end(), seq.substr(1, 1)));
     
     for (auto it=alts.begin(); it != alts.end(); it++) {
         std::string alt = *it;
@@ -186,18 +148,7 @@ void SitesChecks::check_position(int bp) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
         
-        std::string category = "";
-        if (nonsense_check(initial_aa, mutated_aa, bp)) {
-            category = "nonsense";
-        } else if (splice_lof_check(initial_aa, mutated_aa, bp)) {
-            category = "splice_lof";
-        } else if (missense_check(initial_aa, mutated_aa, bp)) {
-            category = "missense";
-        } else if (splice_region_check(initial_aa, mutated_aa, bp)) {
-            category = "splice_region";
-        } else if (synonymous_check(initial_aa, mutated_aa, bp)) {
-            category = "synonymous";
-        }
+        std::string category = check_consequence(initial_aa, mutated_aa, bp);
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.

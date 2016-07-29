@@ -210,26 +210,26 @@ class TestSiteRatesPy(unittest.TestCase):
         # check a site within the intron, but only 2 bp away from the
         # intron/exon boundary
         self.weights.check_position(121)
-        self.assertTrue(self.weights.splice_lof_check('', '', 121))
+        self.assertEqual(self.weights.check_consequence('', '', 121), 'splice_lof')
         
         # check a site within the exon, and also 2 bp away from the intron/exon
         # boundary
         self.weights.check_position(117)
-        self.assertFalse(self.weights.splice_lof_check('', '', 117))
+        self.assertNotEqual(self.weights.check_consequence('', '', 117), 'splice_lof')
         
         # check a intron site outside the splice lof positions
         self.weights.check_position(122)
-        self.assertFalse(self.weights.splice_lof_check('', '', 122))
+        self.assertNotEqual(self.weights.check_consequence('', '', 122), 'splice_lof')
     
     def test_nonsense_check(self):
         """ check that nonsense_check() works correctly
         """
         
         self.weights.check_position(161)
-        self.assertTrue(self.weights.nonsense_check("N", "*", 161))
-        self.assertFalse(self.weights.nonsense_check("N", "G", 161))
-        self.assertFalse(self.weights.nonsense_check("*", "G", 161))
-        self.assertFalse(self.weights.nonsense_check("*", "*", 161))
+        self.assertEqual(self.weights.check_consequence("N", "*", 161), 'nonsense')
+        self.assertNotEqual(self.weights.check_consequence("N", "G", 161), 'nonsense')
+        self.assertNotEqual(self.weights.check_consequence("*", "G", 161), 'nonsense')
+        self.assertNotEqual(self.weights.check_consequence("*", "*", 161), 'nonsense')
     
     def test_missense_check(self):
         """ check that missense_check() works correctly
@@ -239,69 +239,69 @@ class TestSiteRatesPy(unittest.TestCase):
         # stop site changes to coding an amino acid (technically these are
         # stop_lost, but they carry a missense-like severity).
         self.weights.check_position(161)
-        self.assertTrue(self.weights.missense_check("N", "G", 161))
-        self.assertTrue(self.weights.missense_check("*", "G", 161))
+        self.assertTrue(self.weights.check_consequence("N", "G", 161), 'missense')
+        self.assertTrue(self.weights.check_consequence("*", "G", 161), 'missense')
         
         # don't include stop gained mutations, or stop to stop
-        self.assertFalse(self.weights.missense_check("N", "*", 161))
-        self.assertFalse(self.weights.missense_check("*", "*", 161))
+        self.assertNotEqual(self.weights.check_consequence("N", "*", 161), 'missense')
+        self.assertNotEqual(self.weights.check_consequence("*", "*", 161), 'missense')
         
         # the case below shouldn't occur, where the site is in the intron and
         # within the splice lof positions, but somehow the initial and modified
         # amino acids differ, but check this anyway.
         # self.weights.boundary_dist = 2
         self.weights.check_position(121)
-        self.assertFalse(self.weights.missense_check("N", "G", 121))
+        self.assertNotEqual(self.weights.check_consequence("N", "G", 121), 'missense')
     
     def test_splice_region_check(self):
         """ check that splice_region_check() works correctly
         """
         
         self.weights.check_position(123)
-        self.assertTrue(self.weights.splice_region_check("", "", 123))
+        self.assertEqual(self.weights.check_consequence("", "", 123), 'splice_region')
         
         # check a site in the splice lof positions
         self.weights.check_position(121)
-        self.assertFalse(self.weights.splice_region_check("", "", 121))
+        self.assertNotEqual(self.weights.check_consequence("", "", 121), 'splice_region')
         
         # check a site just inside the splice region positions
         self.weights.check_position(127)
-        self.assertTrue(self.weights.splice_region_check("", "", 128))
+        self.assertEqual(self.weights.check_consequence("", "", 128), 'splice_region')
         
         # check a site just outside the splice region positions
         self.weights.check_position(130)
-        self.assertFalse(self.weights.splice_region_check("", "", 130))
+        self.assertNotEqual(self.weights.check_consequence("", "", 130), 'splice_region')
         
         # check an exonic splice region position
         self.weights.check_position(116)
-        self.assertTrue(self.weights.splice_region_check("N", "N", 116))
+        self.assertEqual(self.weights.check_consequence("N", "N", 116), 'splice_region')
         
         # check an exonic site just beyond the splice region positions
         self.weights.check_position(115)
-        self.assertFalse(self.weights.splice_region_check("N", "N", 115))
+        self.assertNotEqual(self.weights.check_consequence("N", "N", 115), 'splice_region')
         
         # check an exonic site inside the splice region positions, but with
         # mutated amino acids aren't splice region variants
         self.weights.check_position(116)
-        self.assertFalse(self.weights.splice_region_check("N", "K", 116))
+        self.assertNotEqual(self.weights.check_consequence("N", "K", 116), 'splice_region')
     
     def test_synonymous_check(self):
         """ check that synonymous_check() works correctly
         """
         
         self.weights.check_position(115)
-        self.assertTrue(self.weights.synonymous_check("N", "N", 115))
-        self.assertTrue(self.weights.synonymous_check("*", "*", 115))
+        self.assertEqual(self.weights.check_consequence("N", "N", 115), 'synonymous')
+        self.assertEqual(self.weights.check_consequence("*", "*", 115), 'synonymous')
         
         # amino acid changes aren't synonymous
-        self.assertFalse(self.weights.synonymous_check("N", "*", 115))
-        self.assertFalse(self.weights.synonymous_check("*", "N", 115))
+        self.assertNotEqual(self.weights.check_consequence("N", "*", 115), 'synonymous')
+        self.assertNotEqual(self.weights.check_consequence("*", "N", 115), 'synonymous')
         
         # sites in splice region or splice lof aren't synonymous
         self.weights.check_position(117)
-        self.assertFalse(self.weights.synonymous_check("N", "N", 117))
+        self.assertNotEqual(self.weights.check_consequence("N", "N", 117), 'synonymous')
         self.weights.check_position(121)
-        self.assertFalse(self.weights.synonymous_check("", "", 121))
+        self.assertNotEqual(self.weights.check_consequence("", "", 121), 'synonymous')
     
     def test_get_gene_range(self):
         """ check that get_gene_range() works correctly
