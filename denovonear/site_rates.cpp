@@ -152,7 +152,7 @@ void SitesChecks::check_position(int bp) {
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
-        ref = seq.substr(1, 1);
+        std::string ref = seq.substr(1, 1);
         if (_tx.get_strand() != fwd) {
             ref = transdict[ref];
             alt = transdict[alt];
