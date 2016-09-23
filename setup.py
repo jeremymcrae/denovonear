@@ -4,10 +4,10 @@ from setuptools import setup
 from distutils.core import Extension
 from Cython.Build import cythonize
 
-# EXTRA_COMPILE_ARGS = ["-std=c++11"]
+EXTRA_COMPILE_ARGS = ["-std=c++11"]
 
-if sys.platform == "darwin":
-    EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
+# if sys.platform == "darwin":
+#     EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
 
 weights = cythonize([
     Extension("denovonear.weights",
