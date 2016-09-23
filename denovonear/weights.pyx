@@ -29,7 +29,8 @@ cdef class WeightedChoice:
         self.pos = 0
     
     def __dealloc__(self):
-        del self.thisptr
+        if self.thisptr is not NULL:
+            del self.thisptr
     
     def __len__(self):
         return self.thisptr.len()
@@ -129,11 +130,11 @@ def geomean(vector[int] distances):
 def simulate_distribution(WeightedChoice choices, int iterations, int de_novos_count):
     """
     """
-
+    
     return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
 
 def analyse_de_novos(WeightedChoice choices, int iterations, int de_novos_count, double observed_value):
     """
     """
-
+    
     return _analyse_de_novos(deref(choices.thisptr), iterations, de_novos_count, observed_value)
