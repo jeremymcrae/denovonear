@@ -37,13 +37,13 @@ class TestSiteRatesPy(unittest.TestCase):
     
     rates = []
     for initial in itertools.product("".join(bases), repeat=3):
-        trinuc = "".join(initial)
+        trinuc = "".join(initial).encode('utf8')
         
+        rate = '5e-7'.encode('utf8')
         for base in bases - set(initial[1]):
-            changed = "{}{}{}".format(initial[0], base, initial[2])
-            rate = '5e-7'
+            changed = "{}{}{}".format(initial[0], base, initial[2]).encode('utf8')
             
-            rates.append([trinuc, changed,  '5e-7'])
+            rates.append([trinuc, changed,  rate])
     
     def setUp(self):
         """ construct a Transcript object to add sequence to

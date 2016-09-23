@@ -12,9 +12,9 @@ def load_mutation_rates(filename):
                 continue
             
             line = line.strip().split()
-            initial = line[0]
-            changed = line[1]
-            rate = line[2]
+            initial = line[0].encode('utf8')
+            changed = line[1].encode('utf8')
+            rate = line[2].encode('utf8')
             
             # if initial not in mut_dict:
             #     mut_dict[initial] = {}

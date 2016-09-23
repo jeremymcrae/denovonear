@@ -46,7 +46,7 @@ cdef class WeightedChoice:
         iter = self.thisptr.iter(self.pos)
         self.pos += 1
         
-        return {"pos": iter.pos, "ref": iter.ref, "alt": iter.alt, 'prob': iter.prob}
+        return {"pos": iter.pos, "ref": iter.ref.decode('utf8'), "alt": iter.alt.decode('utf8'), 'prob': iter.prob}
     
     def add_choice(self, site, prob, ref='N', alt='N'):
         """ add another possible choice for selection
@@ -57,6 +57,9 @@ cdef class WeightedChoice:
             ref: string for reference allele
             alt: string for alternate allele
         """
+        
+        ref = ref.encode('utf8')
+        alt = alt.encode('utf8')
         
         if len(ref) > 1 or len(alt) > 1:
             raise TypeError("requires single base alleles: {}, {}".format(ref, alt))
@@ -82,7 +85,7 @@ cdef class WeightedChoice:
         
         choice = self.thisptr.choice()
         
-        return {"pos": choice.pos, "ref": choice.ref, "alt": choice.alt}
+        return {"pos": choice.pos, "ref": choice.ref.decode('utf8'), "alt": choice.alt.decode('utf8')}
     
     def get_summed_rate(self):
         """ return the cumulative probability for the object

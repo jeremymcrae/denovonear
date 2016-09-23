@@ -21,6 +21,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 cdef class Transcript:
     def __cinit__(self, transcript_id, chrom, start, end, strand):
+        transcript_id = transcript_id.encode('utf8')
+        chrom = chrom.encode('utf8')
         self.thisptr = new Tx(transcript_id, chrom, start, end, ord(strand))
     def __dealloc__(self):
         del self.thisptr
@@ -146,28 +148,28 @@ cdef class Transcript:
         return self.thisptr.get_position_within_codon(pos)
     
     def add_cds_sequence(self, text):
-        self.thisptr.add_cds_sequence(text)
+        self.thisptr.add_cds_sequence(text.encode('utf8'))
         
     def get_cds_sequence(self):
-        return self.thisptr.get_cds_sequence()
+        return self.thisptr.get_cds_sequence().decode('utf8')
     
     def add_genomic_sequence(self, text, offset=0):
-        self.thisptr.add_genomic_sequence(text, offset)
+        self.thisptr.add_genomic_sequence(text.encode('utf8'), offset)
     
     def get_genomic_sequence(self):
-        return self.thisptr.get_genomic_sequence()
+        return self.thisptr.get_genomic_sequence().decode('utf8')
     
     def reverse_complement(self, text):
-        return self.thisptr.reverse_complement(text)
+        return self.thisptr.reverse_complement(text).decode('utf8')
     
     def get_trinucleotide(self, pos):
-        return self.thisptr.get_trinucleotide(pos)
+        return self.thisptr.get_trinucleotide(pos).decode('utf8')
     
     def get_codon_sequence(self, pos):
-        return self.thisptr.get_codon_sequence(pos)
+        return self.thisptr.get_codon_sequence(pos).decode('utf8')
     
     def translate(self, text):
-        return self.thisptr.translate(text)
+        return self.thisptr.translate(text.encode('utf8')).decode('utf8')
     
     def get_codon_info(self, pos):
         codon = dict(self.thisptr.get_codon_info(pos))
@@ -177,6 +179,12 @@ cdef class Transcript:
             codon['intra_codon'] = None
             codon['codon_seq'] = None
             codon['initial_aa'] = None
+        
+        if codon['codon_seq'] is not None:
+            codon['codon_seq'] = codon['codon_seq'].decode('utf8')
+        
+        if codon['initial_aa'] is not None:
+            codon['initial_aa'] = codon['initial_aa'].decode('utf8')
         
         return codon
     

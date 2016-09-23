@@ -28,6 +28,8 @@ cdef class SiteRates:
     def __cinit__(self, Transcript transcript, vector[vector[string]] rates,
             Transcript masked_sites=None):
         
+        # rates = [ [ y.decode('utf8') for y in x ] for x in rates ]
+        
         if masked_sites is None:
             self._checks = new SitesChecks(deref(transcript.thisptr), rates)
         else:
@@ -51,12 +53,16 @@ cdef class SiteRates:
             being mutated to the specific consequence type.
         '''
         
-        cdef Chooser * chooser = self._checks.__getitem__(category)
+        cdef Chooser * chooser = self._checks.__getitem__(category.encode('utf8'))
         
         choices = WeightedChoice()
         for x in range(chooser.len()):
             site = chooser.iter(x)
-            choices.add_choice(site.pos, site.prob, site.ref, site.alt)
+            
+            ref = site.ref.decode('utf8')
+            alt = site.alt.decode('utf8')
+            
+            choices.add_choice(site.pos, site.prob, ref, alt)
         
         return choices
     
@@ -67,11 +73,17 @@ cdef class SiteRates:
         self._checks.check_position(bp)
     
     def check_consequence(self, initial_aa, mutated_aa, position):
-        return self._checks.check_consequence(initial_aa, mutated_aa, position)
+        initial_aa = initial_aa.encode('utf8')
+        mutated_aa = mutated_aa.encode('utf8')
+        return self._checks.check_consequence(initial_aa, mutated_aa, position).decode('utf8')
 
 def get_gene_range(Transcript tx):
     region = _get_gene_range(deref(tx.thisptr))
     return {"start": region.start, "end": region.end}
 
-def get_mutated_aa(Transcript tx,  base, string codon, int intra_codon):
-    return _get_mutated_aa(deref(tx.thisptr), base, codon, intra_codon)
+def get_mutated_aa(Transcript tx,  base, codon, intra_codon):
+    
+    base = base.encode('utf8')
+    codon = codon.encode('utf8')
+    
+    return _get_mutated_aa(deref(tx.thisptr), base, codon, intra_codon).decode('utf8')
