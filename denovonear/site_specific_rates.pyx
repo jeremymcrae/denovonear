@@ -24,13 +24,9 @@ cdef extern from "site_rates.h":
 
 cdef class SiteRates:
     cdef SitesChecks *_checks  # hold a C++ instance which we're wrapping
-    cdef dict categories
     def __cinit__(self, Transcript transcript, vector[vector[string]] rates):
         self._checks = new SitesChecks(deref(transcript.thisptr), rates)
-        self.categories = {}
         
-        # self._checks.set_mask(deref(masked_sites.thisptr))
-        # self._checks = new SitesChecks(deref(transcript.thisptr), rates)
         # if masked is None:
         #     self._checks = new SitesChecks(deref(transcript.thisptr), rates)
         # else:
@@ -38,9 +34,6 @@ cdef class SiteRates:
     
     def __dealloc__(self):
         del self._checks
-        for x in self.categories:
-            self.categories[x].__dealloc__()
-            del self.categories[x]
     
     def __getitem__(self, category):
         ''' get site-specific mutation rates for each CDS base
@@ -57,15 +50,14 @@ cdef class SiteRates:
             being mutated to the specific consequence type.
         '''
         
-        cdef Chooser * chooser
+        cdef Chooser * chooser = self._checks.__getitem__(category)
         
-        if category not in self.categories:
-            chooser = self._checks.__getitem__(category)
-            choices = WeightedChoice()
-            choices.thisptr = chooser
-            self.categories[category] = choices
+        choices = WeightedChoice()
+        for x in range(chooser.len()):
+            site = chooser.iter(x)
+            choices.add_choice(site.pos, site.prob, site.ref, site.alt)
         
-        return self.categories[category]
+        return choices
     
     def clear(self):
         self._checks.initialise_choices()
