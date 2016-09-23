@@ -148,7 +148,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         except ValueError:
             continue
         
-        if len(transcript.cds_sequence) % 3 != 0:
+        if len(transcript.get_cds_sequence()) % 3 != 0:
             raise ValueError("anomalous_coding_sequence")
         
         # ignore mitochondrial genes, since mitochondiral mutation rates differ
@@ -158,7 +158,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         
         if combined_transcript is None:
             sites = SiteRates(transcript, mut_dict)
-            combined_transcript = copy.deepcopy(transcript)
+            combined_transcript = transcript
         else:
             sites = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
             combined_transcript += transcript
@@ -183,7 +183,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     length = "NA"
     if combined_transcript is not None:
         length = combined_transcript.get_coding_distance(\
-            combined_transcript.cds_min, combined_transcript.cds_max)
+            combined_transcript.get_cds_start(), combined_transcript.get_cds_end())
     
     return (chrom, length, missense, nonsense, splice_lof, splice_region, synonymous)
 
