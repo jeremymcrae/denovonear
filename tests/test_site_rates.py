@@ -273,17 +273,17 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertNotEqual(self.weights.check_consequence("", "", 130), 'splice_region')
         
         # check an exonic splice region position
-        self.weights.check_position(116)
-        self.assertEqual(self.weights.check_consequence("N", "N", 116), 'splice_region')
+        self.weights.check_position(117)
+        self.assertEqual(self.weights.check_consequence("N", "N", 117), 'splice_region')
         
         # check an exonic site just beyond the splice region positions
-        self.weights.check_position(115)
-        self.assertNotEqual(self.weights.check_consequence("N", "N", 115), 'splice_region')
+        self.weights.check_position(116)
+        self.assertNotEqual(self.weights.check_consequence("N", "N", 116), 'splice_region')
         
         # check an exonic site inside the splice region positions, but with
         # mutated amino acids aren't splice region variants
-        self.weights.check_position(116)
-        self.assertNotEqual(self.weights.check_consequence("N", "K", 116), 'splice_region')
+        self.weights.check_position(117)
+        self.assertNotEqual(self.weights.check_consequence("N", "K", 117), 'splice_region')
     
     def test_synonymous_check(self):
         """ check that synonymous_check() works correctly
