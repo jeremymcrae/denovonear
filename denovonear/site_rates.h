@@ -31,7 +31,8 @@ class SitesChecks {
 
  public:
     SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut) : _tx(tx) { init(mut); };
-    // void set_mask(Tx tx) { masked = tx; has_mask = true; };
+    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, Tx mask) :
+        _tx(tx), masked(mask) { has_mask = true; init(mut); };
     Chooser * __getitem__(std::string category) { return &rates[category]; };
     void initialise_choices();
     // bool splice_lof_check(std::string initial_aa, std::string mutated_aa, int position);
@@ -45,6 +46,7 @@ class SitesChecks {
     
  private:
     Tx _tx;
+    Tx masked = Tx("zz", "z", -100, -100, '+');
     void init(std::vector<std::vector<std::string>> mut);
     bool has_mask = false;
 };

@@ -105,11 +105,11 @@ void SitesChecks::check_position(int bp) {
         @bp genomic position of the variant
     */
     
-    // // ignore sites within masked regions (typically masked because the
-    // // site has been picked up on alternative transcript)
-    // if ( has_mask && masked.in_coding_region(bp) ) {
-    //     return ;
-    // }
+    // ignore sites within masked regions (typically masked because the
+    // site has been picked up on alternative transcript)
+    if ( has_mask && masked.in_coding_region(bp) ) {
+        return ;
+    }
     
     // ignore sites outside the CDS region
     if (bp < std::min(_tx.get_cds_start(), _tx.get_cds_end()) ||

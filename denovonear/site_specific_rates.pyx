@@ -12,6 +12,7 @@ from denovonear.transcript cimport Tx, Transcript, Region
 cdef extern from "site_rates.h":
     cdef cppclass SitesChecks:
         SitesChecks(Tx, vector[vector[string]]) except +
+        SitesChecks(Tx, vector[vector[string]], Tx) except +
         
         void initialise_choices()
         Chooser * __getitem__(string) except +
@@ -24,13 +25,13 @@ cdef extern from "site_rates.h":
 
 cdef class SiteRates:
     cdef SitesChecks *_checks  # hold a C++ instance which we're wrapping
-    def __cinit__(self, Transcript transcript, vector[vector[string]] rates):
-        self._checks = new SitesChecks(deref(transcript.thisptr), rates)
+    def __cinit__(self, Transcript transcript, vector[vector[string]] rates,
+            Transcript masked_sites=None):
         
-        # if masked is None:
-        #     self._checks = new SitesChecks(deref(transcript.thisptr), rates)
-        # else:
-        #     self._checks = new SitesChecks(deref(transcript.thisptr), rates, deref(masked_sites.thisptr))
+        if masked_sites is None:
+            self._checks = new SitesChecks(deref(transcript.thisptr), rates)
+        else:
+            self._checks = new SitesChecks(deref(transcript.thisptr), rates, deref(masked_sites.thisptr))
     
     def __dealloc__(self):
         del self._checks
