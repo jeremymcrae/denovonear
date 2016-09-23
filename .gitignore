@@ -8,5 +8,6 @@ dist/
 results/
 denovonear/weights.cpp
 denovonear/transcript.cpp
+denovonear/site_specific_rates.cpp
 *.egg-info/
 *.so
