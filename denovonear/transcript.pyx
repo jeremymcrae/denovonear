@@ -58,7 +58,7 @@ cdef class Transcript:
     
     
     def get_overlap(self, exon, regions):
-        ''' find the maxmimal range for overlapping regions
+        ''' find the union of ranges for overlapping regions
         
         Args:
             exon: dictionary of start and end positions for a single exon
@@ -75,7 +75,7 @@ cdef class Transcript:
         return None
     
     def merge_coordinates(self, first, second):
-        ''' merge two sets of coordinates, to get the maximal regions
+        ''' merge two sets of coordinates, to get the union of regions
         
         This uses an inefficient approach, looping over and over, but we won't
         need to perform this often.
