@@ -126,45 +126,39 @@ class TestTranscriptPy(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.construct_gene(strand='x')
     
-    # def test___add__(self):
-    #     """ test that __add__() works correctly
-    #     """
-    #
-    #     exons = [(10, 20), (50, 60), (90, 100)]
-    #     a = Transcript("a", 10, 100, "+", "1", exons, [(55, 60), (90, 100)])
-    #     b = Transcript("b", 10, 100, "+", "1", exons, [(50, 60), (90, 95)])
-    #     c = Transcript("c", 10, 100, "+", "1", [(45, 65)], [(45, 65)])
-    #     d = Transcript("d", 10, 100, "+", "1", [(30, 40)], [(30, 40)])
-    #
-    #     # check that adding two Transcripts gives the union of CDS regions
-    #     self.assertEqual((a + b).cds, [(50, 60), (90, 100)])
-    #     self.assertEqual((a + c).cds, [(45, 65), (90, 100)])
-    #
-    #     # check that addition is reversible
-    #     self.assertEqual((c + a).cds, [(45, 65), (90, 100)])
-    #
-    #     # check that adding previously unknown exons works
-    #     self.assertEqual((a + d).cds, [(30, 40), (55, 60), (90, 100)])
-    #
-    # def test___region_overlaps_cds__(self):
-    #     """ check that __region_overlaps_cds__() works correctly
-    #     """
-    #
-    #     # the cds regions are at [(1100, 1200), (1800, 1900)], so check regions
-    #     # that do and do not intersect with those
-    #
-    #     self.assertTrue(self.gene.__region_overlaps_cds__((1050, 1150)))
-    #
-    #     # check exons surrounding, and within the genes exons
-    #     self.assertTrue(self.gene.__region_overlaps_cds__((1050, 1250)))
-    #     self.assertTrue(self.gene.__region_overlaps_cds__((1150, 1160)))
-    #
-    #     # check that non overlapping region fails
-    #     self.assertFalse(self.gene.__region_overlaps_cds__((1050, 1090)))
-    #
-    #     # check the boundaries of the exons
-    #     self.assertTrue(self.gene.__region_overlaps_cds__((1050, 1100)))
-    #     self.assertFalse(self.gene.__region_overlaps_cds__((1050, 1099)))
+    def test___add__(self):
+        """ test that __add__() works correctly
+        """
+        
+        exons = [(10, 20), (50, 60), (90, 100)]
+        cds_2 = [(50, 60), (90, 95)]
+        
+        a = Transcript("a", "1", 10, 100, "+")
+        b = Transcript("b", "1", 10, 100, "+")
+        c = Transcript("c", "1", 10, 100, "+")
+        d = Transcript("d", "1", 10, 100, "+")
+        
+        a.set_exons(exons, [(55, 60), (90, 100)])
+        a.set_cds([(55, 60), (90, 100)])
+        
+        b.set_exons(exons, [(50, 60), (90, 95)])
+        b.set_cds([(50, 60), (90, 95)])
+        
+        c.set_exons([(45, 65)], [(45, 65)])
+        c.set_cds([(45, 65)])
+        
+        d.set_exons([(30, 40)], [(30, 40)])
+        d.set_cds([(30, 40)])
+        
+        # check that adding two Transcripts gives the union of CDS regions
+        self.assertEqual((a + b).get_cds(), [{'start': 50, 'end': 60}, {'start': 90, 'end': 100}])
+        self.assertEqual((a + c).get_cds(), [{'start': 45, 'end': 65}, {'start': 90, 'end': 100}])
+        
+        # check that addition is reversible
+        self.assertEqual((c + a).get_cds(), [{'start': 45, 'end': 65}, {'start': 90, 'end': 100}])
+        
+        # check that adding previously unknown exons works
+        self.assertEqual((a + d).get_cds(), [{'start': 30, 'end': 40}, {'start': 55, 'end': 60}, {'start': 90, 'end': 100}])
     
     def test_in_exons(self):
         """ test that in_exons() works correctly
