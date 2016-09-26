@@ -485,6 +485,9 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
         }
     }
     
+    // don't check the CDS matches expectations if the CDS sequence isn't set
+    if (cds_sequence == "") { cds_sequence = cds_seq; return ; }
+    
     // do a sanity check to check that we've got the right cds sequence, this
     // fails for at least one gene (CCDC18), which begins with a N, and
     // throws the coordinates off
