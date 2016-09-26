@@ -166,9 +166,9 @@ cdef class Transcript:
     def get_cds(self):
         return self.thisptr.get_cds()
     def get_name(self):
-        return self.thisptr.get_name()
+        return self.thisptr.get_name().decode('utf8')
     def get_chrom(self):
-        return self.thisptr.get_chrom()
+        return self.thisptr.get_chrom().decode('utf8')
     def get_start(self):
         return self.thisptr.get_start()
     def get_end(self):
