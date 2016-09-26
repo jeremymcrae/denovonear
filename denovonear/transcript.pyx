@@ -56,7 +56,6 @@ cdef class Transcript:
         
         self.thisptr.set_exons(exon_ranges, cds_ranges)
     
-    
     def set_cds(self, cds_ranges):
         ''' set CDS ranges
         
