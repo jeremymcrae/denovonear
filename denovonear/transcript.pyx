@@ -56,6 +56,96 @@ cdef class Transcript:
         
         self.thisptr.set_exons(exon_ranges, cds_ranges)
     
+    
+    def get_overlap(self, exon, regions):
+        ''' find the maxmimal range for overlapping regions
+        
+        Args:
+            exon: dictionary of start and end positions for a single exon
+            regions: list of start and end position dictionaries.
+        
+        Returns:
+            list of start and end positions, or None if no matches found
+        '''
+        
+        for region in regions:
+            if (exon['start'] <= region['end'] and exon['end'] >= region['start']):
+                return min(exon['start'], region['start']), max(exon['end'], region['end'])
+        
+        return None
+    
+    def merge_coordinates(self, first, second):
+        ''' merge two sets of coordinates, to get the maximal regions
+        
+        This uses an inefficient approach, looping over and over, but we won't
+        need to perform this often.
+        
+        Args:
+            first: list of {'start': x, 'end': y} dictionaries for first transcript
+            second: list of {'start': x, 'end': y} dictionaries for second transcript
+        
+        Returns:
+            list of [start, end] lists, sorted by position.
+        '''
+        
+        coords = []
+        for x in first:
+            overlap = self.get_overlap(x, second)
+            
+            if overlap is not None:
+                coords.append(overlap)
+            else:
+                coords.append([x['start'], x['end']])
+        
+        # include the second's regions that didn't overlap the first's regions
+        for x in second:
+            overlap = self.get_overlap(x, second)
+            
+            if overlap is None:
+                coords.append([x['start'], x['end']])
+        
+        return sorted(coords)
+    
+    def __add__(self, other):
+        """ combine the coding sequences of two Transcript objects
+        
+        When we determine the sites for sampling, occasioally we want to
+        use sites from multiple alternative transcripts. We determine the sites
+        for each transcript in turn, but mask the sites that have been collected
+        in the preceeding transcripts. In order to be able to mask all previous
+        trabnscripts, we need to combine the coding sequence of the transcripts
+        as we move through them. This function performs the union of coding
+        sequence regions between different transcripts.
+        
+        We do this outside of the c++ class, so as to be able to set up a
+        Transcript object correctly.
+        
+        Args:
+            other: a transcript to be combined with the current object.
+        
+        Returns:
+            an altered instance of the class, where the coding sequence regions
+            are the union of the coding regions of two Transcript objects. This
+            disrupts the ability to get meaningingful sequence from the object,
+            so don't try to extract sequence from the returned object.
+        """
+        
+        cds_min = min(other.get_cds_start(), other.get_cds_end())
+        cds_max = max(other.get_cds_start(), other.get_cds_end())
+        
+        altered = Transcript(self.get_name(), self.get_chrom(),
+            self.get_start(), self.get_end(), self.get_strand())
+        
+        exons = self.merge_coordinates(self.get_exons(), other.get_exons())
+        cds = self.merge_coordinates( self.get_cds(), other.get_cds())
+        
+        altered.set_exons(exons, cds)
+        altered.set_cds(cds)
+        
+        altered.add_genomic_sequence(self.get_genomic_sequence(), self.get_genomic_offset())
+        
+        return altered
+    
     def set_cds(self, cds_ranges):
         ''' set CDS ranges
         
