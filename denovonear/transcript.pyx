@@ -70,7 +70,8 @@ cdef class Transcript:
         
         for region in regions:
             if (exon['start'] <= region['end'] and exon['end'] >= region['start']):
-                return min(exon['start'], region['start']), max(exon['end'], region['end'])
+                return {'start': min(exon['start'], region['start']),
+                    'end': max(exon['end'], region['end'])}
         
         return None
     
@@ -95,14 +96,16 @@ cdef class Transcript:
             if overlap is not None:
                 coords.append(overlap)
             else:
-                coords.append([x['start'], x['end']])
+                coords.append(x)
         
         # include the second's regions that didn't overlap the first's regions
         for x in second:
-            overlap = self.get_overlap(x, second)
+            overlap = self.get_overlap(x, coords)
             
             if overlap is None:
-                coords.append([x['start'], x['end']])
+                coords.append(x)
+        
+        coords = [ ( x['start'], x['end'] ) for x in coords ]
         
         return sorted(coords)
     
@@ -137,7 +140,7 @@ cdef class Transcript:
             self.get_start(), self.get_end(), self.get_strand())
         
         exons = self.merge_coordinates(self.get_exons(), other.get_exons())
-        cds = self.merge_coordinates( self.get_cds(), other.get_cds())
+        cds = self.merge_coordinates(self.get_cds(), other.get_cds())
         
         altered.set_exons(exons, cds)
         altered.set_cds(cds)
