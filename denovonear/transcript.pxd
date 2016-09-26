@@ -56,6 +56,7 @@ cdef extern from "tx.h":
         void add_genomic_sequence(string, int) except +
         string get_cds_sequence()
         string get_genomic_sequence()
+        int get_genomic_offset()
         
         string reverse_complement(string)
         string get_trinucleotide(int) except +

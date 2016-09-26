@@ -28,7 +28,7 @@ class Tx {
     int cds_max;
     std::vector<Region> exons;
     std::vector<Region> cds;
-    std::string cds_sequence;
+    std::string cds_sequence = "";
     int gdna_offset;
     std::string genomic_sequence;
     
@@ -92,6 +92,7 @@ class Tx {
     void add_genomic_sequence(std::string gdna, int offset);
     std::string get_cds_sequence() { return cds_sequence; }
     std::string get_genomic_sequence() { return genomic_sequence; }
+    int get_genomic_offset() { return gdna_offset; }
     
     void _fix_transcript_off_by_one_bp();
     

@@ -65,7 +65,9 @@ cdef class Transcript:
         '''
         
         self.thisptr.set_cds(cds_ranges)
-        
+    
+    def get_genomic_offset(self):
+        return self.thisptr.get_genomic_offset()
     def get_exons(self):
         return self.thisptr.get_exons()
     def get_cds(self):
