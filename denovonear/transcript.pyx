@@ -142,7 +142,8 @@ cdef class Transcript:
         altered.set_exons(exons, cds)
         altered.set_cds(cds)
         
-        altered.add_genomic_sequence(self.get_genomic_sequence(), self.get_genomic_offset())
+        if self.get_genomic_sequence() != "":
+            altered.add_genomic_sequence(self.get_genomic_sequence(), self.get_genomic_offset())
         
         return altered
     

@@ -30,7 +30,7 @@ class Tx {
     std::vector<Region> cds;
     std::string cds_sequence = "";
     int gdna_offset;
-    std::string genomic_sequence;
+    std::string genomic_sequence = "";
     
     std::map<char, char> transdict = {
         {'a', 't'}, {'c', 'g'}, {'g', 'c'}, {'t', 'a'}, {'u', 'a'},
