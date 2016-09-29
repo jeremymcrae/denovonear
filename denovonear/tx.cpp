@@ -632,11 +632,10 @@ Codon Tx::get_codon_info(int bp) {
             codon translates to, and position within the codon.
     */
     
-    int boundary_dist = get_boundary_distance(bp);
     bool in_coding = in_coding_region(bp);
     
     // ignore positions outside the exons that are too distant from a boundary
-    if (boundary_dist >= 9 and not in_coding) {
+    if (not in_coding and get_boundary_distance(bp) >= 9) {
         throw std::invalid_argument( "position too distant from an exon" );
     }
     
