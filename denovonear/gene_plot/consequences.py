@@ -116,8 +116,7 @@ class Consequences(object):
             HGVS-like code for a indel variant e.g. R226fs.
         """
         
-        distance = self.transcript.get_boundary_distance(pos)
-        codon = self.transcript.get_codon_info(pos, distance)
+        codon = self.transcript.get_codon_info(pos)
         
         # change the codon number from being 0-based to 1-based
         codon["codon_number"] += 1
@@ -180,8 +179,7 @@ class Consequences(object):
             the 226nd amino acid being substituted with a glutamine.
         """
         
-        distance = self.transcript.get_boundary_distance(pos)
-        codon = self.transcript.get_codon_info(pos, distance)
+        codon = self.transcript.get_codon_info(pos)
         
         # change the codon number from being 0-based to 1-based
         codon["codon_number"] += 1
