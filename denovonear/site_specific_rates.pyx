@@ -28,7 +28,8 @@ cdef class SiteRates:
     def __cinit__(self, Transcript transcript, vector[vector[string]] rates,
             Transcript masked_sites=None):
         
-        # rates = [ [ y.decode('utf8') for y in x ] for x in rates ]
+        if transcript is None:
+            raise ValueError('no transcript supplied')
         
         if masked_sites is None:
             self._checks = new SitesChecks(deref(transcript.thisptr), rates)
