@@ -18,7 +18,7 @@ class GenomicPlot(object):
         
         min_pos = self.transcript.get_start()
         max_pos = self.transcript.get_end()
-        strand = self.transcript.strand
+        strand = self.transcript.get_strand()
         length = (max_pos - min_pos) / self.size
         
         # plot the base strand
@@ -47,7 +47,7 @@ class GenomicPlot(object):
         
         cds_min = min(self.transcript.get_cds_start(), self.transcript.get_cds_end())
         cds_max = max(self.transcript.get_cds_start(), self.transcript.get_cds_end())
-        strand = self.transcript.strand
+        strand = self.transcript.get_strand()
         
         x_pos_1 = (start - min_pos) / length
         width_1 = (end - start) / length

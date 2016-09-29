@@ -45,7 +45,7 @@ class Consequences(object):
         """
         
         # make sure the alleles match the strand of the gene
-        if self.transcript.strand == "-":
+        if self.transcript.get_strand() == "-":
             ref = self.transcript.reverse_complement(ref)
             alt = self.transcript.reverse_complement(alt)
         
@@ -79,7 +79,7 @@ class Consequences(object):
         # if we are on the reverse strand, then reverse the alleles, so as to
         # get them back oriented to the genomic strand. Reverse strand alleles
         # remain as the  complement
-        if self.transcript.strand == "-":
+        if self.transcript.get_strand() == "-":
             ref = ref[::-1]
             alt = alt[::-1]
         
@@ -90,7 +90,7 @@ class Consequences(object):
         except IndexError:
             pass
         
-        if self.transcript.strand == "-" and len(ref) > len(alt):
+        if self.transcript.get_strand() == "-" and len(ref) > len(alt):
             pos += len(ref) - 2
         else:
             pos += matched
@@ -116,8 +116,8 @@ class Consequences(object):
             HGVS-like code for a indel variant e.g. R226fs.
         """
         
-        distance = get_boundary_distance(self.transcript, pos)
-        codon = get_codon_info(self.transcript, pos, distance)
+        distance = self.transcript.get_boundary_distance(pos)
+        codon = self.transcript.get_codon_info(pos, distance)
         
         # change the codon number from being 0-based to 1-based
         codon["codon_number"] += 1
@@ -161,7 +161,7 @@ class Consequences(object):
             cds_pos = self.transcript.chrom_pos_to_cds(end)
         
         cds_pos += 1
-        if self.transcript.strand == "-":
+        if self.transcript.get_strand() == "-":
             distance -= 1
             separator = {"-": "+", "+": "-"}[separator]
         
@@ -180,8 +180,8 @@ class Consequences(object):
             the 226nd amino acid being substituted with a glutamine.
         """
         
-        distance = get_boundary_distance(self.transcript, pos)
-        codon = get_codon_info(self.transcript, pos, distance)
+        distance = self.transcript.get_boundary_distance(pos)
+        codon = self.transcript.get_codon_info(pos, distance)
         
         # change the codon number from being 0-based to 1-based
         codon["codon_number"] += 1
