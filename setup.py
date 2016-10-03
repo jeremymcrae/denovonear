@@ -44,6 +44,7 @@ setup (name="denovonear",
                           'webcolors >= 1.5',
                           'cython >= 0.19.0'
         ],
+        package_data={"denovonear": ['data/rates.txt']},
         classifiers=[
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",

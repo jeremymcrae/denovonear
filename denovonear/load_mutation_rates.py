@@ -1,24 +1,29 @@
 """ load trincleotide mutation rates
 """
 
-def load_mutation_rates(filename):
-    """ load mutation rates provided by Kaitlin Samocha (Broad Institute).
+from pkg_resources import resource_filename
+
+def load_mutation_rates(path=None):
+    """ load trinucleotide-based mutation rates
+    
+    Args:
+        path: path to table of per-trinucleotide mutation rates. If None, this
+            defaults to rates provided by Kaitlin Samocha (Broad Institute).
+    
+    Returns:
+        list of [initial, changed, rate] lists e.g. [['AGA', 'ATA', '5e-8']]
     """
     
-    mut_dict = []
-    with open(filename) as handle:
+    if path is None:
+        path = resource_filename(__name__, "data/rates.txt")
+    
+    rates = []
+    with open(path) as handle:
         for line in handle:
             if line.startswith("from"): # ignore the header line
                 continue
             
-            line = line.strip().split()
-            initial = line[0].encode('utf8')
-            changed = line[1].encode('utf8')
-            rate = line[2].encode('utf8')
-            
-            # if initial not in mut_dict:
-            #     mut_dict[initial] = {}
-            
-            mut_dict.append([initial, changed, rate])
+            line = [ x.encode('utf8') for x in line.strip().split() ]
+            rates.append(line)
     
-    return mut_dict
+    return rates
