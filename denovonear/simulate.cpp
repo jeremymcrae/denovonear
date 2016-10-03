@@ -1,8 +1,7 @@
-#include <iostream>
+// #include <iostream>
 #include <algorithm>
 #include <cmath>
 #include <vector>
-#include <python2.7/Python.h>
 
 #include "weighted_choice.h"
 

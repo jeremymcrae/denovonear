@@ -2,11 +2,8 @@
 #include <vector>
 #include <chrono>
 #include <algorithm>
-#include <python2.7/Python.h>
 
 #include "weighted_choice.h"
-// g++ -std=c++0x -c -fPIC weighted_choice.cpp -o weighted_choice.o
-// g++ -shared -Wl,-soname,libchooser.so -o libchooser.so weighted_choice.o
 
 Chooser::Chooser() {
     /**

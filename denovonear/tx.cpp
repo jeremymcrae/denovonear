@@ -3,7 +3,6 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
-#include <iostream>
 
 #include "tx.h"
 

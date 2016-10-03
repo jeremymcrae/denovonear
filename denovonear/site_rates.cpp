@@ -3,10 +3,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
-#include <iostream>
 
-// #include "tx.h"
-// #include "weighted_choice.h"
 #include "site_rates.h"
 
 Region _get_gene_range(Tx & tx) {
