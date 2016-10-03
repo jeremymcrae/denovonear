@@ -23,23 +23,23 @@ def get_options():
     """ get the command line switches
     """
     
-    parser = argparse.ArgumentParser(description="Examines the proximity \
-        clustering of de novo mutations in genes.")
-    parser.add_argument("--in", dest="input", required=True, help="Path to \
-        file listing known mutations in genes. See example file in data folder \
-        for format.")
+    parser = argparse.ArgumentParser(description="Examines the proximity" \
+        "clustering of de novo mutations in genes.")
+    parser.add_argument("--in", dest="input", required=True, help="Path to" \
+        "file listing known mutations in genes. See example file in data folder" \
+        "for format.")
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
-    parser.add_argument("--rates", dest="rates_path", required=True, \
+    parser.add_argument("--rates",
         help="Path to file containing trinucleotide mutation rates.")
-    parser.add_argument("--deprecated-genes", dest="deprecated_genes_path", \
+    parser.add_argument("--deprecated-genes", dest="deprecated_genes_path",
         help="deprecated gene IDs filename")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
-        "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
+        "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build " \
         "that the de novo coordinates are based on (GrCh37 or GRCh38")
-    parser.add_argument("--cache-folder", dest="cache_dir", \
-        default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
-        to cache Ensembl data into (defaults to clustering code directory)")
+    parser.add_argument("--cache-folder", dest="cache_dir",
+        default=os.path.join(os.path.dirname(__file__), "cache"), help="folder" \
+        "to cache Ensembl data into (defaults to clustering code directory)")
     
     args = parser.parse_args()
     
@@ -163,7 +163,7 @@ def main():
     
     # load all the data
     ensembl = EnsemblRequest(args.cache_dir, args.genome_build)
-    mut_dict = load_mutation_rates(args.rates_path)
+    mut_dict = load_mutation_rates(args.rates)
     
     old_gene_ids = {}
     # only load the old gene ID converter if we have specified the file

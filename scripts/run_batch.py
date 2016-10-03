@@ -19,7 +19,6 @@ def get_options():
     parser.add_argument("--in", dest="input", required=True, help="Path to"
         "file listing known mutations in genes. See example file in data folder"
         "for format.")
-    parser.add_argument("--rates", required=True, help="Path to rates file.")
     parser.add_argument("--temp-dir", required=True, help="path to hold intermediate files")
     parser.add_argument("--out", required=True, help="Path to output file.")
     
@@ -158,7 +157,7 @@ def submit_bsub_job(command, job_id=None, dependent_id=None, memory=None, requeu
     command = " ".join(preamble + command)
     subprocess.call(command, shell=True)
 
-def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
+def batch_process(script, de_novo_path, temp_dir, output_path):
     """ sets up a lsf job array
     """
     
@@ -175,8 +174,7 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
     
     command = ["python", script,
         "--in", infile,
-        "--out", outfile,
-        "--rates", rates_path]
+        "--out", outfile]
     submit_bsub_job(command, job_id, memory=3500, requeue_code=134, logfile="clustering.bjob")
     time.sleep(2)
     
@@ -194,7 +192,7 @@ def batch_process(script, de_novo_path, temp_dir, rates_path, output_path):
 def main():
     args = get_options()
     
-    batch_process(args.script, args.input, args.temp_dir, args.rates, args.out)
+    batch_process(args.script, args.input, args.temp_dir, args.out)
 
 if __name__ == '__main__':
     main()

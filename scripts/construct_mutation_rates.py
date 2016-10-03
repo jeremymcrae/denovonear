@@ -35,7 +35,7 @@ def get_options():
     
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
-    parser.add_argument("--rates", dest="mut_rates", required=True, \
+    parser.add_argument("--rates", dest="mut_rates",
         help="Path to file containing trinucleotide mutation rates.")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \

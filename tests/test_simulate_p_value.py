@@ -43,9 +43,7 @@ class TestGetPValuePy(unittest.TestCase):
     def get_rates(self, tx):
         # load the sequence contect mutation rates, then assess each site in the
         # CDS.
-        path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data',
-            'forSanger_1KG_mutation_rate_table.txt')
-        mut_dict = load_mutation_rates(path)
+        mut_dict = load_mutation_rates()
         
         return SiteRates(tx, mut_dict)
     
