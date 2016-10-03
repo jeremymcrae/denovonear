@@ -32,7 +32,6 @@ script:
  - python setup.py test
  - "python scripts/clustering.py \
      --in data/example_de_novos.txt \
-     --rates data/forSanger_1KG_mutation_rate_table.txt \
      --out output.txt"
  - "python scripts/identify_transcripts.py \
      --de-novos data/example_de_novos.txt \
@@ -40,7 +39,6 @@ script:
      --all-transcripts"
  - "python scripts/construct_mutation_rates.py \
      --transcripts data/example_transcript_ids.txt \
-     --rates data/forSanger_1KG_mutation_rate_table.txt \
      --out output.txt"
  - python -m coverage run --source=./denovonear -m unittest discover
 after_success:
