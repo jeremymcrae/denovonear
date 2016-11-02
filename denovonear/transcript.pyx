@@ -122,13 +122,11 @@ cdef class Transcript:
         # figure out which transcripts hold the leading and lagging sections
         lead, not_lead = self, other
         if self.get_start() > other.get_start():
-            lead = other
-            not_lead = self
+            lead, not_lead = other, self
         
         lag, not_lag = self, other
         if self.get_end() < other.get_end():
-            lag = other
-            not_lag = self
+            lag, not_lag = other, self
         
         lead_offset = lead.get_genomic_offset()
         lead_gdna = lead.get_genomic_sequence()
