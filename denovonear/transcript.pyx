@@ -109,6 +109,45 @@ cdef class Transcript:
         
         return sorted(coords)
     
+    def merge_genomic_seq(self, other):
+        ''' merge the genomic sequence from two transcripts
+        '''
+        
+        # make sure that the surrounding sequence is the same length in both
+        # transcripts.
+        # TODO: this could be worked around, by figuring the minimum offset length,
+        # TODO: then trimming the respective DNA offset sequences to that length.
+        assert self.get_genomic_offset() == other.get_genomic_offset()
+        
+        # figure out which transcripts hold the leading and lagging sections
+        lead, not_lead = self, other
+        if self.get_start() > other.get_start():
+            lead = other
+            not_lead = self
+        
+        lag, not_lag = self, other
+        if self.get_end() < other.get_end():
+            lag = other
+            not_lag = self
+        
+        lead_offset = lead.get_genomic_offset()
+        lead_gdna = lead.get_genomic_sequence()
+        initial = lead_gdna[:not_lead.get_start() - lead.get_start() + lead_offset]
+        
+        if self.get_start() <= other.get_end() and self.get_end() >= other.get_start():
+            intersect_start = not_lead.get_start() - lead.get_start() + lead_offset
+            intersect_end = not_lag.get_end() - lead.get_start() + lead_offset
+            intersect = lead_gdna[intersect_start:intersect_end]
+        else:
+            intersect = 'N' * (lag.get_start() - lead.get_end() - lead_offset * 2)
+        
+        lag_offset = lag.get_genomic_offset()
+        lag_gdna = lag.get_genomic_sequence()
+        
+        final = lag_gdna[not_lag.get_end() - lag.get_start() + lead_offset:]
+        
+        return initial + intersect + final
+    
     def __add__(self, other):
         """ combine the coding sequences of two Transcript objects
         
@@ -133,11 +172,9 @@ cdef class Transcript:
             so don't try to extract sequence from the returned object.
         """
         
-        cds_min = min(other.get_cds_start(), other.get_cds_end())
-        cds_max = max(other.get_cds_start(), other.get_cds_end())
-        
-        altered = Transcript(self.get_name(), self.get_chrom(),
-            self.get_start(), self.get_end(), self.get_strand())
+        altered = Transcript('{}:{}'.format(self.get_name(), other.get_name()),
+            self.get_chrom(), min(self.get_start(), other.get_start()),
+            min(self.get_end(), other.get_end()), self.get_strand())
         
         exons = self.merge_coordinates(self.get_exons(), other.get_exons())
         cds = self.merge_coordinates(self.get_cds(), other.get_cds())
@@ -146,7 +183,7 @@ cdef class Transcript:
         altered.set_cds(cds)
         
         if self.get_genomic_sequence() != "":
-            altered.add_genomic_sequence(self.get_genomic_sequence(), self.get_genomic_offset())
+            altered.add_genomic_sequence(self.merge_genomic_seq(other), self.get_genomic_offset())
         
         return altered
     
