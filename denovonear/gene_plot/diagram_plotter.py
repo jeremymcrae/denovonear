@@ -44,7 +44,7 @@ class DiagramPlotter(GenomicPlot, TranscriptPlot, DomainPlot, Consequences):
         self.de_novos = de_novos
         self.hgnc_symbol = hgnc_symbol
         
-        if transcript.strand == "-":
+        if transcript.get_strand() == "-":
             for key in self.de_novos:
                 self.de_novos[key]["start_pos"] -= 1
         

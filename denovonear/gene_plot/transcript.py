@@ -24,7 +24,8 @@ class TranscriptPlot(object):
         x_pos = 0
         self.add_text(x_pos, self.transcript.get_name(), y_adjust=self.box_height*1.5)
         
-        for start, end in self.transcript.get_cds():
+        for exon in self.transcript.get_cds():
+            start, end = exon['start'], exon['end']
             if self.transcript.get_strand() == "+":
                 x_pos = self.transcript.get_coding_distance(cds_start, start) / length
                 width = (self.transcript.get_coding_distance(start, end) + 1) / length

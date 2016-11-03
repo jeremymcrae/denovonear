@@ -31,8 +31,8 @@ class GenomicPlot(object):
         # give a label for the gene
         self.add_text(x_pos, self.transcript.get_name(), y_adjust=self.box_height*1.5)
         
-        for (start, end) in self.transcript.get_exons():
-            self.plot_single_exon(start, end, length, min_pos)
+        for exon in self.transcript.get_exons():
+            self.plot_single_exon(exon['start'], exon['end'], length, min_pos)
         
         for x in self.de_novos:
             x_pos = (self.de_novos[x]["start_pos"] - min_pos)/length
