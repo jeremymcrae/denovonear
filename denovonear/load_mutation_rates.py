@@ -4,11 +4,12 @@
 from pkg_resources import resource_filename
 
 def load_mutation_rates(path=None):
-    """ load trinucleotide-based mutation rates
+    """ load sequence context-based mutation rates
     
     Args:
-        path: path to table of per-trinucleotide mutation rates. If None, this
-            defaults to rates provided by Kaitlin Samocha (Broad Institute).
+        path: path to table of sequence context-based mutation rates. If None,
+            this defaults to per-trinucleotide rates provided by Kaitlin Samocha
+            (Broad Institute).
     
     Returns:
         list of [initial, changed, rate] lists e.g. [['AGA', 'ATA', '5e-8']]

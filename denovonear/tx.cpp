@@ -556,20 +556,21 @@ std::string Tx::reverse_complement(std::string seq) {
 
 std::string Tx::get_centered_sequence(int pos, int length) {
     /**
-        obtains the trinucleotide sequence around a position
+        obtains the sequence around a position
         
         @pos integer for chromosomal nucleotide position.
         @length integer for length of region to select.
         
-        @returns trinucleotide e.g. 'TCC', centered around the required position,
-            given with respect to the fwd strand.
+        @returns nucleotide sequence e.g. a trinucleotide such as 'TCC',
+            centered around the required position, given with respect to the fwd
+            strand.
     */
     
     if (pos < 0) {
-        throw std::invalid_argument( "trinucleotide position < 0" );
+        throw std::invalid_argument( "sequence position < 0" );
     }
     if (pos <= get_start() - gdna_offset || pos >= get_end() + gdna_offset) {
-        throw std::invalid_argument( "trinucleotide position not in gene range" );
+        throw std::invalid_argument( "sequence position not in gene range" );
     }
     if (length % 2 != 1) {
         throw std::invalid_argument( "length is not an odd number") ;

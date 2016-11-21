@@ -9,9 +9,11 @@ We use mutation rates based on the local sequence context to determine the
 expected likelihood that specific regions of the gene contain mutations.
 Currently, the local sequence context mutation rates are per-trinucleotide
 mutation rates provided by Kaitlin Samocha of the Broad Institute, see [Nature
-Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html).
+Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html),
+but you can use your own rates, or even longer sequence contexts, such as 5-mers
+or 7-mers.
 
-Obtain the code from the bitbucket repository with:
+Obtain the code from the repository with:
 
 `git clone https://github.com/jeremymcrae/denovonear.git`
 

@@ -31,7 +31,7 @@ def get_options():
     parser.add_argument("--out", dest="output", required=True, help="output \
         filename")
     parser.add_argument("--rates",
-        help="Path to file containing trinucleotide mutation rates.")
+        help="Path to file containing sequence context-based mutation rates.")
     parser.add_argument("--deprecated-genes", dest="deprecated_genes_path",
         help="deprecated gene IDs filename")
     parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
