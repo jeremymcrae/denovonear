@@ -97,7 +97,7 @@ class Tx {
     void _fix_transcript_off_by_one_bp();
     
     std::string reverse_complement(std::string seq);
-    std::string get_trinucleotide(int pos);
+    std::string get_centered_sequence(int pos, int length=3);
     std::string get_codon_sequence(int codon_number);
     std::string translate(std::string seq);
     

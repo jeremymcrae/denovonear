@@ -554,11 +554,12 @@ std::string Tx::reverse_complement(std::string seq) {
     return complement;
 }
 
-std::string Tx::get_trinucleotide(int pos) {
+std::string Tx::get_centered_sequence(int pos, int length) {
     /**
         obtains the trinucleotide sequence around a position
         
         @pos integer for chromosomal nucleotide position.
+        @length integer for length of region to select.
         
         @returns trinucleotide e.g. 'TCC', centered around the required position,
             given with respect to the fwd strand.
@@ -570,10 +571,13 @@ std::string Tx::get_trinucleotide(int pos) {
     if (pos <= get_start() - gdna_offset || pos >= get_end() + gdna_offset) {
         throw std::invalid_argument( "trinucleotide position not in gene range" );
     }
+    if (length % 2 != 1) {
+        throw std::invalid_argument( "length is not an odd number") ;
+    }
     
-    int sequence_pos = pos - get_start() + gdna_offset - 1;
+    int sequence_pos = pos - get_start() + gdna_offset - floor(length/2);
     
-    return genomic_sequence.substr(sequence_pos, 3);
+    return genomic_sequence.substr(sequence_pos, length);
 }
 
 std::string Tx::get_codon_sequence(int codon) {

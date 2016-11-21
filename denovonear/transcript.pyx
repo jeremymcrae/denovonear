@@ -292,8 +292,8 @@ cdef class Transcript:
     def reverse_complement(self, text):
         return self.thisptr.reverse_complement(text).decode('utf8')
     
-    def get_trinucleotide(self, pos):
-        return self.thisptr.get_trinucleotide(pos).decode('utf8')
+    def get_centered_sequence(self, pos, length=3):
+        return self.thisptr.get_centered_sequence(pos, length).decode('utf8')
     
     def get_codon_sequence(self, pos):
         return self.thisptr.get_codon_sequence(pos).decode('utf8')

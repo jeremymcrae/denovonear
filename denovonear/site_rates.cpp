@@ -48,6 +48,12 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
         mut_dict[line[0]][line[1]] = std::stod(line[2]);
     }
     
+    // calculate the length of sequences used in the mutation rate dictionary
+    // This means we can flexibly use 3-mers, 5-mers, 7-mers etc if desired.
+    std::string str = mut_dict.begin()->first;
+    kmer_length = str.length();
+    mid_pos = kmer_length/2;
+    
     initialise_choices();
     // check the consequence alternates for each base in the coding sequence
     Region region = _get_gene_range(_tx);
@@ -114,7 +120,7 @@ void SitesChecks::check_position(int bp) {
         return ;
     }
     
-    std::string seq = _tx.get_trinucleotide(bp);
+    std::string seq = _tx.get_centered_sequence(bp, kmer_length);
     boundary_dist = _tx.get_boundary_distance(bp);
     
     char fwd = '+';
@@ -134,12 +140,14 @@ void SitesChecks::check_position(int bp) {
     
     // drop the initial base, since we want to mutate to other bases
     std::vector<std::string> alts(bases);
-    alts.erase(std::find(alts.begin(), alts.end(), seq.substr(1, 1)));
+    alts.erase(std::find(alts.begin(), alts.end(), seq.substr(mid_pos, 1)));
     
     for (auto it=alts.begin(); it != alts.end(); it++) {
         std::string alt = *it;
         std::string mutated_aa = initial_aa;
-        std::string alt_seq = seq[0] + alt + seq[2];
+        std::string alt_seq = seq.substr(0, mid_pos) + alt +
+            seq.substr(mid_pos + 1, kmer_length - mid_pos);
+        
         double rate = mut_dict[seq][alt_seq];
         if ( initial_aa != "" ) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
@@ -149,7 +157,7 @@ void SitesChecks::check_position(int bp) {
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
-        std::string ref = seq.substr(1, 1);
+        std::string ref = seq.substr(mid_pos, 1);
         if (_tx.get_strand() != fwd) {
             ref = transdict[ref];
             alt = transdict[alt];

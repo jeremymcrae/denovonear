@@ -29,21 +29,35 @@ from denovonear.site_specific_rates import get_gene_range, get_mutated_aa, SiteR
 from denovonear.weights import WeightedChoice
 from denovonear.transcript import Transcript
 
-class TestSiteRatesPy(unittest.TestCase):
-    """ unit test the SiteRates class
-    """
+def generate_rates(kmer_length=3):
+    ''' make a list of tuples for all sequence alterations of a given length
+    
+    Returns:
+        a pseudo mutation rate dictionary, filled with initial sequence,
+        modified sequence and mutation rate.
+    '''
     
     bases = set(["A", "T", "G", "C"])
     
     rates = []
-    for initial in itertools.product("".join(bases), repeat=3):
+    for initial in itertools.product("".join(bases), repeat=kmer_length):
         trinuc = "".join(initial).encode('utf8')
         
         rate = '5e-7'.encode('utf8')
         for base in bases - set(initial[1]):
-            changed = "{}{}{}".format(initial[0], base, initial[2]).encode('utf8')
+            changed = list(initial)
+            changed[kmer_length // 2] = base
+            changed = "".join(changed).encode('utf8')
             
             rates.append([trinuc, changed,  rate])
+    
+    return rates
+
+class TestSiteRatesPy(unittest.TestCase):
+    """ unit test the SiteRates class
+    """
+    
+    rates = generate_rates()
     
     def setUp(self):
         """ construct a Transcript object to add sequence to
@@ -69,6 +83,27 @@ class TestSiteRatesPy(unittest.TestCase):
         tx.set_cds(cds)
         
         return tx
+    
+    def test_longer_mutation_rate_sequences(self):
+        """ check that we can construct a SiteRates object if using a mutation
+        rate dictionary with longer kmers (e.g 5-mers, rather than the 3-mers
+        for the trinucleotide base rates.)
+        """
+        
+        five_mers = generate_rates(5)
+        seven_mers = generate_rates(7)
+        
+        transcript = self.construct_gene()
+        
+        cds = "ATGTCCATAACCAAAGCCTGA"
+        genomic = "CCTCCAGATTCACGGGAAGCATGTCCATAAGTAGGGAGATATTTGGTGCTCTCATTTG" \
+            "TGGAGACTCTAGCCAAAGCCTGAGTCATGCGTACCATAGATAG"
+        
+        transcript.add_cds_sequence(cds)
+        transcript.add_genomic_sequence(genomic, offset=10)
+        
+        weights = SiteRates(transcript, five_mers)
+        weights = SiteRates(transcript, seven_mers)
     
     def test_get_boundary_distance(self):
         """ check the function to get distances to the nearest intron/exon boundary

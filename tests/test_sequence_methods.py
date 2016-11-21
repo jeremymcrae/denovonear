@@ -124,8 +124,8 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.add_genomic_sequence(gdna, offset=1)
         self.assertEqual(self.gene.get_cds_sequence(), "AGGCTT")
     
-    def test_get_trinucleotide(self):
-        """ test that get_trinucleotide() works correctly
+    def test_get_centered_sequence(self):
+        """ test that get_centered_sequence() works correctly
         """
         
         start = 0
@@ -139,22 +139,22 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.add_genomic_sequence(gdna, offset=0)
         
         # test CDS positions: start, end, and spanning the exon boundaries
-        self.assertEqual(self.gene.get_trinucleotide(2), "AAG")
-        self.assertEqual(self.gene.get_trinucleotide(3), "AGG")
-        self.assertEqual(self.gene.get_trinucleotide(4), "GGC")
-        self.assertEqual(self.gene.get_trinucleotide(6), "CCT")
-        self.assertEqual(self.gene.get_trinucleotide(7), "CTT")
-        self.assertEqual(self.gene.get_trinucleotide(8), "TTT")
+        self.assertEqual(self.gene.get_centered_sequence(2), "AAG")
+        self.assertEqual(self.gene.get_centered_sequence(3), "AGG")
+        self.assertEqual(self.gene.get_centered_sequence(4), "GGC")
+        self.assertEqual(self.gene.get_centered_sequence(6), "CCT")
+        self.assertEqual(self.gene.get_centered_sequence(7), "CTT")
+        self.assertEqual(self.gene.get_centered_sequence(8), "TTT")
         
         # test that positions outside the CDS raise errors
         with self.assertRaises(ValueError):
-            self.gene.get_trinucleotide(-1)
+            self.gene.get_centered_sequence(-1)
         
         with self.assertRaises(ValueError):
-            self.gene.get_trinucleotide(10)
+            self.gene.get_centered_sequence(10)
     
-    def test_get_trinucleotide_minus_strand(self):
-        """ test that get_trinucleotide() works correctly on the minus strand
+    def test_get_centered_sequence_minus_strand(self):
+        """ test that get_centered_sequence() works correctly on the minus strand
         """
         
         strand = '-'
@@ -170,8 +170,29 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.add_genomic_sequence(gdna, offset=0)
         
         # test CDS positions: start, end, and spanning the exon boundaries
-        self.assertEqual(self.gene.get_trinucleotide(2), "AAA")
-        self.assertEqual(self.gene.get_trinucleotide(3), "AAG")
+        self.assertEqual(self.gene.get_centered_sequence(2), "AAA")
+        self.assertEqual(self.gene.get_centered_sequence(3), "AAG")
+    
+    def test_get_centered_sequence_long_region(self):
+        """ test that get_centered_sequence() works correctly with longer regions
+        """
+        
+        start = 0
+        end = 10
+        exons = [(0, 4), (6, 10)]
+        cds = [(2, 4), (6, 8)]
+        self.gene = self.construct_gene(start=start, end=end, exons=exons, cds=cds)
+        
+        gdna = "AAAGGCCTTT"
+        self.gene.add_cds_sequence("AGGCTT")
+        self.gene.add_genomic_sequence(gdna, offset=0)
+        
+        # test CDS positions: start, end, and spanning the exon boundaries
+        self.assertEqual(self.gene.get_centered_sequence(2, length=5), "AAAGG")
+        
+        # check that we raise an error for regions with even numbered lengths
+        with self.assertRaises(ValueError):
+            self.gene.get_centered_sequence(2, length=4)
     
     def test_get_codon_sequence(self):
         """ test that get_codon_sequence() works correctly

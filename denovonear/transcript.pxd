@@ -59,7 +59,7 @@ cdef extern from "tx.h":
         int get_genomic_offset()
         
         string reverse_complement(string)
-        string get_trinucleotide(int) except +
+        string get_centered_sequence(int, int) except +
         string get_codon_sequence(int) except +
         string translate(string) except +
         
