@@ -37,11 +37,6 @@ class SitesChecks {
         _tx(tx), masked(mask) { has_mask = true; init(mut); };
     Chooser * __getitem__(std::string category) { return &rates[category]; };
     void initialise_choices();
-    // bool splice_lof_check(std::string initial_aa, std::string mutated_aa, int position);
-    // bool nonsense_check(std::string initial_aa, std::string mutated_aa, int position);
-    // bool missense_check(std::string initial_aa, std::string mutated_aa, int position);
-    // bool splice_region_check(std::string initial_aa, std::string mutated_aa, int position);
-    // bool synonymous_check(std::string initial_aa, std::string mutated_aa, int position);
     
     void check_position(int bp);
     std::string check_consequence(std::string initial_aa, std::string mutated_aa, int position);
