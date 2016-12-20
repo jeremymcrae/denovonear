@@ -137,6 +137,7 @@ void SitesChecks::check_position(int bp) {
     
     std::string initial_aa = codon.initial_aa;
     int cds_pos = codon.cds_pos;
+    int offset = codon.offset;
     
     // drop the initial base, since we want to mutate to other bases
     std::vector<std::string> alts(bases);
@@ -163,10 +164,10 @@ void SitesChecks::check_position(int bp) {
             alt = transdict[alt];
         }
         
-        rates[category].add_choice(cds_pos, rate, ref, alt);
+        rates[category].add_choice(cds_pos, rate, ref, alt, offset);
         
         if (category == "nonsense" || category == "splice_lof") {
-            rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt);
+            rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt, offset);
         }
     }
 }

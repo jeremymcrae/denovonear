@@ -24,7 +24,7 @@ from libcpp.string cimport string
 cdef extern from "weighted_choice.h":
     cdef cppclass Chooser:
         Chooser() except +
-        void add_choice(int, double, string, string)
+        void add_choice(int, double, string, string, int)
         AlleleChoice choice()
         double get_summed_rate()
         int len()
@@ -35,6 +35,7 @@ cdef extern from "weighted_choice.h":
         string ref
         string alt
         double prob
+        int offset
 
 cdef class WeightedChoice:
     cdef int pos

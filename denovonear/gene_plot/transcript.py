@@ -38,7 +38,7 @@ class TranscriptPlot(object):
         # and plot the de novo positions
         for x in self.de_novos:
             cds = self.transcript.chrom_pos_to_cds(self.de_novos[x]["start_pos"])
-            x_pos = cds/length
+            x_pos = cds['pos']/length
             width = max(1/length, self.size/1000)
             
             self.de_novos[x]["coordinate"] = (x_pos, width)

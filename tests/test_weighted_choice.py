@@ -124,16 +124,23 @@ class TestWeightedChoicePy(unittest.TestCase):
         choices = WeightedChoice()
         choices.add_choice(1, 1, "A", "T")
         self.assertEqual(choices.choice_with_alleles(),
-            {'alt': 'T', 'ref': 'A', 'pos': 1})
+            {'alt': 'T', 'ref': 'A', 'pos': 1, 'offset': 0})
         self.assertEqual(choices.choice(), 1)
         
         # if you add choices without alleles, then default the alleles to "N"
         choices = WeightedChoice()
         choices.add_choice(1, 1)
         self.assertEqual(choices.choice_with_alleles(),
-            {'alt': 'N', 'ref': 'N', 'pos': 1})
+            {'alt': 'N', 'ref': 'N', 'pos': 1, 'offset': 0})
         
         # make sure you can't add multi-base alleles to the choices
         with self.assertRaises(TypeError):
             choices.add_choice(1, 1, "AA", "A")
             choices.add_choice(1, 1, "A", "AG")
+        
+        # make sure non-zero offsets are returned corectly
+        choices = WeightedChoice()
+        choices.add_choice(1, 1, "A", "T", 3)
+        self.assertEqual(choices.choice_with_alleles(),
+            {'alt': 'T', 'ref': 'A', 'pos': 1, 'offset': 3})
+        self.assertEqual(choices.choice(), 1)

@@ -47,9 +47,9 @@ cdef extern from "tx.h":
         bool in_coding_region(int)
         int get_exon_containing_position(int, vector[Region]) except +
         int get_coding_distance(int, int) except +
-        int chrom_pos_to_cds(int) except +
+        CDS_coords chrom_pos_to_cds(int) except +
         
-        int get_position_on_chrom(int) except +
+        int get_position_on_chrom(int, int) except +
         int get_codon_number_for_cds_position(int)
         int get_position_within_codon(int)
         void add_cds_sequence(string)
@@ -66,6 +66,10 @@ cdef extern from "tx.h":
         Codon get_codon_info(int) except +
         int get_boundary_distance(int) except +
     
+    cdef struct CDS_coords:
+        int position
+        int offset
+    
     cdef struct Region:
         int start
         int end
@@ -76,6 +80,7 @@ cdef extern from "tx.h":
         int intra_codon
         int codon_number
         string initial_aa
+        int offset
 
 cdef class Transcript:
     cdef Tx *thisptr # hold a C++ instance which we're wrapping

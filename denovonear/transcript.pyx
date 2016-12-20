@@ -265,11 +265,13 @@ cdef class Transcript:
     def get_coding_distance(self, pos_1, pos_2):
         return self.thisptr.get_coding_distance(pos_1, pos_2)
         
-    def chrom_pos_to_cds(self, pos_1):
-        return self.thisptr.chrom_pos_to_cds(pos_1)
+    def chrom_pos_to_cds(self, pos):
+        coords = self.thisptr.chrom_pos_to_cds(pos)
+        
+        return {'pos': coords.position, 'offset': coords.offset}
     
-    def get_position_on_chrom(self, pos):
-        return self.thisptr.get_position_on_chrom(pos)
+    def get_position_on_chrom(self, pos, offset=0):
+        return self.thisptr.get_position_on_chrom(pos, offset)
     
     def get_codon_number_for_cds_position(self, pos):
         return self.thisptr.get_codon_number_for_cds_position(pos)

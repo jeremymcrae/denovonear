@@ -145,28 +145,28 @@ class TestSiteRatesPy(unittest.TestCase):
         # check the first base of the CDS
         self.assertEqual(self.transcript.get_codon_info(110),
             {'cds_pos': 0, 'codon_seq': 'ATG', 'intra_codon': 0,
-                "codon_number": 0, 'initial_aa': 'M'})
+                "codon_number": 0, 'initial_aa': 'M', 'offset': 0})
         
         # check the second base of the CDS
         self.assertEqual(self.transcript.get_codon_info(111),
             {'cds_pos': 1, 'codon_seq': 'ATG', 'intra_codon': 1,
-                "codon_number": 0, 'initial_aa': 'M'})
+                "codon_number": 0, 'initial_aa': 'M', 'offset': 0})
         
         # check the third base of the CDS
         self.assertEqual(self.transcript.get_codon_info(112),
             {'cds_pos': 2, 'codon_seq': 'ATG', 'intra_codon': 2,
-                "codon_number": 0, 'initial_aa': 'M'})
+                "codon_number": 0, 'initial_aa': 'M', 'offset': 0})
         
         # check the fourth base of the CDS
         self.assertEqual(self.transcript.get_codon_info(113),
             {'cds_pos': 3, 'codon_seq': 'TCC', 'intra_codon': 0,
-                "codon_number": 1, 'initial_aa': 'S'})
+                "codon_number": 1, 'initial_aa': 'S', 'offset': 0})
         
         # check a site 2 bp into the first intron. We assign this as the
         # position of the closest exon boundary, but without any codon info
         self.assertEqual(self.transcript.get_codon_info(122),
             {'cds_pos': 9, 'codon_seq': None, 'intra_codon': None,
-                "codon_number": None, 'initial_aa': None})
+                "codon_number": None, 'initial_aa': None, 'offset': 3})
     
     def test_site_rates_weights(self):
         """ check the cumulative mutation rates for each consequence type.

@@ -279,16 +279,16 @@ class TestTranscriptPy(unittest.TestCase):
         """
         
         # note that all of these chr positions are 0-based (ie pos - 1)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1100), 0)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1101), 1)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1199), 99)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1100), {'pos': 0, 'offset': 0})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1101), {'pos': 1, 'offset': 0})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1199), {'pos': 99, 'offset': 0})
         
         # check that outside exon boundaries gets the closest exon position, if
         # the variant is close enough
-        self.assertEqual(self.gene.chrom_pos_to_cds(1200), 100)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1201), 100)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1798), 101)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1799), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1200), {'pos': 100, 'offset': 0})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1201), {'pos': 100, 'offset': 1})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1798), {'pos': 101, 'offset': -2})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1799), {'pos': 101, 'offset': -1})
         
         # check that sites sufficiently distant from an exon raise an error, or
         # sites upstream of a gene, just outside the CDS, but within an exon
@@ -298,13 +298,13 @@ class TestTranscriptPy(unittest.TestCase):
             self.gene.chrom_pos_to_cds(1098)
         
         # check that sites in a different exon are counted correctly
-        self.assertEqual(self.gene.chrom_pos_to_cds(1799), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1799), {'pos': 101, 'offset': -1})
         
         # check that sites on the reverse strand still give the correct CDS
         self.gene = self.construct_gene(strand="-")
-        self.assertEqual(self.gene.chrom_pos_to_cds(1900), 0)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1890), 10)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1799), 100)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1792), 100)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1900), {'pos': 0, 'offset': 0})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1890), {'pos': 10, 'offset': 0})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1799), {'pos': 100, 'offset': -1})
+        self.assertEqual(self.gene.chrom_pos_to_cds(1792), {'pos': 100, 'offset': -8})
         
-        self.assertEqual(self.gene.chrom_pos_to_cds(1200), 101)
+        self.assertEqual(self.gene.chrom_pos_to_cds(1200), {'pos': 101, 'offset': 0})

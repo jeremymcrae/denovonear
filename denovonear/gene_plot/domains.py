@@ -35,7 +35,7 @@ class DomainPlot(object):
         # get the initial coordinates to place the de novos at
         for x in self.de_novos:
             self.de_novos[x]["coordinate"] = ()
-            cds = self.transcript.chrom_pos_to_cds(self.de_novos[x]["start_pos"])
+            cds = self.transcript.chrom_pos_to_cds(self.de_novos[x]["start_pos"])['pos']
             codon = self.transcript.get_codon_number_for_cds_position(cds)
             offset = self.transcript.get_position_within_codon(cds)/3
             

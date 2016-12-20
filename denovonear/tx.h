@@ -5,6 +5,11 @@
 #include <vector>
 #include <map>
 
+struct CDS_coords {
+    int position;
+    int offset;
+};
+
 struct Region {
     int start;
     int end;
@@ -16,6 +21,7 @@ struct Codon {
     int intra_codon;
     int codon_number;
     std::string initial_aa;
+    int offset;
 };
 
 class Tx {
@@ -83,9 +89,9 @@ class Tx {
     bool in_coding_region(int position);
     int get_exon_containing_position(int position, std::vector<Region> & ranges);
     int get_coding_distance(int pos_1, int pos_2);
-    int chrom_pos_to_cds(int pos_1);
+    CDS_coords chrom_pos_to_cds(int pos_1);
     
-    int get_position_on_chrom(int cds_position);
+    int get_position_on_chrom(int cds_position, int offset=0);
     int get_codon_number_for_cds_position(int cds_position);
     int get_position_within_codon(int cds_position);
     void add_cds_sequence(std::string cds_dna);

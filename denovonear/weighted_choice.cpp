@@ -15,7 +15,7 @@ Chooser::Chooser() {
     generator.seed(random_seed);
 }
 
-void Chooser::add_choice(int site, double prob, std::string ref, std::string alt) {
+void Chooser::add_choice(int site, double prob, std::string ref, std::string alt, int offset) {
      /**
         adds another choice to the class object
         
@@ -23,13 +23,16 @@ void Chooser::add_choice(int site, double prob, std::string ref, std::string alt
         @prob site mutation rate (e.g. 0.000000005)
         @ref reference allele for site e.g. 'A'
         @alt alternate allele for site e.g. 'T'
+        @offset number of bases the position is offset from the true chromosomal
+            site. This is relevant for non-CDS sites, such as within splice
+            regions.
     */
     
     // keep track of the cumulative sum for each added site
     double cumulative_sum = get_summed_rate() + prob;
     cumulative.push_back(cumulative_sum);
     
-    sites.push_back(AlleleChoice {site, ref, alt, prob});
+    sites.push_back(AlleleChoice {site, ref, alt, prob, offset});
     
     // any time we add another choice, reset the sampler, so we can sample
     // from all the possible entries.
@@ -45,7 +48,7 @@ AlleleChoice Chooser::choice() {
     */
     
     if (cumulative.empty()) {
-        return AlleleChoice {-1, "N", "N"};
+        return AlleleChoice {-1, "N", "N", 0};
     }
     
     // get a random float between 0 and the cumulative sum

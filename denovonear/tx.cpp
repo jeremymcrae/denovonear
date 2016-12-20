@@ -321,7 +321,7 @@ int Tx::get_coding_distance(int pos_1, int pos_2) {
     return delta;
 }
 
-int Tx::chrom_pos_to_cds(int pos) {
+CDS_coords Tx::chrom_pos_to_cds(int pos) {
     /**
         returns a chromosome position as distance from CDS ATG start
     */
@@ -330,7 +330,7 @@ int Tx::chrom_pos_to_cds(int pos) {
     int cds_start = get_cds_start();
     
     try {
-        return get_coding_distance(cds_start, pos);
+        return CDS_coords { get_coding_distance(cds_start, pos), 0 } ;
     } catch ( const std::invalid_argument& e ) {
         // catch the splice site functional mutations
         Region exon = find_closest_exon(pos);
@@ -342,7 +342,7 @@ int Tx::chrom_pos_to_cds(int pos) {
             site = exon.end;
         }
         
-        int distance = abs(site - pos);
+        int offset = pos - site;
         
         // catch variants near an exon, but where the exon isn't in the CDS
         if (!in_coding_region(site)) {
@@ -352,13 +352,13 @@ int Tx::chrom_pos_to_cds(int pos) {
         }
         
         // ignore positions outside the exons that are too distant from a boundary
-        if (distance >= 9) {
-            std::string msg = "distance to exon (" + std::to_string(distance) +
+        if (abs(offset) >= 9) {
+            std::string msg = "distance to exon (" + std::to_string(abs(offset)) +
                 ") > 8 bp for " + std::to_string(pos) + " in transcript "+ get_name();
             throw std::logic_error(msg);
         }
         
-        return get_coding_distance(cds_start, site);
+        return CDS_coords { get_coding_distance(cds_start, site), offset };
     }
 }
 
@@ -387,7 +387,7 @@ void Tx::_cache_exon_cds_positions() {
     }
 }
 
-int Tx::get_position_on_chrom(int cds_position) {
+int Tx::get_position_on_chrom(int cds_position, int offset) {
     /**
         figure out the chromosome position of a CDS site
     
@@ -417,9 +417,9 @@ int Tx::get_position_on_chrom(int cds_position) {
             // convert the CDS position to a chromosomal coordinate
             char fwd = '+';
             if (get_strand() == fwd) {
-                return start + (cds_position - start_cds);
+                return start + (cds_position - start_cds) + offset;
             } else {
-                return start + (end_cds - cds_position);
+                return start + (end_cds - cds_position) + offset;
             }
         }
     }
@@ -650,15 +650,16 @@ Codon Tx::get_codon_info(int bp) {
     std::string codon_seq = "";
     std::string initial_aa = "";
     
-    int cds_pos = chrom_pos_to_cds(bp);
+    CDS_coords cds_pos = chrom_pos_to_cds(bp);
     if (in_coding) {
-        codon_number = get_codon_number_for_cds_position(cds_pos);
-        intra_codon = get_position_within_codon(cds_pos);
+        codon_number = get_codon_number_for_cds_position(cds_pos.position);
+        intra_codon = get_position_within_codon(cds_pos.position);
         codon_seq = get_codon_sequence(codon_number);
         initial_aa = translate(codon_seq);
     }
     
-    return Codon {cds_pos, codon_seq, intra_codon, codon_number, initial_aa};
+    return Codon {cds_pos.position, codon_seq, intra_codon, codon_number,
+        initial_aa, cds_pos.offset};
 }
 
 int Tx::get_boundary_distance(int bp) {

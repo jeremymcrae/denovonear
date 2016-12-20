@@ -10,6 +10,9 @@ struct AlleleChoice {
     std::string ref;
     std::string alt;
     double prob;
+    
+    // allow for splice altering sites outside the CDS
+    int offset;
 };
 
 class Chooser {
@@ -20,7 +23,7 @@ class Chooser {
 
  public:
     Chooser();
-    void add_choice(int site, double prob, std::string ref="N", std::string alt="N");
+    void add_choice(int site, double prob, std::string ref="N", std::string alt="N", int offset=0);
     AlleleChoice choice();
     double get_summed_rate();
     int len() { return sites.size() ;};
