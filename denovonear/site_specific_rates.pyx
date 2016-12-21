@@ -63,7 +63,7 @@ cdef class SiteRates:
             ref = site.ref.decode('utf8')
             alt = site.alt.decode('utf8')
             
-            choices.add_choice(site.pos, site.prob, ref, alt)
+            choices.add_choice(site.pos, site.prob, ref, alt, site.offset)
         
         return choices
     

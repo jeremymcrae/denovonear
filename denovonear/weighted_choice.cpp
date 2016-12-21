@@ -48,7 +48,7 @@ AlleleChoice Chooser::choice() {
     */
     
     if (cumulative.empty()) {
-        return AlleleChoice {-1, "N", "N", 0};
+        return AlleleChoice {-1, "N", "N", 0.0, 0};
     }
     
     // get a random float between 0 and the cumulative sum
