@@ -68,7 +68,7 @@ double _geomean(std::vector<int> distances) {
     return mean;
 }
 
-std::vector<double> _simulate_distribution(Chooser choices, int iterations,
+std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
     int de_novo_count) {
     /**
         simulates de novos weighted by mutation rate
@@ -129,7 +129,7 @@ bool _halt_permutation(double p_val, int iterations, double z, double alpha) {
     return lower_bound > alpha;
 }
 
-double _analyse_de_novos(Chooser choices, int iterations, int de_novo_count,
+double _analyse_de_novos(Chooser & choices, int iterations, int de_novo_count,
     double observed_value) {
     /**
         simulates de novos weighted by mutation rate

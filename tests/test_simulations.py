@@ -22,7 +22,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import math
 import unittest
 
-from denovonear.weights import get_distances, geomean, WeightedChoice, analyse_de_novos
+from denovonear.weights import get_distances, geomean, WeightedChoice, \
+    analyse_de_novos, simulate_distribution
 
 class TestSimulationsPy(unittest.TestCase):
     """ unit test the simulation functions
@@ -65,5 +66,14 @@ class TestSimulationsPy(unittest.TestCase):
         p_val = analyse_de_novos(self.choices, 1000000, len(positions), observed)
         
         self.assertAlmostEqual(p_val, 0.002, places=3)
+    
+    def test_simulate_distribution(self):
+        ''' check that simulate_distribution works correctly
+        '''
         
+        # repeated function calls should give different samples
+        first = simulate_distribution(self.choices, iterations=5, de_novos_count=3)
+        second = simulate_distribution(self.choices, iterations=5, de_novos_count=3)
+        
+        self.assertNotEqual(first, second)
         
