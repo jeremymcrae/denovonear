@@ -28,7 +28,6 @@ Analyse your de novos with:
 ```sh
 python scripts/clustering.py \
    --in data/example_de_novos.txt \
-   --rates data/forSanger_1KG_mutation_rate_table.txt \
    --out output.txt
 ```
 
@@ -39,9 +38,16 @@ the variant, and whether the de novo is a SNP or indel (the analysis excludes
 indels).
 
 Other options are:
+ * `--rates PATH_TO_RATES`
  * `--deprecated-genes data/deprecated_ddg2p_hgnc_ids.txt`
  * `--cache-folder PATH_TO_CACHE_DIR`
  * `--genome-build "grch37" or "grch38" (default=grch37)`
+
+The optional rates file is a tabe separated file with three columns: 'from',
+'to', and 'mu_snp'. The 'from' column contains DNA sequence (where the length
+is an odd number) with the base to change at the central nucleotide. The 'to'
+column contains the sequence with the central base modified. The 'mu_snp' column
+contains the probability of the change (as per site per generation). 
 
 The deprecated gene ID file is a manually generated file for the genes where
 the code failed to retrieve coordinates from Ensembl, so it's built from the
@@ -78,7 +84,6 @@ generated with:
 ```sh
 python scripts/construct_mutation_rates.py \
     --transcripts data/example_transcript_ids.txt \
-    --rates data/forSanger_1KG_mutation_rate_table.txt \
     --out output.txt
 ```
 Other options are:
