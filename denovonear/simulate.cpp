@@ -36,13 +36,7 @@ bool _has_zero(std::vector<int> distances) {
         
         @return true/false for containing zero
     */
-    
-    bool zero_val = false;
-    if (std::find(distances.begin(), distances.end(), 0) != distances.end()) {
-        zero_val = true;
-    }
-    
-    return zero_val;
+    return std::find(distances.begin(), distances.end(), 0) != distances.end();
 }
 
 double _geomean(std::vector<int> distances) {
@@ -132,9 +126,7 @@ bool _halt_permutation(double p_val, int iterations, double z, double alpha) {
     
     // if the lower bound of the confidence interval exceeds 0.1, then we
     // can be sure it's not going to ever get lower than 0.05.
-    bool exceeds = lower_bound > alpha;
-    
-    return exceeds;
+    return lower_bound > alpha;
 }
 
 double _analyse_de_novos(Chooser choices, int iterations, int de_novo_count,
