@@ -67,6 +67,7 @@ def main():
     output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")
     
     for gene_id in sorted(known_de_novos):
+        print(gene_id)
         de_novos = known_de_novos[gene_id]
         func_events = de_novos["missense"] + de_novos["nonsense"]
         
