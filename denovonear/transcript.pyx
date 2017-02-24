@@ -142,7 +142,12 @@ cdef class Transcript:
         lag_offset = lag.get_genomic_offset()
         lag_gdna = lag.get_genomic_sequence()
         
-        final = lag_gdna[not_lag.get_end() - lag.get_start() + lead_offset:]
+        # some transcripts overlap, but some do not. We need to find the position
+        # where the lagging transcript takes over, which is either at the end of
+        # not lagging transcript, or the start of the lagging transcript,
+        # whichever is higher
+        pos = max(not_lag.get_end(), lag.get_start())
+        final = lag_gdna[pos - lag.get_start() + lead_offset:]
         
         return initial + intersect + final
     
@@ -172,7 +177,7 @@ cdef class Transcript:
         
         altered = Transcript('{}:{}'.format(self.get_name(), other.get_name()),
             self.get_chrom(), min(self.get_start(), other.get_start()),
-            min(self.get_end(), other.get_end()), self.get_strand())
+            max(self.get_end(), other.get_end()), self.get_strand())
         
         exons = self.merge_coordinates(self.get_exons(), other.get_exons())
         cds = self.merge_coordinates(self.get_cds(), other.get_cds())
