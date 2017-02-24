@@ -161,7 +161,7 @@ class TestTranscriptPy(unittest.TestCase):
         self.assertEqual((a + d).get_cds(), [{'start': 30, 'end': 40}, {'start': 55, 'end': 60}, {'start': 90, 'end': 100}])
     
     def test___add__not_overlapping(self):
-        ''' test that __add__() works correctly are not transcripts overlapping
+        ''' test that __add__() works correctly when transcripts do not overlap
         '''
         
         a = Transcript("a", "1", 10, 50, "+")
