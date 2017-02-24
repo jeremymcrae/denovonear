@@ -172,7 +172,7 @@ class TestTranscriptPy(unittest.TestCase):
         a.add_genomic_sequence('N' * 40)
         
         b.set_exons([(60, 80)], [(60, 80)])
-        b.set_cds([(60, 1080)])
+        b.set_cds([(60, 80)])
         b.add_genomic_sequence('N' * 20)
         
         self.assertEqual(len((a + b).get_genomic_sequence()), 70)
