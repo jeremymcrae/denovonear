@@ -111,6 +111,28 @@ cdef class Transcript:
     
     def merge_genomic_seq(self, other):
         ''' merge the genomic sequence from two transcripts
+        
+        We have two transcripts A, and B. We need to get the contiguous sequence
+        from the start of the first transcript on the chromosome to the end of
+        the second transcript. The transcripts may or may not overlap. There are
+        three scenarios we need to account for:
+        
+        
+        overlap without   A   =================
+        enveloping                           ================= B
+        
+        
+            overlap       A   ==============================
+        and envelop               ==================  B
+        
+        
+        no overlap        A  ===============
+                                               ===============  B
+        
+        I've called the transcript whose sequence is first along the chromosome
+        as 'lead', and the transcript whose sequence is last as 'lag', and the
+        converse as 'not_lead', and 'not_lag'. Note that in the envelope case,
+        the lead transcript can also be the lag transcript.
         '''
         
         # make sure that the surrounding sequence is the same length in both
