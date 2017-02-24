@@ -160,6 +160,23 @@ class TestTranscriptPy(unittest.TestCase):
         # check that adding previously unknown exons works
         self.assertEqual((a + d).get_cds(), [{'start': 30, 'end': 40}, {'start': 55, 'end': 60}, {'start': 90, 'end': 100}])
     
+    def test___add__not_overlapping(self):
+        ''' test that __add__() works correctly are not transcripts overlapping
+        '''
+        
+        a = Transcript("a", "1", 10, 50, "+")
+        b = Transcript("b", "1", 60, 80, "+")
+        
+        a.set_exons([(10, 50)], [(10, 50)])
+        a.set_cds([(10, 50)])
+        a.add_genomic_sequence('N' * 40)
+        
+        b.set_exons([(60, 80)], [(60, 80)])
+        b.set_cds([(60, 1080)])
+        b.add_genomic_sequence('N' * 20)
+        
+        self.assertEqual(len((a + b).get_genomic_sequence()), 70)
+    
     def test_in_exons(self):
         """ test that in_exons() works correctly
         """
