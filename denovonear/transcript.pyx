@@ -54,6 +54,9 @@ cdef class Transcript:
             exon_ranges: a CDS position of the selected base.
         '''
         
+        if len(cds_ranges) == 0:
+            raise ValueError('CDS coordinates were not supplied.')
+        
         self.thisptr.set_exons(exon_ranges, cds_ranges)
     
     
