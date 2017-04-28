@@ -100,7 +100,8 @@ class InterProParser(object):
             # doesn't include them (and because they have slightly different naming
             # conventions, whichmakes more difficult to match predictions between
             # different tools)
-            if len(set(entry["tool"]) & set(["PANTHER", "Gene3D", "SUPERFAMILY"])) > 0:
+            if len(set(entry["tool"]) & set(["PANTHER", "Gene3D", "SUPERFAMILY",
+                    "SignalP_GRAM_POSITIVE", "SignalP_GRAM_NEGATIVE"])) > 0:
                 continue
             
             match = self.find_domain_match(entry, domains)
