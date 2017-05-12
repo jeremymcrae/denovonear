@@ -42,9 +42,7 @@ std::string _get_mutated_aa(Tx & tx, std::string base, std::string codon, int in
 void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
     
     // convert the rates data to a nested map
-    int len = mut.size();
-    for (int i=0; i < len; i++) {
-        std::vector<std::string> line = mut[i];
+    for (auto line : mut) {
         mut_dict[line[0]][line[1]] = std::stod(line[2]);
     }
     
@@ -64,8 +62,8 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
 
 void SitesChecks::initialise_choices() {
     // initialise a WeightedChoice object for each consequence category
-    for (auto it=categories.begin(); it != categories.end(); it++) {
-        rates[*it] = Chooser();
+    for (auto category : categories) {
+        rates[category] = Chooser();
     }
 }
 
@@ -143,8 +141,7 @@ void SitesChecks::check_position(int bp) {
     std::vector<std::string> alts(bases);
     alts.erase(std::find(alts.begin(), alts.end(), seq.substr(mid_pos, 1)));
     
-    for (auto it=alts.begin(); it != alts.end(); it++) {
-        std::string alt = *it;
+    for (auto alt : alts) {
         std::string mutated_aa = initial_aa;
         std::string alt_seq = seq.substr(0, mid_pos) + alt +
             seq.substr(mid_pos + 1, kmer_length - mid_pos);

@@ -33,14 +33,10 @@ void Tx::set_exons(std::vector<std::vector<int>> exon_ranges,
     */
     
     exons.clear();
-    
-    int len = exon_ranges.size();
     std::sort(exon_ranges.begin(), exon_ranges.end());
     
-    for (int i=0; i < len; i++) {
-        std::vector<int> range = exon_ranges[i];
+    for (auto range : exon_ranges) {
         Region region {range[0], range[1]};
-        
         exons.push_back(region);
     }
     
@@ -74,13 +70,10 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
         throw std::invalid_argument( "you need to set the exons before the CDS" );
     }
     
-    int len = cds_ranges.size();
     std::sort(cds_ranges.begin(), cds_ranges.end());
     
-    for (int i=0; i < len; i++) {
-        std::vector<int> range = cds_ranges[i];
+    for (auto range : cds_ranges) {
         Region region {range[0], range[1]};
-        
         cds.push_back(region);
     }
     
@@ -178,10 +171,7 @@ bool Tx::in_exons(int position) {
        @position integer chromosome position e.g. 10000000
     */
     
-    int len = exons.size();
-    
-    for (int i=0; i < len; i++) {
-        Region region = exons[i];
+    for (auto region : exons) {
         if (region.start <= position && position <= region.end) {
             return true;
         }
@@ -207,14 +197,11 @@ Region Tx::find_closest_exon(int position, std::vector<Region> & ranges) {
        @position integer chromosome position e.g. 10000000
     */
     
-    int len = ranges.size();
-    
     long max_distance = 1000000000;
     int ref_start = 0;
     int ref_end = 0;
     
-    for (int i=0; i < len; i++) {
-        Region region = ranges[i];
+    for (auto region : ranges) {
         int start_dist = abs(region.start - position);
         int end_dist = abs(region.end - position);
         
@@ -241,10 +228,7 @@ bool Tx::in_coding_region(int position) {
        @position integer chromosome position e.g. 10000000
     */
     
-    int len = cds.size();
-    
-    for (int i=0; i < len; i++) {
-        Region region = cds[i];
+    for (auto region : cds) {
         if (region.start <= position && position <= region.end) {
             return true;
         }
@@ -263,11 +247,9 @@ int Tx::get_exon_containing_position(int position, std::vector<Region> & ranges)
         @returns number of exon containing the position
     */
     
-    int len = ranges.size();
     int exon_num = 0;
     
-    for (int i=0; i < len; i++) {
-        Region region = ranges[i];
+    for (auto region : ranges) {
         if (region.start <= position && position <= region.end) {
             return exon_num;
         }
@@ -372,10 +354,8 @@ void Tx::_cache_exon_cds_positions() {
     */
     
     exon_to_cds.clear();
-    int len = cds.size();
     
-    for (int i=0; i < len; i++) {
-        Region region = cds[i];
+    for (auto region : cds) {
         // get the positions of the exon boundaries in CDS distance from
         // the start site
         int start_cds = get_coding_distance(get_cds_start(), region.start);
@@ -398,15 +378,13 @@ int Tx::get_position_on_chrom(int cds_position, int offset) {
     // cache the exon boundaries in CDS distances
     if (exon_to_cds.empty()) { _cache_exon_cds_positions(); }
     
-    int len = cds.size();
     int start;
     int end;
     int start_cds;
     int end_cds;
     
     // quickly find the exon containing the CDS position
-    for (int i=0; i < len; i++) {
-        Region region = cds[i];
+    for (auto region : cds) {
         start = region.start;
         end = region.end;
         
@@ -468,11 +446,9 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     
     gdna_offset = offset;
     genomic_sequence = gdna;
-    int len = cds.size();
     
     std::string cds_seq;
-    for (int i=0; i < len; i++) {
-        Region region = cds[i];
+    for (auto region : cds) {
         int x = abs(region.start - get_start()) + offset;
         int len = (region.end - region.start) + 1;
         std::string bases = genomic_sequence.substr(x, len);
@@ -546,9 +522,8 @@ std::string Tx::reverse_complement(std::string seq) {
     std::reverse(seq.begin(), seq.end());
     std::string complement;
     
-    int len = seq.size();
-    for ( int i=0; i < len; i++ ) {
-        complement += transdict[seq[i]];
+    for (auto base : seq) {
+        complement += transdict[base];
     }
     
     return complement;

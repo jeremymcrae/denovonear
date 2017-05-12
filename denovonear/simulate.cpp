@@ -46,20 +46,19 @@ double _geomean(std::vector<int> distances) {
         @sites vector of distances
         @return geometric mean
     */
-    int sz = distances.size();
     bool zero_val = _has_zero(distances);
     
     double total = 0;
     // if some values are zero, adjust the values upwards, then add the log10
     // value, otherwise add the uncorrected log10 value
     if (zero_val) {
-        for (int i=0; i < sz; i++) { total += log10(distances[i] + 1); }
+        for (auto x: distances) { total += log10(x + 1); }
     } else {
-        for (int i=0; i < sz; i++) { total += log10(distances[i]); }
+        for (auto x: distances) { total += log10(x); }
     }
     
     // calculate the mean value
-    double mean = total/sz;
+    double mean = total/distances.size();
     mean = std::pow(10, mean);
     
     // adjust mean back to where it should be if we had a zero value
