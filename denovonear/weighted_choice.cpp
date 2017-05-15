@@ -66,9 +66,5 @@ double Chooser::get_summed_rate() {
         gets the cumulative sum for all the current choices.
     */
     
-    if (sites.empty()) {
-        return 0.0;
-    } else {
-        return cumulative.back();
-    }
+    return (sites.empty()) ? 0.0 : cumulative.back() ;
 }
