@@ -11,8 +11,8 @@ Chooser::Chooser() {
     */
     
     // start the random sampler
-    long long random_seed = std::chrono::system_clock::now().time_since_epoch().count();
-    generator.seed(random_seed);
+    std::random_device rd;
+    generator.seed(rd());
 }
 
 void Chooser::add_choice(int site, double prob, std::string ref, std::string alt, int offset) {
@@ -55,8 +55,7 @@ AlleleChoice Chooser::choice() {
     double number = dist(generator);
     
     // figure out where in the list a random probability would fall
-    std::vector<double>::iterator pos;
-    pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
+    auto pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
     int offset = pos - cumulative.begin();
     
     return sites[offset];
