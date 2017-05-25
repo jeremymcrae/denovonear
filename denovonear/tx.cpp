@@ -171,7 +171,7 @@ bool Tx::in_exons(int position) {
        @position integer chromosome position e.g. 10000000
     */
     
-    for (auto region : exons) {
+    for (auto &region : exons) {
         if (region.start <= position && position <= region.end) {
             return true;
         }
@@ -201,7 +201,7 @@ Region Tx::find_closest_exon(int position, std::vector<Region> & ranges) {
     int ref_start = 0;
     int ref_end = 0;
     
-    for (auto region : ranges) {
+    for (auto &region : ranges) {
         int start_dist = abs(region.start - position);
         int end_dist = abs(region.end - position);
         
@@ -228,7 +228,7 @@ bool Tx::in_coding_region(int position) {
        @position integer chromosome position e.g. 10000000
     */
     
-    for (auto region : cds) {
+    for (auto &region : cds) {
         if (region.start <= position && position <= region.end) {
             return true;
         }
@@ -249,7 +249,7 @@ int Tx::get_exon_containing_position(int position, std::vector<Region> & ranges)
     
     int exon_num = 0;
     
-    for (auto region : ranges) {
+    for (auto &region : ranges) {
         if (region.start <= position && position <= region.end) {
             return exon_num;
         }
@@ -355,7 +355,7 @@ void Tx::_cache_exon_cds_positions() {
     
     exon_to_cds.clear();
     
-    for (auto region : cds) {
+    for (auto &region : cds) {
         // get the positions of the exon boundaries in CDS distance from
         // the start site
         int start_cds = get_coding_distance(get_cds_start(), region.start);
@@ -384,7 +384,7 @@ int Tx::get_position_on_chrom(int cds_position, int offset) {
     int end_cds;
     
     // quickly find the exon containing the CDS position
-    for (auto region : cds) {
+    for (auto &region : cds) {
         start = region.start;
         end = region.end;
         
@@ -448,7 +448,7 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     genomic_sequence = gdna;
     
     std::string cds_seq;
-    for (auto region : cds) {
+    for (auto &region : cds) {
         int x = abs(region.start - get_start()) + offset;
         int len = (region.end - region.start) + 1;
         std::string bases = genomic_sequence.substr(x, len);
@@ -522,7 +522,7 @@ std::string Tx::reverse_complement(std::string seq) {
     std::reverse(seq.begin(), seq.end());
     std::string complement;
     
-    for (auto base : seq) {
+    for (auto &base : seq) {
         complement += transdict[base];
     }
     

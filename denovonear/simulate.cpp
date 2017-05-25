@@ -52,9 +52,9 @@ double _geomean(std::vector<int> distances) {
     // if some values are zero, adjust the values upwards, then add the log10
     // value, otherwise add the uncorrected log10 value
     if (zero_val) {
-        for (auto x: distances) { total += log10(x + 1); }
+        for (auto &x: distances) { total += log10(x + 1); }
     } else {
-        for (auto x: distances) { total += log10(x); }
+        for (auto &x: distances) { total += log10(x); }
     }
     
     // calculate the mean value

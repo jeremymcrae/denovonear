@@ -141,7 +141,7 @@ void SitesChecks::check_position(int bp) {
     std::vector<std::string> alts(bases);
     alts.erase(std::find(alts.begin(), alts.end(), seq.substr(mid_pos, 1)));
     
-    for (auto alt : alts) {
+    for (auto &alt : alts) {
         std::string mutated_aa = initial_aa;
         std::string alt_seq = seq.substr(0, mid_pos) + alt +
             seq.substr(mid_pos + 1, kmer_length - mid_pos);
