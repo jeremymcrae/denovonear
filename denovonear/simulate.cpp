@@ -52,9 +52,9 @@ double _geomean(std::vector<int> distances) {
     // if some values are zero, adjust the values upwards, then add the log10
     // value, otherwise add the uncorrected log10 value
     if (zero_val) {
-        for (auto &x: distances) { total += log10(x + 1); }
+        for (auto x: distances) { total += log10(x + 1); }
     } else {
-        for (auto &x: distances) { total += log10(x); }
+        for (auto x: distances) { total += log10(x); }
     }
     
     // calculate the mean value
@@ -172,7 +172,7 @@ double _analyse_de_novos(Chooser & choices, int iterations, int de_novo_count,
         double alpha = 0.1;
         if (_halt_permutation(sim_prob, iterations, z, alpha)) { break; }
         
-        iterations += 100000;  // for if we need to run more iterations
+        iterations += 1000000;  // for if we need to run more iterations
     }
     
     return sim_prob;
