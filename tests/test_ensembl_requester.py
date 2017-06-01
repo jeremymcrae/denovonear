@@ -27,15 +27,27 @@ class TestEnsemblRequestPy(unittest.TestCase):
         url = "http://rest.ensembl.org/overlap/id/ENSG00000172320?feature=gene"
         (response, status_code, headers) = self.ensembl.open_url(url, headers)
         
+        response = json.loads(response)
+        
         self.assertEqual(status_code, 200)
-        self.assertEqual(response, '[{"source":"ensembl_havana","logic_name":'
-            '"ensembl_havana_gene","feature_type":"gene","external_name":"OR5A1"'
-            ',"havana_version":"1","seq_region_name":"11","havana_gene":'
-            '"OTTHUMG00000167339","strand":1,"id":"ENSG00000172320","gene_id":'
-            '"ENSG00000172320","version":2,"assembly_name":"GRCh38","description"'
-            ':"olfactory receptor family 5 subfamily A member 1 [Source:HGNC'
-            ' Symbol;Acc:HGNC:8319]","end":59444194,"biotype":"protein_coding",'
-            '"start":59443144}]')
+        self.assertEqual(response, [{
+            "source": "ensembl_havana",
+            "logic_name": "ensembl_havana_gene",
+            "feature_type": "gene",
+            "external_name": "OR5A1",
+            "havana_version": "1",
+            "seq_region_name": "11",
+            "havana_gene": "OTTHUMG00000167339",
+            "strand": 1,
+            "id": "ENSG00000172320",
+            "gene_id": "ENSG00000172320",
+            "version": 2,
+            "assembly_name": "GRCh38",
+            "description": "olfactory receptor family 5 subfamily A member 1 [Source:HGNC Symbol;Acc:HGNC:8319]",
+            "end": 59444194,
+            "biotype": "protein_coding",
+            "start": 59443144}]
+            )
     
     def test_get_genes_for_hgnc_id(self):
         """ test that get_genes_for_hgnc_id() works correctly
