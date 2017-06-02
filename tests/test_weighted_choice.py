@@ -52,6 +52,27 @@ class TestWeightedChoicePy(unittest.TestCase):
         choices.add_choice(3, 1.000000000000005e-10)
         self.assertAlmostEqual(choices.get_summed_rate(), 1.51000000000000005e-8, places=23)
     
+    def test_append(self):
+        """ test that append() works correctly
+        """
+        
+        # construct two objects
+        a = WeightedChoice()
+        a.add_choice(1, 0.5)
+        
+        b = WeightedChoice()
+        b.add_choice(2, 1)
+        
+        # add one object to the other
+        a.append(b)
+        
+        # check that the first object has changed correctly, but the other
+        # remains unchanged
+        self.assertEqual(a.get_summed_rate(), 1.5)
+        self.assertEqual(b.get_summed_rate(), 1.0)
+
+
+    
     def test_choice(self):
         """ test that choice() works correctly.
         
