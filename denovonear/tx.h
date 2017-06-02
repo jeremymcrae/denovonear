@@ -3,7 +3,7 @@
 
 #include <string>
 #include <vector>
-#include <map>
+#include <unordered_map>
 
 struct CDS_coords {
     int position;
@@ -38,11 +38,11 @@ class Tx {
     int gdna_offset;
     std::string genomic_sequence = "";
     
-    std::map<char, char> transdict = {
+    std::unordered_map<char, char> transdict = {
         {'a', 't'}, {'c', 'g'}, {'g', 'c'}, {'t', 'a'}, {'u', 'a'},
         {'A', 'T'}, {'C', 'G'}, {'G', 'C'}, {'T', 'A'}, {'U', 'A'}};
     
-    std::map<std::string, std::string> aa_code = {
+    std::unordered_map<std::string, std::string> aa_code = {
         {"AAA", "K"}, {"AAC", "N"}, {"AAG", "K"}, {"AAT", "N"},
         {"ACA", "T"}, {"ACC", "T"}, {"ACG", "T"}, {"ACT", "T"},
         {"AGA", "R"}, {"AGC", "S"}, {"AGG", "R"}, {"AGT", "S"},
@@ -60,7 +60,8 @@ class Tx {
         {"TGA", "*"}, {"TGC", "C"}, {"TGG", "W"}, {"TGT", "C"},
         {"TTA", "L"}, {"TTC", "F"}, {"TTG", "L"}, {"TTT", "F"}};
     
-    std::map<int, int> exon_to_cds;
+    std::unordered_map<int, int> exon_to_cds;
+    // std::map<int, int> exon_to_cds;
     void _cache_exon_cds_positions();
     
     void _fix_cds_length();

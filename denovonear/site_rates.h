@@ -18,13 +18,13 @@ class SitesChecks {
     defined at: http://www.ensembl.org/info/genome/variation/predicted_data.html
     */
     
-    std::map<std::string, std::map<std::string, double>> mut_dict;
-    std::map<std::string, Chooser> rates;
+    std::unordered_map<std::string, std::unordered_map<std::string, double>> mut_dict;
+    std::unordered_map<std::string, Chooser> rates;
     int boundary_dist;
     int kmer_length;
     int mid_pos;
     
-    std::map<std::string, std::string> transdict = {
+    std::unordered_map<std::string, std::string> transdict = {
         {"A", "T"}, {"T", "A"}, {"G", "C"}, {"C", "G"}};
     
     std::vector<std::string> bases = {"A", "C", "G", "T"};
