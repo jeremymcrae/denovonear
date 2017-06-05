@@ -57,13 +57,7 @@ cdef class SiteRates:
         cdef Chooser * chooser = self._checks.__getitem__(category.encode('utf8'))
         
         choices = WeightedChoice()
-        for x in range(chooser.len()):
-            site = chooser.iter(x)
-            
-            ref = site.ref.decode('utf8')
-            alt = site.alt.decode('utf8')
-            
-            choices.add_choice(site.pos, site.prob, ref, alt, site.offset)
+        choices.thisptr.append(deref(chooser))
         
         return choices
     

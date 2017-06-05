@@ -29,6 +29,7 @@ cdef extern from "weighted_choice.h":
         double get_summed_rate()
         int len()
         AlleleChoice iter(int)
+        void append(Chooser)
     
     cdef struct AlleleChoice:
         int pos

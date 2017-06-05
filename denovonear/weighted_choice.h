@@ -20,6 +20,7 @@ class Chooser {
     std::vector<double> cumulative;
     std::uniform_real_distribution<double> dist;
     std::mt19937_64 generator;
+    void reset_sampler();
 
  public:
     Chooser();
@@ -28,6 +29,7 @@ class Chooser {
     double get_summed_rate();
     int len() { return sites.size() ;};
     AlleleChoice iter(int pos) { return sites[pos]; };
+    void append(Chooser other);
 };
 
 #endif  // DENOVONEAR_WEIGHTED_CHOICE_H_

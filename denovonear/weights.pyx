@@ -51,17 +51,15 @@ cdef class WeightedChoice:
     
     def append(self, WeightedChoice other):
         ''' combines the sites from two WeightedChoice objects
-        
+    
         NOTE: This is inefficient, but I can't figure out an easier way around
         NOTE: cython.
-        
+    
         Args:
             other: WeightedChoice object
         '''
-        
-        for site in other:
-            self.add_choice(site['pos'], site['prob'], site['ref'], site['alt'],
-                site['offset'])
+    
+        self.thisptr.append(deref(other.thisptr))
     
     def add_choice(self, site, prob, ref='N', alt='N', offset=0):
         """ add another possible choice for selection

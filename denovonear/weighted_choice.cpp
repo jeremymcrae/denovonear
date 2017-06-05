@@ -15,6 +15,13 @@ Chooser::Chooser() {
     generator.seed(rd());
 }
 
+void Chooser::reset_sampler() {
+    // any time we add another choice, reset the sampler, so we can sample
+    // from all the possible entries.
+    std::uniform_real_distribution<double> temp(0.0, get_summed_rate());
+    dist = temp;
+}
+
 void Chooser::add_choice(int site, double prob, std::string ref, std::string alt, int offset) {
      /**
         adds another choice to the class object
@@ -33,11 +40,7 @@ void Chooser::add_choice(int site, double prob, std::string ref, std::string alt
     cumulative.push_back(cumulative_sum);
     
     sites.push_back(AlleleChoice {site, ref, alt, prob, offset});
-    
-    // any time we add another choice, reset the sampler, so we can sample
-    // from all the possible entries.
-    std::uniform_real_distribution<double> temp(0.0, cumulative_sum);
-    dist = temp;
+    reset_sampler();
 }
 
 AlleleChoice Chooser::choice() {
@@ -67,4 +70,16 @@ double Chooser::get_summed_rate() {
     */
     
     return (sites.empty()) ? 0.0 : cumulative.back() ;
+}
+
+void Chooser::append(Chooser other) {
+    
+    double current = get_summed_rate();
+    int len = other.sites.size();
+    for (int i=0; i < len; i++) {
+        cumulative.push_back(other.cumulative[i] + current);
+        sites.push_back(other.sites[i]);
+    }
+    
+    reset_sampler();
 }
