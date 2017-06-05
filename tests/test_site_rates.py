@@ -223,6 +223,20 @@ class TestSiteRatesPy(unittest.TestCase):
         self.assertEqual(set([ wts["splice_region"].choice() for x in range(n) ]),
             set([8, 9, 10, 11]))
     
+    def test_site_rates_sampled_genomic_coords(self):
+        ''' check the sites sampled when we request genomic coordinates.
+        '''
+        wts = SiteRates(self.transcript, self.rates, cds_coords=False)
+        n = 10000
+        
+        self.assertEqual(set([ wts["missense"].choice() for x in range(n) ]),
+            set([110, 111, 112, 113, 114, 116, 117, 118, 119, 160, 162, 163,
+            164, 165, 166, 168, 169, 170]))
+        
+        # the transcript only has one position where we can get a stop_gained
+        self.assertEqual(set([ wts["nonsense"].choice() for x in range(n) ]),
+            set([162]))
+    
     def test_get_mutated_aa(self):
         """ check that mutating a codon gives the expected amino acids
         """
