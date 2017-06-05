@@ -32,9 +32,10 @@ class SitesChecks {
         "splice_lof", "splice_region", "loss_of_function"};
 
  public:
-    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut) : _tx(tx) { init(mut); };
-    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, Tx mask) :
-        _tx(tx), masked(mask) { has_mask = true; init(mut); };
+    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords) :
+         _tx { tx }, use_cds_coords { cds_coords } { init(mut); };
+    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords, Tx mask) :
+         _tx { tx }, masked { mask }, use_cds_coords { cds_coords } { has_mask = true; init(mut); };
     Chooser * __getitem__(std::string category) { return &rates[category]; };
     void initialise_choices();
     
@@ -46,6 +47,7 @@ class SitesChecks {
     Tx masked = Tx("zz", "z", -100, -100, '+');
     void init(std::vector<std::vector<std::string>> mut);
     bool has_mask = false;
+    bool use_cds_coords = true;
 };
 
 Region _get_gene_range(Tx & tx);

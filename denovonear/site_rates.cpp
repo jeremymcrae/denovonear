@@ -161,7 +161,11 @@ void SitesChecks::check_position(int bp) {
             alt = transdict[alt];
         }
         
-        rates[category].add_choice(cds_pos, rate, ref, alt, offset);
+        if (use_cds_coords) {
+            rates[category].add_choice(cds_pos, rate, ref, alt, offset);
+        } else {
+            rates[category].add_choice(bp, rate, ref, alt, 0);
+        }
         
         if (category == "nonsense" || category == "splice_lof") {
             rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt, offset);
