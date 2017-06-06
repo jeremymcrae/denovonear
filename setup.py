@@ -34,7 +34,7 @@ weights = cythonize([
 
 setup (name="denovonear",
         description='Package to examine de novo clustering',
-        version="0.4.0",
+        version="0.4.1",
         author="Jeremy McRae",
         author_email="jeremy.mcrae@sanger.ac.uk",
         license="MIT",
@@ -44,7 +44,7 @@ setup (name="denovonear",
                           'webcolors >= 1.5',
                           'cython >= 0.19.0'
         ],
-        package_data={"denovonear": ['data/rates.txt']},
+        package_data={"denovonear": ['data/rates.txt', 'weights.pxd']},
         classifiers=[
             "Development Status :: 3 - Alpha",
             "License :: OSI Approved :: MIT License",
