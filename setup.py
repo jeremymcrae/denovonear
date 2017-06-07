@@ -12,17 +12,25 @@ if sys.platform == "darwin":
 weights = cythonize([
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
-        sources=["denovonear/weights.pyx"],
+        sources=["denovonear/weights.pyx",
+            "src/weighted_choice.cpp",
+            "src/simulate.cpp"],
         include_dirs=["src/"],
         language="c++"),
     Extension("denovonear.transcript",
         extra_compile_args=EXTRA_COMPILE_ARGS,
-        sources=["denovonear/transcript.pyx"],
+        sources=[
+            "denovonear/transcript.pyx",
+            "src/tx.cpp"],
         include_dirs=["src/"],
         language="c++"),
     Extension("denovonear.site_specific_rates",
         extra_compile_args=EXTRA_COMPILE_ARGS,
-        sources=["denovonear/site_specific_rates.pyx"],
+        sources=[
+            "denovonear/site_specific_rates.pyx",
+            "src/weighted_choice.cpp",
+            "src/tx.cpp",
+            "src/site_rates.cpp"],
         include_dirs=["src/"],
         language="c++"),
     ])
