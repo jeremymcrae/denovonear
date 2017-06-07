@@ -71,7 +71,7 @@ class EnsemblRequest(object):
         major = release[0]
         minor = release[1]
         
-        if major != "5":
+        if major != "6":
             raise ValueError("check ensembl api version")
         
     def open_url(self, url, headers):
