@@ -18,14 +18,8 @@ addons:
 env:
     - CC=gcc-4.9 CXX=g++-4.9
 before_install:
- - mkdir -p $HOME/.cache/pip/wheels
- # build wheel only if none present
- - travis_wait pip wheel --find-links=$HOME/.cache/pip/wheels --use-wheel --wheel-dir=$HOME/.cache/pip/wheels scipy
- - travis_wait pip wheel --find-links=$HOME/.cache/pip/wheels --use-wheel --wheel-dir=$HOME/.cache/pip/wheels cython
- # now install from it
- - pip install --no-index --find-links=$HOME/.cache/pip/wheels scipy
- - pip install --no-index --find-links=$HOME/.cache/pip/wheels cython
- - pip install coveralls
+ - pip install --upgrade pip setuptools wheel
+ - pip install --only-binary=all scipy cython coveralls
 install:
  - python setup.py install
 script:
