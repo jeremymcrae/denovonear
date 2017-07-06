@@ -90,18 +90,18 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene = self.construct_gene(start=0, end=10, exons=[(0, 4), (6, 10)],
             cds=[(2, 4), (6, 8)])
         
-        # check that we get an error if we haven't got any reference CDS to check
-        with self.assertRaises(IndexError):
-            self.gene.add_genomic_sequence("AAA")
-        
         gdna = "AGAGGCCTATT"
+        # check that we can add gDNA sequence, even if we haven't got any
+        # reference CDS to check
+        self.gene.add_genomic_sequence(gdna)
+        
         self.gene.add_cds_sequence("AGGCTA")
         
+        # check that we can add gDNA after adding cDNA
         self.gene.add_genomic_sequence(gdna)
         self.assertEqual(self.gene.get_cds_sequence(), "AGGCTA")
         
         # now check for a gene on the reverse strand
-        # gdna = "AGAGGCCTAT"
         gdna = "ATAGGCCTCTT"
         self.gene = self.construct_gene(start=0, end=10, exons=[(0, 4), (6, 10)],
             cds=[(2, 4), (6, 8)], strand='-')
@@ -109,6 +109,8 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.add_genomic_sequence(gdna)
         self.assertEqual(self.gene.get_cds_sequence(), "AGGCTC")
         
+        # check that we raise an error if the CDS predicted from the gDNA
+        # doesn't match the CDS already provided
         self.gene.add_cds_sequence("TTTTTT")
         with self.assertRaises(ValueError):
             self.gene.add_genomic_sequence(gdna)
