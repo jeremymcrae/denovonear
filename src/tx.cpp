@@ -438,6 +438,12 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
             reorient the DNA to the + strand.
     */
     
+    if ( cds.size() == 0 ) {
+        std::string msg = "You need to add CDS coordinates before adding"
+            "genomic sequence!";
+        throw std::invalid_argument(msg);
+    }
+    
     char fwd = '+';
     if (get_strand() != fwd) {
         // orient the DNA sequence to the + strand.

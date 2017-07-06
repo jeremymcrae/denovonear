@@ -132,6 +132,19 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene.add_genomic_sequence(gdna, offset=1)
         self.assertEqual(self.gene.get_cds_sequence(), "AGGCTT")
     
+    def test_add_genomic_sequencE_without_cds_coords(self):
+        """ test that error is raised if we add gDNA without CDS coords
+        """
+        
+        a = Transcript("a", "1", 10, 20, "+")
+        a.set_exons([(10, 20)], [(10, 20)])
+        
+        with self.assertRaises(ValueError):
+            a.add_genomic_sequence('CGTAGACTGTACGCATCGATT', offset=5)
+        
+        a.set_cds([(10, 20)])
+        a.add_genomic_sequence('CGTAGACTGTACGCATCGATT', offset=5)
+    
     def test_get_centered_sequence(self):
         """ test that get_centered_sequence() works correctly
         """
