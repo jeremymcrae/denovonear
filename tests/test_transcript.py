@@ -177,6 +177,28 @@ class TestTranscriptPy(unittest.TestCase):
         
         self.assertEqual(len((a + b).get_genomic_sequence()), 70)
     
+    def test___add__cds_length_fixed(self):
+        """ check that we can merge transcripts, even with fixed CDS coords
+        """
+        
+        a = Transcript("a", "1", 10, 20, "+")
+        a.set_exons([(10, 20)], [(10, 20)])
+        a.set_cds([(10, 20)])
+        
+        a.add_cds_sequence('ACTGTACGCAT')
+        a.add_genomic_sequence('CGTAGACTGTACGCATCGATT', offset=5)
+        
+        b = Transcript("b", "1", 0, 10, "+")
+        b.set_exons([(0, 10)], [(0, 10)])
+        b.set_cds([(0, 10)])
+        
+        b.add_cds_sequence('ACTGTACGCAT')
+        b.add_genomic_sequence('CGTAGACTGTACGCATCGTAG', offset=5)
+        
+        # without a fix to tx.cpp to adjust an exon coordinate simultaneously,
+        # the line below would give an error.
+        c = a + b
+    
     def test_in_exons(self):
         """ test that in_exons() works correctly
         """
@@ -325,3 +347,4 @@ class TestTranscriptPy(unittest.TestCase):
         self.assertEqual(self.gene.chrom_pos_to_cds(1792), {'pos': 100, 'offset': -8})
         
         self.assertEqual(self.gene.chrom_pos_to_cds(1200), {'pos': 101, 'offset': 0})
+    

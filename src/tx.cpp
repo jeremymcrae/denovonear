@@ -518,6 +518,18 @@ void Tx::_fix_cds_length() {
     
     cds_min = cds[0].start;
     cds_max = cds[last].end;
+    
+    // shifting the CDS coordinates can, very infrequently, shift the CDS
+    // beyond the exon coordinates. This is only a problem if we take the union
+    // transcript coordinates, but should be accounted for.
+    if (cds_min < exons[0].start) {
+        exons[0] = Region {exons[0].start - diff, exons[0].end};
+    }
+    
+    last = exons.size() - 1;
+    if (cds_max > exons[last].end) {
+        exons[last] = Region {exons[last].start, exons[last].end + diff};
+    }
 }
 
 std::string Tx::reverse_complement(std::string seq) {
