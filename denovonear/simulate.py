@@ -29,7 +29,7 @@ def get_p_value(transcript, rates, iterations, consequence, de_novos):
     """
     
     if len(de_novos) < 2:
-        return ("NA", "NA")
+        return (float('nan'), float('nan'))
     
     rename = {"lof": "loss_of_function"}
     if consequence in rename:
@@ -39,12 +39,11 @@ def get_p_value(transcript, rates, iterations, consequence, de_novos):
     
     cds_positions = [ transcript.chrom_pos_to_cds(x)['pos'] for x in de_novos ]
     distances = get_distances(cds_positions)
-    observed_value = geomean(distances)
+    observed = geomean(distances)
     
     # call a cython wrapped C++ library to handle the simulations
-    sim_prob = analyse_de_novos(weights, iterations, len(de_novos), observed_value)
+    sim_prob = analyse_de_novos(weights, iterations, len(de_novos), observed)
     
-    if type(observed_value) != "str":
-        observed_value = "{0:0.1f}".format(observed_value)
+    observed = "{0:0.1f}".format(observed)
     
-    return (observed_value, sim_prob)
+    return (observed, sim_prob)

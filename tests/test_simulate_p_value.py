@@ -4,6 +4,7 @@ from __future__ import division
 
 import os
 import unittest
+import math
 
 from denovonear.weights import WeightedChoice
 from denovonear.transcript import Transcript
@@ -57,7 +58,8 @@ class TestGetPValuePy(unittest.TestCase):
         de_novos = [5]
         
         (obs, p_value) = get_p_value(self.transcript, self.rates, iterations, cq, de_novos)
-        self.assertEqual((obs, p_value), ('NA', 'NA'))
+        self.assertTrue(math.isnan(obs))
+        self.assertTrue(math.isnan(p_value))
     
     def test_get_p_value(self):
         """

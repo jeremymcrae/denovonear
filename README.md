@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.org/jeremymcrae/denovonear.svg?branch=master)]
-(https://travis-ci.org/jeremymcrae/denovonear)
+[![Build Status](https://travis-ci.org/jeremymcrae/denovonear.svg?branch=master)](https://travis-ci.org/jeremymcrae/denovonear)
 
 ## Denovonear
 
@@ -47,7 +46,7 @@ The optional rates file is a tabe separated file with three columns: 'from',
 'to', and 'mu_snp'. The 'from' column contains DNA sequence (where the length
 is an odd number) with the base to change at the central nucleotide. The 'to'
 column contains the sequence with the central base modified. The 'mu_snp' column
-contains the probability of the change (as per site per generation). 
+contains the probability of the change (as per site per generation).
 
 The deprecated gene ID file is a manually generated file for the genes where
 the code failed to retrieve coordinates from Ensembl, so it's built from the
@@ -57,6 +56,14 @@ additional genes with out of date gene symbols.
 The cache folder defaults to making a folder named "cache" within the working
 directory. The genome build indicates which genome build the coordinates of the
 de novo variants are based on, and defaults to GRCh37.
+
+You can alternatively run the analysis within python as:
+```python
+from denovonear.cluster_test import cluster_de_novos
+symbol = 'PPP2R5D'
+de_novos = {'missense': [42975003, 42975003, 42975003, 42975013], 'nonsense': []}
+p_values = cluster_de_novos(symbol, de_novos, iterations=1000000)
+```
 
 #### Identify transcripts containing de novo events
 You can identify transcripts containing de novos events with the

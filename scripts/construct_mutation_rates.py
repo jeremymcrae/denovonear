@@ -280,8 +280,7 @@ def main():
             chrom = rates[0]
             length = rates[1]
             rates = rates[2:]
-            # log transform the rates, to keep them consistent with the rates from
-            # Daly et al.
+            # log transform rates, for consistency with Samocha et al.
             line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, \
                 chrom, length, *log_transform(rates))
         except ValueError as error:
