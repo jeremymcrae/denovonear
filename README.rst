@@ -27,7 +27,8 @@ Usage
 -----
 
 Analyse *de novo* mutations within python:
-::
+
+.. code:: python
 
     from denovonear.cluster_test import cluster_de_novos
     
@@ -38,7 +39,8 @@ Analyse *de novo* mutations within python:
 
 Pull out site-specific rates by creating Transcript objects, then get the
 rates by consequence at each site
-::
+
+.. code:: python
 
     from denovonear.ensembl_requester import EnsemblRequest
     from denovonear.load_mutation_rates import load_mutation_rates
