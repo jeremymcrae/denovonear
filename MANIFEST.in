@@ -1,0 +1,14 @@
+# denovonear code
+include MANIFEST.in
+include scripts/*.py
+include denovonear/*.cpp
+include denovonear/*.py
+include denovonear/*.pyx
+include denovonear/*.pxd
+include denovonear/data/rates.txt
+include src/*.h
+include src/*.cpp
+include data/*.txt
+
+# denovonear tests
+include tests/*.py
