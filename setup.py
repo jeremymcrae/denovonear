@@ -1,5 +1,6 @@
 
 import sys
+import os
 from setuptools import setup
 from distutils.core import Extension
 from Cython.Build import cythonize
@@ -37,10 +38,12 @@ weights = cythonize([
 
 setup (name="denovonear",
         description='Package to examine de novo clustering',
-        version="0.4.1",
+        long_description=open('README.rst', encoding='utf-8').read(),
+        version="0.5.0",
         author="Jeremy McRae",
         author_email="jeremy.mcrae@sanger.ac.uk",
         license="MIT",
+        url='https://github.com/jeremymcrae/denovonear',
         packages=["denovonear", "denovonear.gene_plot"],
         install_requires=['scipy >= 0.9.0',
                           'cairocffi >= 0.7.2',
@@ -49,7 +52,8 @@ setup (name="denovonear",
         ],
         package_data={"denovonear": ['data/rates.txt', 'weights.pxd']},
         classifiers=[
-            "Development Status :: 3 - Alpha",
+            "Development Status :: 5 - Production/Stable",
+            "Topic :: Scientific/Engineering :: Bio-Informatics",
             "License :: OSI Approved :: MIT License",
         ],
         ext_modules=weights,
