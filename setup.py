@@ -1,6 +1,7 @@
 
 import sys
 import os
+import io
 from setuptools import setup
 from distutils.core import Extension
 from Cython.Build import cythonize
@@ -38,7 +39,7 @@ weights = cythonize([
 
 setup (name="denovonear",
         description='Package to examine de novo clustering',
-        long_description=open('README.rst', encoding='utf-8').read(),
+        long_description=io.open('README.rst', encoding='utf-8').read(),
         version="0.5.0",
         author="Jeremy McRae",
         author_email="jeremy.mcrae@sanger.ac.uk",
