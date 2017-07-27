@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <cstdlib>
 #include <algorithm>
 #include <stdexcept>
 
@@ -86,7 +87,7 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
     // cds boundaries
     if (!in_exons(cds_min)) {
         Region region = fix_cds_boundary(cds_min);
-        int delta = abs(region.end - region.start);
+        int delta = std::abs(region.end - region.start);
         
         cds[0] = Region {cds[0].start + delta, cds[0].end};
         cds_min = region.start;
@@ -95,7 +96,7 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
     
     if (!in_exons(cds_max)) {
         Region region = fix_cds_boundary(cds_max);
-        int delta = abs(region.end - region.start);
+        int delta = std::abs(region.end - region.start);
         
         int idx = cds.size() - 1;
         cds[idx] = Region {cds[idx].start, cds[idx].end - delta};
@@ -124,8 +125,8 @@ Region Tx::fix_cds_boundary(int position) {
     
     Region region = find_closest_exon(position);
     
-    int start_dist = abs(position - region.start);
-    int end_dist = abs(position - region.end);
+    int start_dist = std::abs(position - region.start);
+    int end_dist = std::abs(position - region.end);
     
     int start;
     int end;
@@ -202,8 +203,8 @@ Region Tx::find_closest_exon(int position, std::vector<Region> & ranges) {
     int ref_end = 0;
     
     for (auto &region : ranges) {
-        int start_dist = abs(region.start - position);
-        int end_dist = abs(region.end - position);
+        int start_dist = std::abs(region.start - position);
+        int end_dist = std::abs(region.end - position);
         
         if (start_dist < max_distance) {
             ref_start = region.start;
@@ -318,7 +319,7 @@ CDS_coords Tx::chrom_pos_to_cds(int pos) {
         Region exon = find_closest_exon(pos);
         
         int site;
-        if (abs(exon.start - pos) < abs(exon.end - pos)) {
+        if (std::abs(exon.start - pos) < std::abs(exon.end - pos)) {
             site = exon.start;
         } else {
             site = exon.end;
@@ -334,8 +335,8 @@ CDS_coords Tx::chrom_pos_to_cds(int pos) {
         }
         
         // ignore positions outside the exons that are too distant from a boundary
-        if (abs(offset) >= 9) {
-            std::string msg = "distance to exon (" + std::to_string(abs(offset)) +
+        if (std::abs(offset) >= 9) {
+            std::string msg = "distance to exon (" + std::to_string(std::abs(offset)) +
                 ") > 8 bp for " + std::to_string(pos) + " in transcript "+ get_name();
             throw std::logic_error(msg);
         }
@@ -455,7 +456,7 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     
     std::string cds_seq;
     for (auto &region : cds) {
-        int x = abs(region.start - get_start()) + offset;
+        int x = std::abs(region.start - get_start()) + offset;
         int len = (region.end - region.start) + 1;
         std::string bases = genomic_sequence.substr(x, len);
         
@@ -507,11 +508,11 @@ void Tx::_fix_cds_length() {
         char fwd = '+';
         if (get_strand() == fwd) {
             cds[last] = Region {cds[last].start, cds[last].end + diff};
-            int start_bp = abs(end - get_start()) + gdna_offset;
+            int start_bp = std::abs(end - get_start()) + gdna_offset;
             cds_sequence += genomic_sequence.substr(start_bp, diff);
         } else {
             cds[0] = Region {cds[0].start - diff, cds[0].end};
-            int start_bp = abs(get_end() - end) + gdna_offset;
+            int start_bp = std::abs(get_end() - end) + gdna_offset;
             cds_sequence += genomic_sequence.substr(start_bp, diff);
         }
     }
@@ -664,7 +665,7 @@ int Tx::get_boundary_distance(int bp) {
     */
     
     Region exon = find_closest_exon(bp);
-    int distance = std::min(abs(exon.start - bp), abs(exon.end - bp));
+    int distance = std::min(std::abs(exon.start - bp), std::abs(exon.end - bp));
     
     // sites within the coding region are actually one bp further away,
     // since we are measuring the distance to the base inside the exon
