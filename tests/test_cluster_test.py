@@ -35,7 +35,7 @@ class TestClusterTestPy(unittest.TestCase):
         p_values = cluster_de_novos(symbol, de_novos, 1000000,
             self.ensembl, self.mut_dict)
         
-        self.assertAlmostEqual(p_values['miss_prob'], 2e-06, delta=2e-6)
+        self.assertAlmostEqual(p_values['miss_prob'], 3e-06, delta=3e-6)
         self.assertEqual(p_values['miss_dist'], '2.3')
         self.assertTrue(math.isnan(p_values['nons_prob']))
         self.assertEqual(p_values['nons_dist'], 'nan')
