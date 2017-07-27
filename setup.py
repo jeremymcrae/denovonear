@@ -9,7 +9,7 @@ from Cython.Build import cythonize
 EXTRA_COMPILE_ARGS = ["-std=c++11"]
 
 if sys.platform == "darwin":
-    EXTRA_COMPILE_ARGS = ["-stdlib=libc++"]
+    EXTRA_COMPILE_ARGS += ["-stdlib=libc++"]
 
 weights = cythonize([
     Extension("denovonear.weights",
@@ -40,7 +40,7 @@ weights = cythonize([
 setup (name="denovonear",
         description='Package to examine de novo clustering',
         long_description=io.open('README.rst', encoding='utf-8').read(),
-        version="0.5.2",
+        version="0.5.3",
         author="Jeremy McRae",
         author_email="jeremy.mcrae@sanger.ac.uk",
         license="MIT",
