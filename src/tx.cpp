@@ -334,13 +334,6 @@ CDS_coords Tx::chrom_pos_to_cds(int pos) {
             throw std::logic_error(msg);
         }
         
-        // ignore positions outside the exons that are too distant from a boundary
-        if (std::abs(offset) >= 9) {
-            std::string msg = "distance to exon (" + std::to_string(std::abs(offset)) +
-                ") > 8 bp for " + std::to_string(pos) + " in transcript "+ get_name();
-            throw std::logic_error(msg);
-        }
-        
         return CDS_coords { get_coding_distance(cds_start, site), offset };
     }
 }

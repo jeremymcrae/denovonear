@@ -29,7 +29,7 @@ class SitesChecks {
     
     std::vector<std::string> bases = {"A", "C", "G", "T"};
     std::vector<std::string> categories = {"missense", "nonsense", "synonymous",
-        "splice_lof", "splice_region", "loss_of_function"};
+        "splice_lof", "splice_region", "loss_of_function", "intronic"};
 
  public:
     SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords) :

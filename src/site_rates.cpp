@@ -94,6 +94,9 @@ std::string SitesChecks::check_consequence(std::string initial_aa,
     } else if ( !_tx.in_coding_region(position) && boundary_dist < 9 ) {
         // check for splice_region_variant inside intron
         cq = "splice_region";
+    } else if ( !_tx.in_coding_region(position) && boundary_dist > 9 ) {
+        // check for intronic sites outside splice region boundaries
+        cq = "intronic";
     }
     
     return cq;

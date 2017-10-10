@@ -47,7 +47,7 @@ cdef class SiteRates:
         Args:
             category: string to indicate the consequence type. The permitted
                 types are "missense", "nonsense", "synonymous",
-                "loss_of_function", "splice_lof", and "splice_region".
+                "loss_of_function", "splice_lof", "splice_region" and "intronic".
         
         Returns:
             A WeightedChoice object for the CDS, where each position is paired
