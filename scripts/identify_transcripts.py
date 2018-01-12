@@ -48,26 +48,25 @@ def main():
     output = open(args.out, "w")
     output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")
     
-    for gene_id in sorted(de_novos):
-        print(gene_id)
-        de_novos = de_novos[gene_id]
-        func_events = de_novos["missense"] + de_novos["nonsense"]
+    for symbol in sorted(de_novos):
+        print(symbol)
+        func_events = de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]
         
         # find the counts per transcript, depending on whether we want to count
         # for all transcripts containing one or more de novos, or to find the
         # minimum set of transcripts to contain the de novos
         try:
             if args.all_transcripts:
-                counts = count_de_novos_per_transcript(ensembl, gene_id, func_events)
+                counts = count_de_novos_per_transcript(ensembl, symbol, func_events)
             elif args.minimal_transcripts:
-                counts = minimise_transcripts(ensembl, gene_id, func_events)
+                counts = minimise_transcripts(ensembl, symbol, func_events)
         except (ValueError, IndexError):
-            print("error occured with {0}".format(gene_id))
+            print("error occured with {0}".format(symbol))
             continue
         
         # write the transcript details to a file
         for key in counts:
-            line = "{}\t{}\t{}\t{}\n".format(gene_id, key, counts[key]["len"],
+            line = "{}\t{}\t{}\t{}\n".format(symbol, key, counts[key]["len"],
                 counts[key]["n"])
             output.write(line)
         

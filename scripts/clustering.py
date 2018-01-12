@@ -42,18 +42,16 @@ def main():
     mut_dict = load_mutation_rates(args.rates)
     de_novos = load_de_novos(args.input)
     
-    output = open(args.output, "w")
+    output = open(args.out, "w")
     output.write("gene_id\tmutation_category\tevents_n\tdist\tprobability\n")
     
     iterations = 1000000
     for symbol in sorted(de_novos):
         
-        de_novos = de_novos[symbol]
-        
-        if len(de_novos["missense"] + de_novos["nonsense"]) < 2:
+        if len(de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]) < 2:
             continue
         
-        probs = cluster_de_novos(symbol, de_novos, iterations, ensembl, mut_dict)
+        probs = cluster_de_novos(symbol, de_novos[symbol], iterations, ensembl, mut_dict)
         
         if probs is None:
             continue
