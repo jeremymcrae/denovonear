@@ -39,12 +39,12 @@ class TestEnsemblRequestPy(unittest.TestCase):
             "strand": 1,
             "id": "ENSG00000172320",
             "gene_id": "ENSG00000172320",
-            "version": 2,
+            "version": 3,
             "assembly_name": "GRCh38",
             "description": "olfactory receptor family 5 subfamily A member 1 [Source:HGNC Symbol;Acc:HGNC:8319]",
-            "end": 59444194,
+            "end": 59451380,
             "biotype": "protein_coding",
-            "start": 59443144}]
+            "start": 59436469}]
             )
     
     def test_get_genes_for_hgnc_id(self):
