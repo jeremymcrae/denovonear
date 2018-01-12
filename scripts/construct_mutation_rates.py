@@ -93,14 +93,12 @@ def load_genes(path):
             if line.startswith("hgnc"):
                 continue
             
-            line = line.strip().split("\t")
-            gene_id = line[0]
-            transcript_id = line[1]
+            symbol, tx_id = line.strip().split("\t")
             
-            if gene_id not in transcripts:
-                transcripts[gene_id] = []
+            if symbol not in transcripts:
+                transcripts[symbol] = []
             
-            transcripts[gene_id].append(transcript_id)
+            transcripts[symbol].append(tx_id)
             
     return transcripts
 
