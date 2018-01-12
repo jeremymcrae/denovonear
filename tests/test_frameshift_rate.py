@@ -47,6 +47,10 @@ class TestIncludeFrameshiftRatesPy(unittest.TestCase):
         with open(temp.name) as handle:
             values = [ line.strip().split('\t')[-1] for line in handle ]
         
-        self.assertEqual(['frameshift_rate', '-1.9240621930896515',
-            '-0.9240621930896515', '-0.9240621930896515'], values)
+        header, a, b, c = values
+        
+        self.assertEqual(header, 'frameshift_rate')
+        self.assertAlmostEqual(float(a), -1.9240621930896515)
+        self.assertAlmostEqual(float(b), -0.9240621930896515)
+        self.assertAlmostEqual(float(c), -0.9240621930896515)
     
