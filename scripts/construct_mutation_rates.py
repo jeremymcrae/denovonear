@@ -69,7 +69,7 @@ def load_genes(path):
             if line.startswith("hgnc"):
                 continue
             
-            symbol, tx_id = line.strip().split("\t")
+            symbol, tx_id, *_ = line.strip().split("\t")
             
             if symbol not in transcripts:
                 transcripts[symbol] = []
