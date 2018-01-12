@@ -18,55 +18,31 @@ from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.site_specific_rates import SiteRates
 from denovonear.frameshift_rate import include_frameshift_rates
+from denovonear.log_transform_rates import log_transform
 
 def get_options():
     """ get the command line switches
     """
     
-    parser = argparse.ArgumentParser(description="determine mutation rates \
-        for genes given transcript IDs.")
-    
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--transcripts", dest="transcript_input",
-        help="Path to file listing Ensembl transcript IDs, one ID per line.")
-    group.add_argument("--genes", dest="gene_input", help="Path to file" + \
-        " listing HGNC symbols, with one or more transcript IDs per gene. " + \
-        "The tab-separated input format is gene symbol followed by transcript " + \
+    parser = argparse.ArgumentParser(description="determine mutation rates "
+        "for genes given transcript IDs.")
+    parser.add_argument("--genes", help="Path to file "
+        "listing HGNC symbols, with one or more transcript IDs per gene. "
+        "The tab-separated input format is gene symbol followed by transcript "
         "ID. Alternative transcripts are listed on separate lines.")
     
-    parser.add_argument("--out", dest="output", required=True, help="output \
-        filename")
-    parser.add_argument("--rates", dest="mut_rates",
+    parser.add_argument("--out", required=True, help="output filename")
+    parser.add_argument("--rates",
         help="Path to file containing sequence-context based mutation rates.")
-    parser.add_argument("--genome-build", dest="genome_build", choices=["grch37",
-        "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "+ \
+    parser.add_argument("--genome-build", choices=["grch37", "GRCh37",
+        "grch38", "GRCh38"], default="grch37", help="Genome build "
         "that the de novo coordinates are based on (currently GRCh37 or GRCh38).")
-    parser.add_argument("--cache-folder", dest="cache_folder", \
-        default=os.path.join(os.path.dirname(__file__), "cache"), help="folder \
-        to cache Ensembl data into (defaults to clustering code directory).")
+    parser.add_argument("--cache-folder",
+        default=os.path.join(os.path.dirname(__file__), "cache"), help="folder "
+            "to cache Ensembl data into (defaults to clustering code directory).")
     
-    args = parser.parse_args()
-    
-    return args.transcript_input, args.gene_input, args.output, args.mut_rates, \
-        args.cache_folder, args.genome_build.lower()
+    return parser.parse_args()
 
-def load_transcripts(path):
-    """ load a file listing transcript IDs per line
-    
-    Args:
-        path: path to file containing transcript IDs, one per line
-    
-    Returns:
-        list of transcript IDs eg ["ENST00000315684", "ENST00000485511"]
-    """
-    
-    transcripts = {}
-    with open(path, "r") as f:
-        for line in f:
-            transcripts[line.strip()] = [line.strip()]
-            
-    return transcripts
-    
 def load_genes(path):
     """ load a file listing gene and transcript IDs
     
@@ -84,7 +60,7 @@ def load_genes(path):
             gene_2    transcript_2.1    length_3    denovo_count
     
     Returns:
-        list of transcript IDs eg ["ENST00000315684", "ENST00000485511"]
+        dict of transcripts eg {'CTC1': ["ENST00000315684", "ENST00000485511"]}
     """
     
     transcripts = {}
@@ -131,60 +107,36 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         tuple of (missense, nonsense, synonymous) mutation rates
     """
     
-    missense = 0
-    nonsense = 0
-    splice_lof = 0
-    splice_region = 0
-    synonymous = 0
-    combined_transcript = None
+    rates = {'missense': 0, 'nonsense': 0, 'splice_lof': 0,
+        'splice_region': 0, 'synonymous': 0}
+    combined = None
     
     for transcript_id in transcripts[gene_id]:
-        
-        # get the gene coordinates, sequence etc, but if the transcript is
-        # unusable (hence raises an error), simply move to the next transcript
         try:
-            transcript = construct_gene_object(ensembl, transcript_id)
+            tx = construct_gene_object(ensembl, tx_id)
         except ValueError:
             continue
         
-        if len(transcript.get_cds_sequence()) % 3 != 0:
+        if len(tx.get_cds_sequence()) % 3 != 0:
             raise ValueError("anomalous_coding_sequence")
         
-        # ignore mitochondrial genes, since mitochondiral mutation rates differ
-        # from autosomal and allosomal mutation rates
-        if transcript.get_chrom() == "MT":
+        # ignore mitochondrial genes
+        if tx.get_chrom() == "MT":
             continue
         
-        if combined_transcript is None:
-            sites = SiteRates(transcript, mut_dict)
-            combined_transcript = transcript
-        else:
-            sites = SiteRates(transcript, mut_dict, masked_sites=combined_transcript)
-            combined_transcript += transcript
+        sites = SiteRates(tx, mut_dict, masked_sites=combined)
+        combined = tx + combined
         
-        missense_rates = sites["missense"]
-        nonsense_rates = sites["nonsense"]
-        splice_lof_rates = sites["splice_lof"]
-        splice_region_rates = sites["splice_region"]
-        synonymous_rates = sites["synonymous"]
-        
-        # if any sites have been sampled in the transcript, then add the
-        # cumulative probability from those sites to the approporiate
-        # mutation rate. Sometimes we won't have any sites for a transcript, as
-        # all the sites will have been captured in previous transcripts.
-        missense += missense_rates.get_summed_rate()
-        nonsense += nonsense_rates.get_summed_rate()
-        splice_lof += splice_lof_rates.get_summed_rate()
-        splice_region += splice_region_rates.get_summed_rate()
-        synonymous += synonymous_rates.get_summed_rate()
+        for cq in ['missense', 'nonsense', 'splice_lof', 'splice_region', 'synonymous']:
+            rates[cq] += sites[cq].get_summed_rate()
     
-    chrom = combined_transcript.get_chrom()
-    length = "NA"
-    if combined_transcript is not None:
-        length = combined_transcript.get_coding_distance(\
-            combined_transcript.get_cds_start(), combined_transcript.get_cds_end())
+    if combined is None:
+        raise ValueError('no tx found')
     
-    return (chrom, length, missense, nonsense, splice_lof, splice_region, synonymous)
+    length = combined.get_coding_distance(combined.get_cds_start(),
+        combined.get_cds_end())
+    
+    return rates, combined, length
 
 def log_transform(values):
     """ log transform a numeric value, unless it is zero, or negative
@@ -202,43 +154,33 @@ def log_transform(values):
 
 def main():
     
-    input_transcripts, input_genes, output_file, rates_file, cache_dir, \
-        genome_build = get_options()
+    args = get_options()
     
     # load all the data
-    ensembl = EnsemblRequest(cache_dir, genome_build)
-    mut_dict = load_mutation_rates(rates_file)
+    ensembl = EnsemblRequest(args.cache_folder, args.genome_build)
+    mut_dict = load_mutation_rates(args.rates)
     
-    if input_transcripts is not None:
-        transcripts = load_transcripts(input_transcripts)
-    else:
-        transcripts = load_genes(input_genes)
+    transcripts = load_genes(args.genes)
     
-    output = open(output_file, "w")
-    output.write("transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate\t"
-        "splice_lof_rate\tsplice_region_rate\tsynonymous_rate\n")
+    output = open(args.out, "w")
+    header = ['transcript_id', 'chrom', 'length', 'missense_rate', 'nonsense_rate',
+        'splice_lof_rate', 'splice_region_rate', 'synonymous_rate']
+    output.write('\t'.join(header) + "\n")
     
-    for gene_id in sorted(transcripts):
-        print(gene_id)
+    for symbol in sorted(transcripts):
+        print(symbol)
         try:
-            rates = get_mutation_rates(gene_id, transcripts, mut_dict, ensembl)
-            
-            chrom = rates[0]
-            length = rates[1]
-            rates = rates[2:]
+            rates, tx, length = get_mutation_rates(symbol, transcripts[symbol],
+                mut_dict, ensembl)
             # log transform rates, for consistency with Samocha et al.
-            line = "{0}\t{1}\t{2}\t{3}\t{4}\t{5}\t{6}\t{7}\n".format(gene_id, \
-                chrom, length, *log_transform(rates))
-        except ValueError as error:
-            line = "{0}\t{1}\n".format(gene_id, error)
-        except KeyError as error:
-            # ignore genes with odd genomic sequence eg ENST00000436041 in GRCh37
-            continue
+            line = "{}\t{}\t{}\t{}".format(symbol, tx.chrom, length, log_transform(rates))
+        except (ValueError, KeyError) as error:
+            print("{}\t{}\n".format(symbol, error))
+            line = "{}\t{}\tNA\tNA\tNA\tNA\tNA\tNA".format(symbol, tx.chrom)
         
-        output.write(line)
+        output.write(line + '\n')
     
     output.close()
-    
     include_frameshift_rates(output_file)
 
 if __name__ == '__main__':
