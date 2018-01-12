@@ -57,9 +57,9 @@ def main():
             continue
         
         output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "missense",
-            len(de_novos["missense"]), probs["miss_dist"], probs["miss_prob"]))
+            len(de_novos[symbol]["missense"]), probs["miss_dist"], probs["miss_prob"]))
         output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "nonsense",
-            len(de_novos["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
+            len(de_novos[symbol]["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
 
 if __name__ == '__main__':
     main()
