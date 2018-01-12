@@ -111,7 +111,7 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
         'splice_region': 0, 'synonymous': 0}
     combined = None
     
-    for transcript_id in transcripts[gene_id]:
+    for tx_id in transcripts:
         try:
             tx = construct_gene_object(ensembl, tx_id)
         except ValueError:
@@ -138,20 +138,6 @@ def get_mutation_rates(gene_id, transcripts, mut_dict, ensembl):
     
     return rates, combined, length
 
-def log_transform(values):
-    """ log transform a numeric value, unless it is zero, or negative
-    """
-    
-    transformed = []
-    for value in values:
-        try:
-            value = math.log10(value)
-        except ValueError:
-            value = "NA"
-        transformed.append(value)
-    
-    return transformed
-
 def main():
     
     args = get_options()
@@ -173,15 +159,15 @@ def main():
             rates, tx, length = get_mutation_rates(symbol, transcripts[symbol],
                 mut_dict, ensembl)
             # log transform rates, for consistency with Samocha et al.
-            line = "{}\t{}\t{}\t{}".format(symbol, tx.chrom, length, log_transform(rates))
+            line = "{}\t{}\t{}\t{}".format(symbol, tx.get_chrom(), length, log_transform(rates))
         except (ValueError, KeyError) as error:
             print("{}\t{}\n".format(symbol, error))
-            line = "{}\t{}\tNA\tNA\tNA\tNA\tNA\tNA".format(symbol, tx.chrom)
+            line = "{}\t{}\tNA\tNA\tNA\tNA\tNA\tNA".format(symbol, tx.get_chrom())
         
         output.write(line + '\n')
     
     output.close()
-    include_frameshift_rates(output_file)
+    include_frameshift_rates(args.out)
 
 if __name__ == '__main__':
     main()
