@@ -7,7 +7,7 @@ def log_transform(rates):
     
     transformed = []
     for key in ['missense', 'nonsense', 'splice_lof', 'splice_region',
-            'synonymous', 'cryptic_splice']:
+            'synonymous']:
         
         try:
             value = math.log10(rates[key])
