@@ -159,6 +159,10 @@ class TestTranscriptPy(unittest.TestCase):
         
         # check that adding previously unknown exons works
         self.assertEqual((a + d).get_cds(), [{'start': 30, 'end': 40}, {'start': 55, 'end': 60}, {'start': 90, 'end': 100}])
+        
+        # check that we can add transcript + None correctly
+        self.assertEqual(a + None, a)
+        self.assertEqual(None + a, a)
     
     def test___add__not_overlapping(self):
         ''' test that __add__() works correctly when transcripts do not overlap

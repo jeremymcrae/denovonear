@@ -200,8 +200,12 @@ cdef class Transcript:
             so don't try to extract sequence from the returned object.
         """
         
+        # if we try transcript + None or None + transcript, return the original
+        # transcript, rather than raising an error.
         if other is None:
             return self
+        if self is None:
+            return other
         
         altered = Transcript('{}:{}'.format(self.get_name(), other.get_name()),
             self.get_chrom(), min(self.get_start(), other.get_start()),
