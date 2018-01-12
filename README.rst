@@ -134,16 +134,8 @@ generated with:
 .. code:: bash
 
     python scripts/construct_mutation_rates.py \
-        --transcripts data/example_transcript_ids.txt \
+        --genes data/example_gene_ids.txt \
         --out output.txt
-
-Other options are:
-
-* ``--genes`` in place of ``--transcripts``, to obtain a mutation rate from the
-  union of alternative transcripts for a gene. Requires a file listing HGNC
-  symbols, with one or more transcript IDs per gene. The tab-separated input
-  format is gene symbol followed by transcript ID. Alternative transcripts are
-  listed on separate lines.
 
 The tab-separated output file will contain one row per gene/transcript, with
 each line containing a transcript ID or gene symbol, a log10 transformed
