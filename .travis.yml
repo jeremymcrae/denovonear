@@ -29,7 +29,7 @@ script:
      --out output.txt \
      --all-transcripts"
  - "python scripts/construct_mutation_rates.py \
-     --transcripts data/example_transcript_ids.txt \
+     --genes data/example_gene_ids.txt \
      --out output.txt"
  - python -m coverage run --source=./denovonear -m unittest discover
 after_success:
