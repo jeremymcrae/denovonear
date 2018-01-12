@@ -625,10 +625,10 @@ Codon Tx::get_codon_info(int bp) {
     
     bool in_coding = in_coding_region(bp);
     
-    // ignore positions outside the exons that are too distant from a boundary
-    if (not in_coding and get_boundary_distance(bp) >= 9) {
-        throw std::invalid_argument( "position too distant from an exon" );
-    }
+    // // ignore positions outside the exons that are too distant from a boundary
+    // if (not in_coding and get_boundary_distance(bp) >= 9) {
+    //     throw std::invalid_argument( "position too distant from an exon" );
+    // }
     
     // define the default values for the codon positions. We check these later
     // in python and convert to None if they are still the defaults.
