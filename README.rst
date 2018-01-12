@@ -81,7 +81,6 @@ indels).
 Other options are:
 
 * ``--rates PATH_TO_RATES``
-* ``--deprecated-genes data/deprecated_ddg2p_hgnc_ids.txt``
 * ``--cache-folder PATH_TO_CACHE_DIR``
 * ``--genome-build "grch37" or "grch38" (default=grch37)``
 
@@ -90,11 +89,6 @@ The optional rates file is a table separated file with three columns: 'from',
 is an odd number) with the base to change at the central nucleotide. The 'to'
 column contains the sequence with the central base modified. The 'mu_snp' column
 contains the probability of the change (as per site per generation).
-
-The deprecated gene ID file is a manually generated file for the genes where
-the code failed to retrieve coordinates from Ensembl, so it's built from the
-gene symbols from analysed files to date, so ongoing analyses might pick up
-additional genes with out of date gene symbols.
 
 The cache folder defaults to making a folder named "cache" within the working
 directory. The genome build indicates which genome build the coordinates of the
