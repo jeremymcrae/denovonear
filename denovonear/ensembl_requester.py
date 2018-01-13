@@ -86,7 +86,7 @@ class EnsemblRequest(object):
             # if we get a http error, we still process the status code, since a
             # later step deals with different status codes differently.
             handler = error
-        except (URLError, ConnectionResetError, TimeOutError):
+        except (URLError, ConnectionResetError, TimeoutError):
             # if we get a ConnectionResetError, assume something has gone wrong
             # with the server. Later code will wait before retrying.
             return '', 500, headers
