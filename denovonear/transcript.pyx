@@ -22,17 +22,58 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from itertools import combinations
 
 cdef class Transcript:
-    def __cinit__(self, transcript_id, chrom, start, end, strand):
-        transcript_id = transcript_id.encode('utf8')
+    def __cinit__(self, name, chrom, start, end, strand, exons=None,
+            cds=None, sequence=None, offset=0):
+        ''' construct a Transcript object
+        
+        Args:
+            name: ID of the transcript
+            start: position in bp at 5' edge of transcript (on + strand)
+            end: position in bp at 3' edge of transcript (on + strand)
+            exons: list of tuples defining start and end positions of exons
+            cds: list of tuples defining start and end positions of CDS regions
+            sequence: DNA sequence of genome region of the transcript.
+            offset: how many base pairs the DNA sequence extends outwards
+        '''
+        
+        name = name.encode('utf8')
         chrom = chrom.encode('utf8')
-        self.thisptr = new Tx(transcript_id, chrom, start, end, ord(strand))
+        self.thisptr = new Tx(name, chrom, start, end, ord(strand))
+        
+        if exons is not None and cds is not None:
+            self.set_exons(exons, cds)
+            self.set_cds(cds)
+            
+            if sequence is not None:
+                self.add_genomic_sequence(sequence, offset)
+    
     def __dealloc__(self):
         del self.thisptr
     
     def __repr__(self):
-        return "{0}({1} {2}:{3}-{4})".format(self.__class__.__name__,
-            self.thisptr.get_name(), self.thisptr.get_chrom(),
-            self.thisptr.get_start(), self.thisptr.get_end())
+        
+        exons = [ (x['start'], x['end']) for x in self.get_exons() ]
+        cds = [ (x['start'], x['end']) for x in self.get_cds() ]
+        seq = self.get_genomic_sequence()
+        
+        if len(seq) > 40:
+            seq = seq[:20] + '...[{} bp]...'.format(len(seq) - 40) + seq[-20:]
+        
+        if exons == []:
+            exons = None
+        
+        if cds == []:
+            cds = None
+        
+        if seq == '':
+            seq = None
+        else:
+            seq = '"' + seq + '"'
+        
+        return 'Transcript(name="{}", chrom="{}", start={}, end={}, strand="{}", ' \
+            'exons={}, cds={}, sequence={}, offset={})'.format(self.get_name(),
+                self.get_chrom(), self.get_start(), self.get_end(),
+                self.get_strand(), exons, cds, seq, self.get_genomic_offset())
     
     def __str__(self):
         return self.__repr__()
