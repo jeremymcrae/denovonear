@@ -203,6 +203,18 @@ class TestTranscriptPy(unittest.TestCase):
         # the line below would give an error.
         c = a + b
     
+    def test_merge_coordinates(self):
+        """ test that we can merge transcripts with odd overlaps
+        """
+        
+        a = Transcript("a", "1", 10, 20, "+")
+        
+        exons1 = [{'start': 10, 'end': 20}, {'start': 25, 'end': 40}]
+        exons2 = [{'start': 10, 'end': 30}]
+        
+        self.assertEqual(a.merge_coordinates(exons1, exons2),
+            a.merge_coordinates(exons2, exons1))
+    
     def test_in_exons(self):
         """ test that in_exons() works correctly
         """
