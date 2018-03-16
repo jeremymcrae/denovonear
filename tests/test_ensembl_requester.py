@@ -4,20 +4,23 @@
 import json
 import unittest
 import time
+import tempfile
+import shutil
 
 from denovonear.ensembl_requester import EnsemblRequest
-
-ensembl = EnsemblRequest(cache_folder="cache", genome_build="grch37")
 
 class TestEnsemblRequestPy(unittest.TestCase):
     """ unit test the EnsemblRequest class
     """
     
-    def setUp(self):
-        """ construct an EnsemblRequest object for unit tests
-        """
-        
-        self.ensembl = ensembl
+    @classmethod
+    def setUpClass(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.ensembl = EnsemblRequest(self.temp_dir, genome_build="grch37")
+    
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree(self.temp_dir)
     
     def test_open_url(self):
         """ test that open_url() works correctly

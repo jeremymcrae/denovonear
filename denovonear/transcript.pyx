@@ -19,18 +19,61 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 '''
 
+from itertools import combinations
+
 cdef class Transcript:
-    def __cinit__(self, transcript_id, chrom, start, end, strand):
-        transcript_id = transcript_id.encode('utf8')
+    def __cinit__(self, name, chrom, start, end, strand, exons=None,
+            cds=None, sequence=None, offset=0):
+        ''' construct a Transcript object
+        
+        Args:
+            name: ID of the transcript
+            start: position in bp at 5' edge of transcript (on + strand)
+            end: position in bp at 3' edge of transcript (on + strand)
+            exons: list of tuples defining start and end positions of exons
+            cds: list of tuples defining start and end positions of CDS regions
+            sequence: DNA sequence of genome region of the transcript.
+            offset: how many base pairs the DNA sequence extends outwards
+        '''
+        
+        name = name.encode('utf8')
         chrom = chrom.encode('utf8')
-        self.thisptr = new Tx(transcript_id, chrom, start, end, ord(strand))
+        self.thisptr = new Tx(name, chrom, start, end, ord(strand))
+        
+        if exons is not None and cds is not None:
+            self.set_exons(exons, cds)
+            self.set_cds(cds)
+            
+            if sequence is not None:
+                self.add_genomic_sequence(sequence, offset)
+    
     def __dealloc__(self):
         del self.thisptr
     
     def __repr__(self):
-        return "{0}({1} {2}:{3}-{4})".format(self.__class__.__name__,
-            self.thisptr.get_name(), self.thisptr.get_chrom(),
-            self.thisptr.get_start(), self.thisptr.get_end())
+        
+        exons = [ (x['start'], x['end']) for x in self.get_exons() ]
+        cds = [ (x['start'], x['end']) for x in self.get_cds() ]
+        seq = self.get_genomic_sequence()
+        
+        if len(seq) > 40:
+            seq = seq[:20] + '...[{} bp]...'.format(len(seq) - 40) + seq[-20:]
+        
+        if exons == []:
+            exons = None
+        
+        if cds == []:
+            cds = None
+        
+        if seq == '':
+            seq = None
+        else:
+            seq = '"' + seq + '"'
+        
+        return 'Transcript(name="{}", chrom="{}", start={}, end={}, strand="{}", ' \
+            'exons={}, cds={}, sequence={}, offset={})'.format(self.get_name(),
+                self.get_chrom(), self.get_start(), self.get_end(),
+                self.get_strand(), exons, cds, seq, self.get_genomic_offset())
     
     def __str__(self):
         return self.__repr__()
@@ -59,24 +102,31 @@ cdef class Transcript:
         
         self.thisptr.set_exons(exon_ranges, cds_ranges)
     
+    def get_overlaps(self, exon, regions):
+        ''' find all regions which overlap a given region
+        '''
+        return [ i for i, x in enumerate(regions) if
+            exon['start'] <= x['end'] and exon['end'] >= x['start'] ]
     
-    def get_overlap(self, exon, regions):
-        ''' find the union of ranges for overlapping regions
+    def insert_region(self, coords, region):
+        ''' include a region into a list of regions
+        
+        To include a region, we have to check which pre-existing regions the new
+        region overlaps, so any overlaps can be merged into a single region.
         
         Args:
-            exon: dictionary of start and end positions for a single exon
-            regions: list of start and end position dictionaries.
-        
-        Returns:
-            list of start and end positions, or None if no matches found
+            coords: list of {start: X, end: Y} dictionaries
+            region: dict of {'start': X, 'end': Y} positions
         '''
+        indices = self.get_overlaps(region, coords)
+        overlaps = [ coords[i] for i in indices ]
+        start = min( x['start'] for x in overlaps + [region] )
+        end = max( x['end'] for x in overlaps + [region] )
         
-        for region in regions:
-            if (exon['start'] <= region['end'] and exon['end'] >= region['start']):
-                return {'start': min(exon['start'], region['start']),
-                    'end': max(exon['end'], region['end'])}
+        for i in sorted(indices, reverse=True):
+            del coords[i]
         
-        return None
+        return coords + [{'start': start, 'end': end}]
     
     def merge_coordinates(self, first, second):
         ''' merge two sets of coordinates, to get the union of regions
@@ -91,26 +141,17 @@ cdef class Transcript:
         Returns:
             list of [start, end] lists, sorted by position.
         '''
-        
         coords = []
-        for x in first:
-            overlap = self.get_overlap(x, second)
+        for a, b in combinations(first + second, 2):
+            if a['start'] <= b['end'] and a['end'] >= b['start']:
+                region = {'start': min(a['start'], b['start']),
+                    'end': max(a['end'], b['end'])}
+                a, b = region, region
             
-            if overlap is not None:
-                coords.append(overlap)
-            else:
-                coords.append(x)
+            coords = self.insert_region(coords, a)
+            coords = self.insert_region(coords, b)
         
-        # include the second's regions that didn't overlap the first's regions
-        for x in second:
-            overlap = self.get_overlap(x, coords)
-            
-            if overlap is None:
-                coords.append(x)
-        
-        coords = [ ( x['start'], x['end'] ) for x in coords ]
-        
-        return sorted(coords)
+        return [ (x['start'], x['end']) for x in sorted(coords, key=lambda x: x['start']) ]
     
     def merge_genomic_seq(self, other):
         ''' merge the genomic sequence from two transcripts

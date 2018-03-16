@@ -13,10 +13,10 @@ IS_PYTHON3 = sys.version_info[0] == 3
  
 if IS_PYTHON3:
     import urllib.request as request
-    from urllib.error import HTTPError
+    from urllib.error import HTTPError, URLError
 else:
     import urllib2 as request
-    from urllib2 import HTTPError
+    from urllib2 import HTTPError, URLError
 
 from denovonear.ensembl_cache import EnsemblCache
 
@@ -86,7 +86,7 @@ class EnsemblRequest(object):
             # if we get a http error, we still process the status code, since a
             # later step deals with different status codes differently.
             handler = error
-        except ConnectionResetError:
+        except (URLError, ConnectionResetError, TimeoutError):
             # if we get a ConnectionResetError, assume something has gone wrong
             # with the server. Later code will wait before retrying.
             return '', 500, headers

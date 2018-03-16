@@ -20,6 +20,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
 import unittest
+import tempfile
+import shutil
 
 from denovonear.load_gene import get_transcript_lengths, construct_gene_object, \
     get_de_novos_in_transcript, get_transcript_ids, load_gene, \
@@ -31,7 +33,14 @@ class TestLoadGenePy(unittest.TestCase):
     """ unit test functions to load genes
     """
     
-    ensembl = EnsemblRequest(cache_folder="cache", genome_build="grch37")
+    @classmethod
+    def setUpClass(self):
+        self.temp_dir = tempfile.mkdtemp()
+        self.ensembl = EnsemblRequest(self.temp_dir, genome_build="grch37")
+    
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree(self.temp_dir)
     
     def set_transcript(self):
         """ construct a transcript for a known gene

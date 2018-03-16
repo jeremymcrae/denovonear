@@ -25,7 +25,6 @@ from __future__ import absolute_import
 
 import unittest
 import tempfile
-import random
 import os
 import sys
 import shutil
@@ -41,46 +40,21 @@ class TestEnsemblCachePy(unittest.TestCase):
     """ unit test the EnsemblCache class
     """
     
-    def setUp(self):
-        """ construct an EnsemblCache object for unit tests
-        """
-        
-        # set up a random string to use as a directory name
-        hash_string = None
-        while hash_string is None:
-            string = "%8x" % random.getrandbits(64)
-            string = string.strip()
-            if not self.is_number(string):
-                hash_string = string
-        
-        # make a temp directory for the cache file
-        self.temp_dir = os.path.join(tempfile.gettempdir(), hash_string)
-        os.mkdir(self.temp_dir)
-        
-        # construct the cache object
+    @classmethod
+    def setUpClass(self):
+        self.temp_dir = tempfile.mkdtemp()
         self.cache = EnsemblCache(self.temp_dir, "grch37")
         self.cache.set_ensembl_api_version("3.0.0")
     
-    def is_number(self, string):
-        """ checks if a string can be converted to a number
-        """
-        
-        try:
-            float(string)
-            return True
-        except ValueError:
-            return False
-    
-    def tearDown(self):
-        """ remove the temp directory (and contents) containing the sql cache
-        """
-        
+    @classmethod
+    def tearDownClass(self):
         shutil.rmtree(self.temp_dir)
     
     def test_retrieve_data(self):
         """ test that retrieve_data() works correctly
         """
         
+        del self.cache.data
         # check that we raise an error if the data hasn't been set already
         with self.assertRaises(AttributeError):
             self.cache.retrieve_data()
@@ -154,7 +128,7 @@ class TestEnsemblCachePy(unittest.TestCase):
         
         # set up the data to go in the database
         current_date = datetime.strftime(datetime.today(), "%Y-%m-%d")
-        url = "http://beta.rest.ensembl.org/feature/id/temp1?feature=exon"
+        url = "http://beta.rest.ensembl.org/feature/id/temp2?feature=exon"
         key = self.cache.get_key_from_url(url)
         api_version = self.cache.api_version
         temp_data = "temp_data"
