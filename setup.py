@@ -40,7 +40,7 @@ weights = cythonize([
 setup (name="denovonear",
         description='Package to examine de novo clustering',
         long_description=io.open('README.rst', encoding='utf-8').read(),
-        version="0.6.0",
+        version="0.6.2",
         author="Jeremy McRae",
         author_email="jeremy.mcrae@sanger.ac.uk",
         license="MIT",
