@@ -22,7 +22,7 @@ install:
 script:
  - python setup.py test
  - denovonear cluster --in data/example_de_novos.txt --out output.txt
- - denovonear transcripts --de-novos data/example_de_novos.txt --out output.txt \
+ - denovonear transcripts --de-novos data/example_de_novos.txt --out output.txt
      --all-transcripts
  - denovonear rates --genes data/example_gene_ids.txt --out output.txt
  - python -m coverage run --source=./denovonear -m unittest discover
