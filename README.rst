@@ -15,6 +15,7 @@ Install
 -------
 
 .. code:: bash
+
     pip install denovonear
 
 
