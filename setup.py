@@ -52,6 +52,7 @@ setup (name="denovonear",
                           'cython >= 0.19.0'
         ],
         package_data={"denovonear": ['data/rates.txt', 'weights.pxd']},
+        entry_points={'console_scripts': ['denovonear = denovonear.__main__:main']},
         classifiers=[
             "Development Status :: 5 - Production/Stable",
             "Topic :: Scientific/Engineering :: Bio-Informatics",
