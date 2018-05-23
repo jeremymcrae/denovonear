@@ -67,13 +67,7 @@ class EnsemblRequest(object):
         response = json.loads(r)
         release = response["release"].split(".")
         self.cache.set_ensembl_api_version(response["release"])
-        
-        major = release[0]
-        minor = release[1]
-        
-        if major != "6":
-            raise ValueError("check ensembl api version")
-        
+    
     def open_url(self, url, headers):
         """ open url with python libraries
         """
