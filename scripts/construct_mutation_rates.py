@@ -2,16 +2,8 @@
 for Ensembl transcript IDs.
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
-import sys
 import os
-import copy
-import math
 import argparse
-import tempfile
 
 from denovonear.load_gene import construct_gene_object
 from denovonear.ensembl_requester import EnsemblRequest

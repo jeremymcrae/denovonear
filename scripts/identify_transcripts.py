@@ -1,16 +1,11 @@
 """ Script to identify transcripts containing de novos
 """
 
-from __future__ import print_function
-from __future__ import division
-from __future__ import absolute_import
-
 import os
 import argparse
 
 from denovonear.load_gene import count_de_novos_per_transcript, minimise_transcripts
 from denovonear.ensembl_requester import EnsemblRequest
-from denovonear.site_specific_rates import SiteRates
 from denovonear.load_de_novos import load_de_novos
 
 def get_options():
