@@ -14,8 +14,6 @@ def get_options():
     
     parser = argparse.ArgumentParser(description="Script to batch process de"
         "novo clustering.")
-    parser.add_argument("--script", required=True, help="Path to denovonear"
-        "clustering script")
     parser.add_argument("--in", dest="input", required=True, help="Path to"
         "file listing known mutations in genes. See example file in data folder"
         "for format.")
@@ -157,7 +155,7 @@ def submit_bsub_job(command, job_id=None, dependent_id=None, memory=None, requeu
     command = " ".join(preamble + command)
     subprocess.call(command, shell=True)
 
-def batch_process(script, de_novo_path, temp_dir, output_path):
+def batch_process(de_novo_path, temp_dir, output_path):
     """ sets up a lsf job array
     """
     
@@ -172,7 +170,7 @@ def batch_process(script, de_novo_path, temp_dir, output_path):
     infile = os.path.join(temp_dir, "tmp.\$LSB_JOBINDEX\.txt")
     outfile = os.path.join(temp_dir, "tmp.\$LSB_JOBINDEX\.output")
     
-    command = ["python", script,
+    command = ["denovonear", "cluster",
         "--in", infile,
         "--out", outfile]
     submit_bsub_job(command, job_id, memory=3500, requeue_code=134, logfile="clustering.bjob")
@@ -192,7 +190,7 @@ def batch_process(script, de_novo_path, temp_dir, output_path):
 def main():
     args = get_options()
     
-    batch_process(args.script, args.input, args.temp_dir, args.out)
+    batch_process(args.input, args.temp_dir, args.out)
 
 if __name__ == '__main__':
     main()

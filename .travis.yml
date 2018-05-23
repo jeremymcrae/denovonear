@@ -21,16 +21,10 @@ install:
  - python setup.py install
 script:
  - python setup.py test
- - "python scripts/clustering.py \
-     --in data/example_de_novos.txt \
-     --out output.txt"
- - "python scripts/identify_transcripts.py \
-     --de-novos data/example_de_novos.txt \
-     --out output.txt \
-     --all-transcripts"
- - "python scripts/construct_mutation_rates.py \
-     --genes data/example_gene_ids.txt \
-     --out output.txt"
+ - denovonear cluster --in data/example_de_novos.txt --out output.txt
+ - denovonear transcripts --de-novos data/example_de_novos.txt --out output.txt \
+     --all-transcripts
+ - denovonear rates --genes data/example_gene_ids.txt --out output.txt
  - python -m coverage run --source=./denovonear -m unittest discover
 after_success:
  - coveralls

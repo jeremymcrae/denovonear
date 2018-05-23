@@ -11,16 +11,11 @@ regions. The default rates are per-trinucleotide based see `Nature Genetics
 you can use your own rates, or even longer sequence contexts, such as 5-mers or
 7-mers.
 
-Obtain the code from the repository with:
+Install
+-------
 
 .. code:: bash
-
-    git clone https://github.com/jeremymcrae/denovonear.git
-    cd denovonear
-    python setup.py install --user
-    
-    # Alternatively
-    pip install git+git://github.com/jeremymcrae/denovonear.git --user
+    pip install denovonear
 
 
 Usage
@@ -64,11 +59,11 @@ rates by consequence at each site
     rates['missense'].get_summed_rate()
 
 
-You can also analyse de novo clustering with a script in the repository:
+You can also analyse de novo clustering via the denovonear command:
 
 .. code:: bash
 
-    python scripts/clustering.py \
+    denovonear cluster \
        --in data/example_de_novos.txt \
        --out output.txt
 
@@ -106,7 +101,7 @@ can be identified with:
 
 .. code:: bash
 
-    python scripts/identify_transcripts.py \
+    denovonear transcripts \
         --de-novos data/example_de_novos.txt \
         --out output.txt \
         --all-transcripts
@@ -127,7 +122,7 @@ generated with:
 
 .. code:: bash
 
-    python scripts/construct_mutation_rates.py \
+    denovonear rates \
         --genes data/example_gene_ids.txt \
         --out output.txt
 
