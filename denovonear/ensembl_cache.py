@@ -6,6 +6,7 @@ import os
 import sqlite3
 import sys
 import time
+import random
 import zlib
 from datetime import datetime
 
@@ -124,13 +125,16 @@ class EnsemblCache(object):
         
         return self.data
     
-    def cache_url_data(self, url, data):
+    def cache_url_data(self, url, data, attempt=0):
         """ cache the data retrieved from ensembl
         
         Args:
             url: URL for the Ensembl REST service
             data: response data from Ensembl
         """
+        
+        if attempt > 5:
+            raise ValueError('too many attempts at writing to the cache')
         
         key = self.get_key_from_url(url)
         
@@ -144,17 +148,24 @@ class EnsemblCache(object):
         if IS_PYTHON3:
             data = data.encode("utf-8")
         
-        data = zlib.compress(data)
+        compressed = zlib.compress(data)
         
         # python2 sqlite3 can't write "8-bit bytestrings", but it can handle
         # buffer versions of the bytestrings
         if IS_PYTHON2:
-            data = buffer(data)
+            compressed = buffer(compressed)
         
-        t = (key, self.genome_build, current_date, self.api_version, data)
+        t = (key, self.genome_build, current_date, self.api_version, compressed)
         
-        self.c.execute("INSERT OR REPLACE INTO ensembl (key, genome_build, cache_date, api_version, data) VALUES (?,?,?,?,?)", t)
-        self.conn.commit()
+        cmd = "INSERT OR REPLACE INTO ensembl (key, genome_build, cache_date, api_version, data) VALUES (?,?,?,?,?)"
+        try:
+            self.c.execute(cmd, t)
+            self.conn.commit()
+        except sqlite3.OperationalError:
+            # if we hit a sqlite locking error, wait a random time so conflicting
+            # instances are less likely to reconflict, then retry
+            time.sleep(random.uniform(1, 10))
+            self.cache_url_data(url, data.decode('utf-8'), attempt + 1)
     
     def get_key_from_url(self, url):
         """ parses the url into a list of folder locations
