@@ -24,45 +24,27 @@ class EnsemblCache(object):
         Args:
             cache_folder: path to the cache
         """
-        
-        self.cache_folder = cache_folder
-        self.cache_path = os.path.join(self.cache_folder, "ensembl_cache.db")
-        
+        self.api_version = ('1')
         self.genome_build = genome_build
         self.today = datetime.today()
         
-        self.connect_to_database()
-    
-    def connect_to_database(self):
-        """ connect to a sqlite database for the cached data (creates a new
-        database if it doesn't already exist).
-        """
-        
-        # create a folder for the cache database (this will raise an error
-        # if we cannot create the folder)
-        if not os.path.exists(self.cache_folder):
-            os.mkdir(self.cache_folder)
+        if not os.path.exists(cache_folder):
+            os.mkdir(cache_folder)
         
         # generate a database with tables if it doesn't already exist
-        if not os.path.exists(self.cache_path):
-            conn = sqlite3.connect(self.cache_path)
-            c = conn.cursor()
+        path = os.path.join(cache_folder, "ensembl_cache.db")
+        if not os.path.exists(path):
             try:
-                c.execute(u"CREATE TABLE ensembl (key text PRIMARY KEY, genome_build text, cache_date text, api_version text, data blob)")
-                conn.commit()
-                c.close()
+                with sqlite3.connect(path) as conn:
+                    with conn as cursor:
+                        cursor.execute("CREATE TABLE ensembl " \
+                            "(key text PRIMARY KEY, genome_build text, " \
+                            "cache_date text, api_version text, data blob)")
             except sqlite3.OperationalError:
-                # occurs when multiple processes simultaneously try to create the
-                # database
-                
-                # briefly sleep, so the process creating the database has time to
-                # construct it
-                c.close()
-                time.sleep(5)
-            
-        self.conn = sqlite3.connect(self.cache_path)
+                time.sleep(random.uniform(1, 5))
+        
+        self.conn = sqlite3.connect(path)
         self.conn.row_factory = sqlite3.Row
-        self.c = self.conn.cursor()
     
     def set_ensembl_api_version(self, version):
         """ set the ensembl API version, so we can check for obsolete data
@@ -73,57 +55,39 @@ class EnsemblCache(object):
         
         self.api_version = version
     
-    def check_if_data_in_cache(self, url):
-        """ checks if the data for a url has already been stored in the cache
-        
-        Makes sure that the data is not out of date, by only allowing data that
-        is less than six months old, and produced by the same Ensembl REST API
-        version.
+    def get_cached_data(self, url):
+        """ get cached data for a url if stored in the cache and not outdated
         
         Args:
             url: URL for the Ensembl REST service
         
         Returns:
-            True/False for having the data in the cache
+            data if data in cache, else None
         """
         
         key = self.get_key_from_url(url)
         
-        self.c.execute("SELECT * FROM ensembl WHERE key =? AND genome_build=?", (key, self.genome_build))
-        row = self.c.fetchone()
+        with self.conn as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM ensembl WHERE key=? AND genome_build=?",
+                (key, self.genome_build))
+        row = cursor.fetchone()
         
         # if the data has been cached, check that it is not out of date, and
         # the data was generated from the same Ensembl API version
         if row is not None:
             api_version = row["api_version"]
-            
-            # by default extract the data, so we don't have to repeat the
-            # sql query later.
-            self.data = zlib.decompress(row["data"])
+            data = zlib.decompress(row["data"])
             if IS_PYTHON3:
-                self.data = self.data.decode("utf-8")
+                data = data.decode("utf-8")
             
-            cache_date = datetime.strptime(row["cache_date"], "%Y-%m-%d")
-            diff = self.today - cache_date
+            date = datetime.strptime(row["cache_date"], "%Y-%m-%d")
+            diff = self.today - date
             
             if diff.days < 180 and self.api_version == api_version:
-                return True
+                return data
         
-        return False
-    
-    def retrieve_data(self):
-        """retrieves data for a URL (checked earlier that this exists)
-        
-        The function is only used if the data exists in the cache. In order to
-        check if the data is in the cache, we selected database rows, and
-        parsed the contents (to check if the data is obsolete). Rather than
-        reselecting the data, just use the data loaded earlier.
-        
-        Returns:
-            the data object for the URL (which will be parsed elsewhere)
-        """
-        
-        return self.data
+        return None
     
     def cache_url_data(self, url, data, attempt=0):
         """ cache the data retrieved from ensembl
@@ -157,10 +121,11 @@ class EnsemblCache(object):
         
         t = (key, self.genome_build, current_date, self.api_version, compressed)
         
-        cmd = "INSERT OR REPLACE INTO ensembl (key, genome_build, cache_date, api_version, data) VALUES (?,?,?,?,?)"
+        cmd = "INSERT OR REPLACE INTO ensembl " \
+            "(key, genome_build, cache_date, api_version, data) VALUES (?,?,?,?,?)"
         try:
-            self.c.execute(cmd, t)
-            self.conn.commit()
+            with self.conn as cursor:
+                cursor.execute(cmd, t)
         except sqlite3.OperationalError:
             # if we hit a sqlite locking error, wait a random time so conflicting
             # instances are less likely to reconflict, then retry
@@ -169,6 +134,10 @@ class EnsemblCache(object):
     
     def get_key_from_url(self, url):
         """ parses the url into a list of folder locations
+        
+        We take a URL like:
+            http://rest.ensembl.org/sequence/id/ENST00000538324?type=genomic;expand_3prime=10;expand_5prime=10
+        and turn it into 'sequence.id.ENST00000538324.genomic'
         
         Args:
             url: URL for the Ensembl REST service
@@ -179,27 +148,20 @@ class EnsemblCache(object):
         
         key = url.split("/")[3:]
         
-        # fix the final bit of the url, which can have additional requirements,
-        # none of which are necessary for uniquely defining the data
-        key[-1] = key[-1].split(";")[0]
+        # fix the final bit of the url, none of which uniquely define the data
+        suffix = key.pop()
+        suffix = suffix.split(";")[0]
         
-        # convert "feature=transcript" to "transcript" or "type=protein" to
-        # "protein"
-        final = key[-1].split("?")
-        if "=" in final[-1]:
-            final[-1] = final[-1].split("=")[1]
+        # convert "LONG_ID?feature=transcript" to ['LONG_ID', "transcript"] etc
+        id = suffix.split("?", 1)
+        suffix = id.pop()
+        if "=" in suffix:
+            _, suffix = suffix.split("=")
         
-        key = key[:-1] + final
+        key += id + [suffix]
         
-        # replace characters not tolerated in keys
-        for pos in range(len(key)):
-            key[pos] = key[pos].replace(":", "_")
+        # replace characters not tolerated in keys and remove blank entries
+        key = ( x.replace(':', '_') for x in key )
+        key = ( x for x in key if x != '' )
         
-        # if the url ended with "?", then the final list element will be "",
-        # which we should remove
-        if key[-1] == "":
-            key = key[:-1]
-        
-        key = ".".join(key)
-        
-        return key
+        return ".".join(key)

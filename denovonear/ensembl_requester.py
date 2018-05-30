@@ -59,10 +59,10 @@ class EnsemblRequest(object):
         change, and we can manually check the responses for the new version.
         """
         
-        self.request_attempts = 0
-        headers = {"Content-Type": "application/json"}
+        self.attempt = 0
+        headers = {"content-type": "application/json"}
         ext = "/info/rest"
-        r = self.ensembl_request(ext, "version_check", headers)
+        r = self.ensembl_request(ext, headers)
         
         response = json.loads(r)
         release = response["release"].split(".")
@@ -72,6 +72,11 @@ class EnsemblRequest(object):
         """ open url with python libraries
         """
         
+        data = self.cache.get_cached_data(url)
+        if data is not None:
+            return data, 200, headers
+        
+        self.rate_limit_ensembl_requests()
         req = request.Request(url, headers=headers)
         
         try:
@@ -93,41 +98,37 @@ class EnsemblRequest(object):
         # parse the headers into a key, value dictionary
         headers = dict(zip(map(str.lower, handler.headers.keys()), handler.headers.values()))
         
+        now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+        logging.warning("{}\t{}\t{}".format(now, status_code, url))
+        
         return response, status_code, headers
     
-    def ensembl_request(self, ext, sequence_id, headers):
+    def ensembl_request(self, ext, headers):
         """ obtain sequence via the ensembl REST API
         """
         
-        self.request_attempts += 1
-        if self.request_attempts > 5:
+        self.attempt += 1
+        if self.attempt > 5:
             raise ValueError("too many attempts, figure out why its failing")
-            
-        if self.cache.check_if_data_in_cache(self.server + ext):
-            return self.cache.retrieve_data()
         
-        self.rate_limit_ensembl_requests()
-        response, status_code, requested_headers = self.open_url(self.server + ext, headers=headers)
-        logging.warning("{0}\t{1}\t{2}\t{3}".format(\
-            time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), status_code, \
-            sequence_id, self.server + ext))
+        response, status, requested_headers = self.open_url(self.server + ext, headers=headers)
         
         # we might end up passing too many simultaneous requests, or too many
         # requests per hour, just wait until the period is finished before
         # retrying
-        if status_code == 429:
+        if status == 429:
             if "retry-after" in requested_headers:
                 time.sleep(float(requested_headers["retry-after"]))
             elif "x-ratelimit-reset" in requested_headers:
                 time.sleep(int(requested_headers["x-ratelimit-reset"]))
             
-            return self.ensembl_request(ext, sequence_id, headers)
+            return self.ensembl_request(ext, headers)
         # retry after 30 seconds if we get service unavailable error
-        elif status_code in [500, 503, 504]:
+        elif status in [500, 503, 504]:
             time.sleep(30)
-            return self.ensembl_request(ext, sequence_id, headers)
-        elif status_code != 200:
-            raise ValueError("Invalid Ensembl response: {0} for {1}.\nSubmitted URL was: {2}{3}\nheaders: {4}\nresponse: {5}".format(status_code, sequence_id, \
+            return self.ensembl_request(ext, headers)
+        elif status != 200:
+            raise ValueError("Invalid Ensembl response: {} for {}.\nSubmitted URL was: {}{}\nheaders: {}\nresponse: {}".format(status, sequence_id, \
                     self.server, ext, requested_headers, response))
         
         # sometimes ensembl returns odd data. I don't know what it is, but the
@@ -137,11 +138,11 @@ class EnsemblRequest(object):
             try:
                 json.loads(response)
             except ValueError:
-                logging.warning("{0}\t{1}\t{2}\t{3}\t{4}".format(\
-                    time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime()), \
-                    status_code, sequence_id, self.server + ext, \
+                now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
+                logging.warning("{}\t{}\t{}\t{}\t{}".format(now,
+                    status, self.server + ext,
                     "cannot obtain json output"))
-                return self.ensembl_request(ext, sequence_id, requested_headers)
+                return self.ensembl_request(ext, requested_headers)
         
         self.cache.cache_url_data(self.server + ext, response)
         
@@ -151,13 +152,13 @@ class EnsemblRequest(object):
         """ obtain the ensembl gene IDs that correspond to a HGNC symbol
         """
         
-        headers = {"Content-Type": "application/json"}
+        headers = {"content-type": "application/json"}
         
         # http://grch37.rest.ensembl.org/xrefs/symbol/homo_sapiens/KMT2A?content-type=application/json
         
-        self.request_attempts = 0
-        ext = "/xrefs/symbol/homo_sapiens/{0}".format(hgnc_symbol)
-        r = self.ensembl_request(ext, hgnc_symbol, headers)
+        self.attempt = 0
+        ext = "/xrefs/symbol/homo_sapiens/{}".format(hgnc_symbol)
+        r = self.ensembl_request(ext, headers)
         
         genes = []
         for item in json.loads(r):
@@ -183,9 +184,9 @@ class EnsemblRequest(object):
         
         self.server = gene_names_server
         headers = {"accept": "application/json"}
-        ext = "/fetch/symbol/{0}".format(hgnc_symbol)
+        ext = "/fetch/symbol/{}".format(hgnc_symbol)
         try:
-            r = self.ensembl_request(ext, hgnc_symbol, headers)
+            r = self.ensembl_request(ext, headers)
         finally:
             self.server = ensembl_server
         
@@ -218,13 +219,13 @@ class EnsemblRequest(object):
              "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", \
               "X", "Y"}
         
-        headers = {"Content-Type": "application/json"}
+        headers = {"content-type": "application/json"}
         
         transcript_ids = []
         for gene_id in gene_ids:
-            self.request_attempts = 0
-            ext = "/overlap/id/{0}?feature=transcript".format(gene_id)
-            r = self.ensembl_request(ext, gene_id, headers)
+            self.attempt = 0
+            ext = "/overlap/id/{}?feature=transcript".format(gene_id)
+            r = self.ensembl_request(ext, headers)
             
             for item in json.loads(r):
                 # ignore non-coding transcripts
@@ -246,11 +247,11 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers = {"Content-Type": "application/json"}
+        headers = {"content-type": "application/json"}
         
-        self.request_attempts = 0
+        self.attempt = 0
         ext = "/sequence/id/{0}?type=genomic;expand_3prime={1};expand_5prime={1}".format(transcript_id, expand)
-        r = self.ensembl_request(ext, transcript_id, headers)
+        r = self.ensembl_request(ext, headers)
         
         gene = json.loads(r)
         
@@ -276,44 +277,44 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers = {"Content-Type": "text/plain"}
+        headers = {"content-type": "text/plain"}
         
-        self.request_attempts = 0
-        ext = "/sequence/id/{0}?type=cds".format(transcript_id)
+        self.attempt = 0
+        ext = "/sequence/id/{}?type=cds".format(transcript_id)
         
-        return self.ensembl_request(ext, transcript_id, headers)
+        return self.ensembl_request(ext,  headers)
     
     def get_protein_seq_for_transcript(self, transcript_id):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers = {"Content-Type": "text/plain"}
+        headers = {"content-type": "text/plain"}
         
-        self.request_attempts = 0
-        ext = "/sequence/id/{0}?type=protein".format(transcript_id)
+        self.attempt = 0
+        ext = "/sequence/id/{}?type=protein".format(transcript_id)
         
-        return self.ensembl_request(ext, transcript_id, headers)
+        return self.ensembl_request(ext, headers)
     
     def get_genomic_seq_for_region(self, chrom, start_pos, end_pos):
         """ obtain the sequence for a genomic region
         """
         
-        headers = {"Content-Type": "text/plain"}
+        headers = {"content-type": "text/plain"}
         
-        self.request_attempts = 0
-        ext = "/sequence/region/human/{0}:{1}..{2}:1".format(chrom, start_pos, end_pos)
+        self.attempt = 0
+        ext = "/sequence/region/human/{}:{}..{}:1".format(chrom, start_pos, end_pos)
         
-        return self.ensembl_request(ext, "{0}:{1}-{2}".format(chrom, start_pos, end_pos), headers)
+        return self.ensembl_request(ext, headers)
     
     def get_chrom_for_transcript(self, transcript_id, hgnc_id):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers = {"Content-Type": "application/json"}
+        headers = {"content-type": "application/json"}
         
-        self.request_attempts = 0
-        ext = "/overlap/id/{0}?feature=gene".format(transcript_id)
-        r =  self.ensembl_request(ext, transcript_id, headers)
+        self.attempt = 0
+        ext = "/overlap/id/{}?feature=gene".format(transcript_id)
+        r =  self.ensembl_request(ext, headers)
         
         for gene in json.loads(r):
             if gene["external_name"] == hgnc_id:
@@ -325,11 +326,11 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers = {"Content-Type": "application/json"}
+        headers = {"content-type": "application/json"}
         
-        self.request_attempts = 0
-        ext = "/overlap/id/{0}?feature=exon".format(transcript_id)
-        r = self.ensembl_request(ext, transcript_id, headers)
+        self.attempt = 0
+        ext = "/overlap/id/{}?feature=exon".format(transcript_id)
+        r = self.ensembl_request(ext, headers)
         
         exon_ranges = []
         for exon in json.loads(r):
@@ -347,11 +348,11 @@ class EnsemblRequest(object):
         """ obtain the sequence for a transcript from ensembl
         """
         
-        headers = {"Content-Type": "application/json"}
+        headers = {"content-type": "application/json"}
         
-        self.request_attempts = 0
-        ext = "/overlap/id/{0}?feature=cds".format(transcript_id)
-        r = self.ensembl_request(ext, transcript_id, headers)
+        self.attempt = 0
+        ext = "/overlap/id/{}?feature=cds".format(transcript_id)
+        r = self.ensembl_request(ext, headers)
         
         cds_ranges = []
         for cds_range in json.loads(r):
