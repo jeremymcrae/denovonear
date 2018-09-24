@@ -183,7 +183,7 @@ class EnsemblRequest(object):
         gene_names_server = "http://rest.genenames.org"
         
         self.server = gene_names_server
-        headers = {"accept": "application/json"}
+        headers = {"accept": "application/json", "content-type": "application/json"}
         ext = "/fetch/symbol/{}".format(hgnc_symbol)
         try:
             r = self.ensembl_request(ext, headers)
