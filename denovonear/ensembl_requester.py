@@ -65,7 +65,6 @@ class EnsemblRequest(object):
         r = self.ensembl_request(ext, headers)
         
         response = json.loads(r)
-        release = response["release"].split(".")
         self.cache.set_ensembl_api_version(response["release"])
     
     def open_url(self, url, headers):
@@ -128,8 +127,8 @@ class EnsemblRequest(object):
             time.sleep(30)
             return self.ensembl_request(ext, headers)
         elif status != 200:
-            raise ValueError("Invalid Ensembl response: {} for {}.\nSubmitted URL was: {}{}\nheaders: {}\nresponse: {}".format(status, sequence_id, \
-                    self.server, ext, requested_headers, response))
+            raise ValueError("Invalid Ensembl response for {}\nheaders: {}\nresponse: {}".format(\
+                    self.server + ext, requested_headers, response))
         
         # sometimes ensembl returns odd data. I don't know what it is, but the
         # json interpreter can't handle it. Rather than trying to catch it,
