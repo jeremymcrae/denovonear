@@ -10,7 +10,7 @@ import time
 import logging
 
 IS_PYTHON3 = sys.version_info[0] == 3
- 
+
 if IS_PYTHON3:
     import urllib.request as request
     from urllib.error import HTTPError, URLError
@@ -213,7 +213,7 @@ class EnsemblRequest(object):
             gene_ids: list of Ensembl gene IDs for the gene
             hgnc_symbols: list of possible HGNC symbols for gene
         """
-    
+        
         chroms = {"1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", \
              "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", \
               "X", "Y"}
@@ -378,7 +378,3 @@ class EnsemblRequest(object):
         
         # set the access time to now, for later checks
         self.prior_time = time.time()
-
-
-
-    
