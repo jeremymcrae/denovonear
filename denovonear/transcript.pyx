@@ -1,3 +1,4 @@
+# cython: language_level=3, boundscheck=False
 '''
 Copyright (c) 2015 Genome Research Ltd.
 
@@ -302,49 +303,18 @@ cdef class Transcript:
             position: an integer-based chromosome position.
         '''
         
-        return self.thisptr.in_exons(position)
+        return self.thisptr.is_exonic(position)
     
-    def find_closest_exon(self, position, exons=None):
+    def get_closest_exon(self, position):
         ''' finds the positions of the exon closest to a position
-        
-        Can optionally specify a different set of exon ranges to check from,
-        such as the CDS positions.
         '''
-        
-        cdef vector[Region] temp
-        cdef Region pair
-        
-        if exons is None:
-            return self.thisptr.find_closest_exon(position)
-        else:
-            for (start, end) in exons:
-                pair.start = start
-                pair.end = end
-                temp.push_back(pair)
-            return self.thisptr.find_closest_exon(position, temp)
+        return self.thisptr.get_closest_exon(position)
     
     def in_coding_region(self, position):
         return self.thisptr.in_coding_region(position)
     
-    def get_exon_containing_position(self, position, exons):
-        '''
-        '''
-        
-        cdef vector[Region] regions
-        cdef Region pair
-        
-        for (start, end) in exons:
-            pair.start = start
-            pair.end = end
-            regions.push_back(pair)
-        
-        return self.thisptr.get_exon_containing_position(position, regions)
-    
-    def get_coding_distance(self, pos_1, pos_2):
-        return self.thisptr.get_coding_distance(pos_1, pos_2)
-        
-    def chrom_pos_to_cds(self, pos):
-        coords = self.thisptr.chrom_pos_to_cds(pos)
+    def get_coding_distance(self, pos):
+        coords = self.thisptr.get_coding_distance(pos)
         
         return {'pos': coords.position, 'offset': coords.offset}
     
@@ -400,3 +370,6 @@ cdef class Transcript:
     
     def get_boundary_distance(self, pos):
         return self.thisptr.get_boundary_distance(pos)
+    
+    def consequence(self, start, end, alt):
+        return self.thisptr.consequence(start, end, alt)

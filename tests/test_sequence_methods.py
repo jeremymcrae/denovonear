@@ -44,14 +44,14 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.assertEqual(self.gene.get_position_on_chrom(10), 180)
         self.assertEqual(self.gene.get_position_on_chrom(11), 120)
         
-        self.assertEqual(self.gene.get_position_on_chrom(10, -1), 179)
-        self.assertEqual(self.gene.get_position_on_chrom(11, 1), 121)
+        self.assertEqual(self.gene.get_position_on_chrom(10, 1), 179)
+        self.assertEqual(self.gene.get_position_on_chrom(11, -1), 121)
         
         # run through all the CDS positions, and make sure that converting
         # between coordinates gives the same position as original
         for pos in range(self.gene.get_start(), self.gene.get_end()):
             if self.gene.in_coding_region(pos):
-                cds = self.gene.chrom_pos_to_cds(pos)
+                cds = self.gene.get_coding_distance(pos)
                 converted = self.gene.get_position_on_chrom(cds['pos'])
                 self.assertEqual(pos, converted)
         
@@ -59,7 +59,7 @@ class TestSequenceMethodsPy(unittest.TestCase):
         self.gene = self.construct_gene()
         for pos in range(self.gene.get_start(), self.gene.get_end()):
             if self.gene.in_coding_region(pos):
-                cds = self.gene.chrom_pos_to_cds(pos)
+                cds = self.gene.get_coding_distance(pos)
                 converted = self.gene.get_position_on_chrom(cds['pos'])
                 self.assertEqual(pos, converted)
     

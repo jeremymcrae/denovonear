@@ -85,7 +85,7 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
     // offset to the closest exon boundary, and use that to place the
     // position within the up or downstream exon, and correct the initial
     // cds boundaries
-    if (!in_exons(cds_min)) {
+    if (!is_exonic(cds_min)) {
         Region region = fix_cds_boundary(cds_min);
         int delta = std::abs(region.end - region.start);
         
@@ -94,7 +94,7 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
         cds.insert(cds.begin(), region);
     }
     
-    if (!in_exons(cds_max)) {
+    if (!is_exonic(cds_max)) {
         Region region = fix_cds_boundary(cds_max);
         int delta = std::abs(region.end - region.start);
         
@@ -102,6 +102,11 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
         cds[idx] = Region {cds[idx].start, cds[idx].end - delta};
         cds_max = region.end;
         cds.push_back(region);
+    }
+    
+    cds_length = 0;
+    for (auto region : cds) {
+        cds_length += (region.end - region.start) + 1;
     }
 }
 
@@ -119,11 +124,11 @@ Region Tx::fix_cds_boundary(int position) {
         @returns adjusted chromosome positions
     */
     
-    if ( in_exons(position) ) {
+    if ( is_exonic(position) ) {
         throw std::invalid_argument( "position shouldn't be in exons" );
     }
     
-    Region region = find_closest_exon(position);
+    Region region = get_closest_exon(position);
     
     int start_dist = std::abs(position - region.start);
     int end_dist = std::abs(position - region.end);
@@ -132,12 +137,12 @@ Region Tx::fix_cds_boundary(int position) {
     int end;
     if (start_dist < end_dist) {
         // if we are closer to the start, then we go back an exon
-        int i = get_exon_containing_position(region.start, exons) - 1;
+        int i = closest_exon_num(region.start) - 1;
         end = exons[i].end;
         start = end - start_dist;
     } else {
         // if we are closer to the end, then we go forward an exon
-        int i = get_exon_containing_position(region.end, exons) + 1;
+        int i = closest_exon_num(region.end) + 1;
         start = exons[i].start;
         end = start + end_dist;
     }
@@ -165,184 +170,152 @@ int Tx::get_cds_end() {
     }
 }
 
-bool Tx::in_exons(int position) {
+bool Tx::is_exonic(int pos) {
     /**
        checks if a position lies within the exon ranges
        
        @position integer chromosome position e.g. 10000000
     */
     
-    for (auto &region : exons) {
-        if (region.start <= position && position <= region.end) {
-            return true;
-        }
-    }
-    
-    return false;
+    Region exon = get_closest_exon(pos);
+    return (pos >= exon.start) & (pos <= exon.end);
 }
 
-Region Tx::find_closest_exon(int position) {
-    /**
-       checks if a position lies within the exon ranges
-       
-       @position integer chromosome position e.g. 10000000
+bool compareRegion(const Region& a, int b) {
+    // include a sort operator for Region structs. This allows quick searching
+    // of vectors of Regions
+    return a.start < b;
+}
+
+int Tx::closest_exon_num(int pos) {
+    /* find the index of the closest exon to a chromosome position
     */
-    
-    return find_closest_exon(position, exons);
+    return closest_exon_num(pos, exons);
 }
 
-Region Tx::find_closest_exon(int position, std::vector<Region> & ranges) {
+int Tx::closest_exon_num(int pos, std::vector<Region> group) {
     /**
-       checks if a position lies within the exon ranges
-       
-       @position integer chromosome position e.g. 10000000
-    */
-    
-    long max_distance = 1000000000;
-    int ref_start = 0;
-    int ref_end = 0;
-    
-    for (auto &region : ranges) {
-        int start_dist = std::abs(region.start - position);
-        int end_dist = std::abs(region.end - position);
-        
-        if (start_dist < max_distance) {
-            ref_start = region.start;
-            ref_end = region.end;
-            max_distance = start_dist;
-        }
-        
-        if (end_dist < max_distance) {
-            ref_start = region.start;
-            ref_end = region.end;
-            max_distance = end_dist;
-        }
-    }
-    
-    return Region {ref_start, ref_end};
-}
-
-bool Tx::in_coding_region(int position) {
-    /**
-       checks if a position lies within the exon ranges
-       
-       @position integer chromosome position e.g. 10000000
-    */
-    
-    for (auto &region : cds) {
-        if (region.start <= position && position <= region.end) {
-            return true;
-        }
-    }
-    
-    return false;
-}
-
-int Tx::get_exon_containing_position(int position, std::vector<Region> & ranges) {
-    /**
-        find the exon number for a position within an exon
+        find the index for the closest exon/CDS to a chromosome position
         
         @position: chromosomal nucleotide position
-        @ranges: vector of exon regions
         
         @returns number of exon containing the position
     */
-    
-    int exon_num = 0;
-    
-    for (auto &region : ranges) {
-        if (region.start <= position && position <= region.end) {
-            return exon_num;
-        }
-        exon_num += 1;
+    int idx = std::lower_bound(group.begin(), group.end(), pos, compareRegion) - group.begin();
+    if (idx == 0) {
+        return idx;
     }
     
-    throw std::logic_error( "you've tried to identify the region containing a"
-        "position that doesn't occur within the defined set of regions" );
+    Region a = exons[idx - 1];
+    Region b = exons[idx];
+    
+    if ((pos >= a.start) & (pos <= a.end)) {
+        return idx - 1;
+    } else if ((pos >= b.start) & (pos <= b.end)) {
+        return idx;
+    }
+    
+    int delta_a = std::min(std::abs(pos - a.start), std::abs(pos - a.end));
+    int delta_b = std::min(std::abs(pos - b.start), std::abs(pos - b.end));
+    
+    if (delta_a < delta_b) {
+        return idx - 1;
+    }
+    
+    return idx;
 }
 
-int Tx::get_coding_distance(int pos_1, int pos_2) {
+Region Tx::get_closest_exon(int pos) {
     /**
-        find the distance in coding bp between two chr positions
+       find the closest exon for a chromosome position
+       
+       @position integer chromosome position e.g. 10000000
+    */
+    int idx = closest_exon_num(pos);
+    return exons[idx];
+}
+
+bool Tx::in_coding_region(int pos) {
+    /**
+       checks if a position lies within the CDS
+       
+       @position integer chromosome position e.g. 10000000
+    */
+    int idx = closest_exon_num(pos, cds);
+    Region region = cds[idx];
+    return (pos >= region.start) & (pos <= region.end);
+}
+
+CDS_coords Tx::to_closest_exon(int pos) {
+    /* shift an intronic site to the nearest exon boundary (but track the offset)
+    */
+    Region exon = get_closest_exon(pos);
+    int site;
+    if (std::abs(exon.start - pos) < std::abs(exon.end - pos)) {
+        site = exon.start;
+    } else {
+        site = exon.end;
+    }
+    
+    bool fwd = get_strand() == '+';
+    int offset = (fwd) ? pos - site : site - pos;
+    return CDS_coords {site, offset};
+}
+
+CDS_coords Tx::get_coding_distance(int pos) {
+    /**
+        find the distance in coding bp to the CDS start
         
         @pos_1: first chromosome position
-        @pos_2: second chromosome position
         
-        @returns distance in coding sequence base pairs between two positions
-        
-        @raises invalid_argument if position not in coding region
+        @returns CDS_coords, which contains distance in coding sequence base
+            pairs between two positions and an offset for distance into the
+            intron
     */
-    
-    // make sure that the positions are within the coding region, otherwise
-    // there's no point trying to calculate the coding distance
-    if ( !in_coding_region(pos_1) ) {
-        throw std::invalid_argument( "not in coding region" );
-    }
-    if ( !in_coding_region(pos_2) ) {
-        throw std::invalid_argument( "not in coding region" );
-    }
-    
-    int min_pos = std::min(pos_1, pos_2);
-    int max_pos = std::max(pos_1, pos_2);
-    
-    int exon_1 = get_exon_containing_position(min_pos, cds);
-    int exon_2 = get_exon_containing_position(max_pos, cds);
-    
-    int delta = 0;
-    if (exon_1 == exon_2) {
-        delta = max_pos - min_pos;
-    } else {
-        int dist_1 = cds[exon_1].end - min_pos;
-        int dist_2 = (max_pos - cds[exon_2].start) + 1;
-        
-        delta = dist_1 + dist_2;
-        for (int i=exon_1 + 1; i < exon_2; i++) {
-            delta += (cds[i].end - cds[i].start) + 1;
-        }
-    }
-    
-    return delta;
-}
-
-CDS_coords Tx::chrom_pos_to_cds(int pos) {
-    /**
-        returns a chromosome position as distance from CDS ATG start
-    */
-    
-    // need to convert the de novo event positions into CDS positions
     int cds_start = get_cds_start();
     
-    try {
-        return CDS_coords { get_coding_distance(cds_start, pos), 0 } ;
-    } catch ( const std::invalid_argument& e ) {
-        // catch the splice site functional mutations
-        Region exon = find_closest_exon(pos);
-        
-        int site;
-        if (std::abs(exon.start - pos) < std::abs(exon.end - pos)) {
-            site = exon.start;
-        } else {
-            site = exon.end;
-        }
-        
-        int offset = pos - site;
-        
-        // catch variants near an exon, but where the exon isn't in the CDS
-        if (!in_coding_region(site)) {
-            std::string msg = "Not near coding exon: " + std::to_string(pos) +
-                " in transcript " + get_name();
-            throw std::logic_error(msg);
-        }
-        
-        // ignore positions outside the exons that are too distant from a boundary
-        if (std::abs(offset) >= 9) {
-            std::string msg = "distance to exon (" + std::to_string(std::abs(offset)) +
-                ") > 8 bp for " + std::to_string(pos) + " in transcript "+ get_name();
-            throw std::logic_error(msg);
-        }
-        
-        return CDS_coords { get_coding_distance(cds_start, site), offset };
+    int offset = 0;
+    if ( !is_exonic(pos) ) {
+        CDS_coords site = to_closest_exon(pos);
+        offset = site.offset;
+        pos = site.position;
     }
+    
+    int first = closest_exon_num(cds_start);
+    int alt = closest_exon_num(pos);
+    
+    bool fwd = get_strand() == '+';
+    bool after = alt > first;
+    // bool positive = (fwd & after) | (!fwd & !after);
+    // use positive coding position if the transcript is either:
+    //   a) on the + strand and the site is 3' of CDS start
+    //   b) on the - strand and the site is 5' of CDS start
+    int delta = 0;
+    if (first == alt) {
+        delta = (fwd) ? pos - cds_start : cds_start - pos ;
+    } else {
+        int dist_1;
+        int dist_2;
+        if (after) {
+            dist_1 = (fwd) ? exons[first].end - cds_start : cds_start - exons[first].end;
+            dist_2 = (fwd) ? (pos - exons[alt].start) + 1 : (exons[alt].start - pos) + 1;
+        } else {
+            dist_1 = (fwd) ? exons[first].start - cds_start : cds_start - exons[first].start;
+            dist_2 = (fwd) ? (pos - exons[alt].end) - 1 : (exons[alt].end - pos) + 1;
+        }
+        
+        first += (first < alt) ? 1 : -1;
+        int lo = std::min(first, alt);
+        int hi = std::max(first, alt);
+        delta = dist_1 + dist_2;
+        for (int i=lo; i < hi; i++) {
+            int left = exons[i].start;
+            int right = exons[i].end;
+            delta += (fwd & after) ? (right - left) + 1 : (left - right) - 1;
+        }
+    }
+    
+    return CDS_coords {delta, offset};
 }
 
 void Tx::_cache_exon_cds_positions() {
@@ -357,14 +330,13 @@ void Tx::_cache_exon_cds_positions() {
     exon_to_cds.clear();
     
     for (auto &region : cds) {
-        // get the positions of the exon boundaries in CDS distance from
-        // the start site
-        int start_cds = get_coding_distance(get_cds_start(), region.start);
-        int end_cds = get_coding_distance(get_cds_start(), region.end);
+        // get exon boundaries as CDS distance from the start site
+        CDS_coords start = get_coding_distance(region.start);
+        CDS_coords end = get_coding_distance(region.end);
         
         // cache the CDS positions of the exon boundaries
-        exon_to_cds[region.start] = start_cds;
-        exon_to_cds[region.end] = end_cds;
+        exon_to_cds[region.start] = std::abs(start.position);
+        exon_to_cds[region.end] = std::abs(end.position);
     }
 }
 
@@ -398,7 +370,7 @@ int Tx::get_position_on_chrom(int cds_position, int offset) {
             if (get_strand() == fwd) {
                 return start + (cds_position - start_cds) + offset;
             } else {
-                return start + (end_cds - cds_position) + offset;
+                return start + (end_cds - cds_position) - offset;
             }
         }
     }
@@ -481,6 +453,11 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     }
     
     _fix_cds_length();
+    
+    cds_length = 0;
+    for (auto region : cds) {
+        cds_length += (region.end - region.start) + 1;
+    }
 }
 
 void Tx::_fix_cds_length() {
@@ -575,6 +552,15 @@ std::string Tx::get_centered_sequence(int pos, int length) {
     return genomic_sequence.substr(sequence_pos, length);
 }
 
+std::string Tx::get_seq_in_region(int start, int end) {
+    if (end <= get_start() - gdna_offset || start >= get_end() + gdna_offset) {
+        throw std::invalid_argument( "sequence position not in gene range" );
+    }
+    int pos = start - get_start() + gdna_offset;
+    int length = end - start;
+    return genomic_sequence.substr(pos, length);
+}
+
 std::string Tx::get_codon_sequence(int codon) {
     /**
         get the codon sequence for a given codon_number
@@ -631,10 +617,13 @@ Codon Tx::get_codon_info(int bp) {
     */
     
     bool in_coding = in_coding_region(bp);
+    CDS_coords site = get_coding_distance(bp);
     
     // ignore positions outside the exons that are too distant from a boundary
     if (not in_coding and get_boundary_distance(bp) >= 9) {
         throw std::invalid_argument( "position too distant from an exon" );
+    } else if ((site.position < 0) | (site.position > cds_length)) {
+        throw std::invalid_argument( "position not inside CDS region" );
     }
     
     // define the default values for the codon positions. We check these later
@@ -644,7 +633,7 @@ Codon Tx::get_codon_info(int bp) {
     std::string codon_seq = "";
     std::string initial_aa = "";
     
-    CDS_coords cds_pos = chrom_pos_to_cds(bp);
+    CDS_coords cds_pos = get_coding_distance(bp);
     if (in_coding) {
         codon_number = get_codon_number_for_cds_position(cds_pos.position);
         intra_codon = get_position_within_codon(cds_pos.position);
@@ -664,7 +653,7 @@ int Tx::get_boundary_distance(int bp) {
         @returns distance in base-pairs to the nearest exon boundary.
     */
     
-    Region exon = find_closest_exon(bp);
+    Region exon = get_closest_exon(bp);
     int distance = std::min(std::abs(exon.start - bp), std::abs(exon.end - bp));
     
     // sites within the coding region are actually one bp further away,

@@ -237,30 +237,32 @@ class TestTranscriptPy(unittest.TestCase):
         self.assertFalse(self.gene.in_exons(2001))
         self.assertFalse(self.gene.in_exons(-1100))
     
-    def test_find_closest_exon(self):
-        """ test that find_closest_exon() works correctly
+    def test_get_closest_exon(self):
+        """ test that get_closest_exon() works correctly
         """
         #
         exon_1 = {'start': 1000, 'end': 1200}
         exon_2 = {'start': 1800, 'end': 2000}
         
         # find for positions closer to the first exon
-        self.assertEqual(self.gene.find_closest_exon(0), exon_1)
-        self.assertEqual(self.gene.find_closest_exon(999), exon_1)
-        self.assertEqual(self.gene.find_closest_exon(1000), exon_1)
-        self.assertEqual(self.gene.find_closest_exon(1100), exon_1)
-        self.assertEqual(self.gene.find_closest_exon(1200), exon_1)
-        self.assertEqual(self.gene.find_closest_exon(1201), exon_1)
-        self.assertEqual(self.gene.find_closest_exon(1500), exon_1)
+        self.assertEqual(self.gene.get_closest_exon(0), exon_1)
+        self.assertEqual(self.gene.get_closest_exon(999), exon_1)
+        self.assertEqual(self.gene.get_closest_exon(1000), exon_1)
+        self.assertEqual(self.gene.get_closest_exon(1100), exon_1)
+        self.assertEqual(self.gene.get_closest_exon(1200), exon_1)
+        self.assertEqual(self.gene.get_closest_exon(1201), exon_1)
+        
+        # a site equidistant from the exons will pick the later exon
+        self.assertEqual(self.gene.get_closest_exon(1500), exon_2)
         
         # find for positions closer to the second exon
-        self.assertEqual(self.gene.find_closest_exon(1501), exon_2)
-        self.assertEqual(self.gene.find_closest_exon(1799), exon_2)
-        self.assertEqual(self.gene.find_closest_exon(1800), exon_2)
-        self.assertEqual(self.gene.find_closest_exon(1900), exon_2)
-        self.assertEqual(self.gene.find_closest_exon(2000), exon_2)
-        self.assertEqual(self.gene.find_closest_exon(2001), exon_2)
-        self.assertEqual(self.gene.find_closest_exon(10000), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(1501), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(1799), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(1800), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(1900), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(2000), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(2001), exon_2)
+        self.assertEqual(self.gene.get_closest_exon(10000), exon_2)
     
     def test_in_coding_region(self):
         """ test that in_coding_region() works correctly
@@ -284,20 +286,20 @@ class TestTranscriptPy(unittest.TestCase):
         self.assertFalse(self.gene.in_coding_region(1901))
         self.assertFalse(self.gene.in_coding_region(-1100))
     
-    def test_get_exon_containing_position(self):
-        """ test that get_exon_containing_position() works correctly
-        """
-        
-        exons = [(1000, 1200), (1800, 2000)]
-        
-        self.assertEqual(self.gene.get_exon_containing_position(1000, exons), 0)
-        self.assertEqual(self.gene.get_exon_containing_position(1200, exons), 0)
-        self.assertEqual(self.gene.get_exon_containing_position(1800, exons), 1)
-        self.assertEqual(self.gene.get_exon_containing_position(2000, exons), 1)
-        
-        # raise an error if the position isn't within the exons
-        with self.assertRaises(RuntimeError):
-            self.gene.get_exon_containing_position(2100, exons)
+    # def test_get_exon_containing_position(self):
+    #     """ test that get_exon_containing_position() works correctly
+    #     """
+    #
+    #     exons = [(1000, 1200), (1800, 2000)]
+    #
+    #     self.assertEqual(self.gene.get_exon_containing_position(1000, exons), 0)
+    #     self.assertEqual(self.gene.get_exon_containing_position(1200, exons), 0)
+    #     self.assertEqual(self.gene.get_exon_containing_position(1800, exons), 1)
+    #     self.assertEqual(self.gene.get_exon_containing_position(2000, exons), 1)
+    #
+    #     # raise an error if the position isn't within the exons
+    #     with self.assertRaises(RuntimeError):
+    #         self.gene.get_exon_containing_position(2100, exons)
     
     def test_get_coding_distance(self):
         """ test that get_coding_distance() works correctly
@@ -306,61 +308,74 @@ class TestTranscriptPy(unittest.TestCase):
         # self.gene.cds = [(1100, 1200), (1800, 1900)]
         
         # raise an error for positions outside the CDS
-        with self.assertRaises(ValueError):
-            self.gene.get_coding_distance(1000, 1100)
-        with self.assertRaises(ValueError):
-            self.gene.get_coding_distance(1100, 1300)
+        self.assertEqual(self.gene.get_coding_distance(900), {'pos': -100, 'offset': -100})
+        self.assertEqual(self.gene.get_coding_distance(1000), {'pos': -100, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1051), {'pos': -49, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1300), {'pos': 100, 'offset': 100})
+        self.assertEqual(self.gene.get_coding_distance(1700), {'pos': 101, 'offset': -100})
+        self.assertEqual(self.gene.get_coding_distance(2000), {'pos': 301, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(2100), {'pos': 301, 'offset': 100})
         
         # zero distance between a site and itself
-        self.assertEqual(self.gene.get_coding_distance(1100, 1100), 0)
+        self.assertEqual(self.gene.get_coding_distance(1100), {'pos': 0, 'offset': 0})
         
         # within a single exon, the distance is between the start and end
-        self.assertEqual(self.gene.get_coding_distance(1100, 1200), 100)
+        self.assertEqual(self.gene.get_coding_distance(1200), {'pos': 100, 'offset': 0})
         
         # if we traverse exons, the distance bumps up at exon boundaries
-        self.assertEqual(self.gene.get_coding_distance(1100, 1800), 101)
+        self.assertEqual(self.gene.get_coding_distance(1800), {'pos': 101, 'offset': 0})
         
         # check full distance across gene
-        self.assertEqual(self.gene.get_coding_distance(1100, 1900), 201)
+        self.assertEqual(self.gene.get_coding_distance(1900), {'pos': 201, 'offset': 0})
         
         # check that the distance bumps up for each exon boundary crossed
         cds = [(1100, 1200), (1300, 1400), (1800, 1900)]
         exons = [(1100, 1200), (1300, 1400), (1800, 1900)]
         self.gene = self.construct_gene(exons=exons, cds=cds)
-        self.assertEqual(self.gene.get_coding_distance(1100, 1900), 302)
+        self.assertEqual(self.gene.get_coding_distance(1900), {'pos': 302, 'offset': 0})
+        
+        # now try a gene where the site is in an upstream exon
+        self.gene = self.construct_gene(exons=[(10, 20), (30, 40), (90, 100)],
+            cds= [(30, 40), (90, 95)])
+        self.assertEqual(self.gene.get_coding_distance(15), {'pos': -6, 'offset': 0})
     
     def test_chrom_pos_to_cds(self):
         """ test that chrom_pos_to_cds() works correctly
         """
+        # self.gene.cds = [(1100, 1200), (1800, 1900)]
         
         # note that all of these chr positions are 0-based (ie pos - 1)
-        self.assertEqual(self.gene.chrom_pos_to_cds(1100), {'pos': 0, 'offset': 0})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1101), {'pos': 1, 'offset': 0})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1199), {'pos': 99, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1100), {'pos': 0, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1101), {'pos': 1, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1199), {'pos': 99, 'offset': 0})
         
         # check that outside exon boundaries gets the closest exon position, if
         # the variant is close enough
-        self.assertEqual(self.gene.chrom_pos_to_cds(1200), {'pos': 100, 'offset': 0})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1201), {'pos': 100, 'offset': 1})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1798), {'pos': 101, 'offset': -2})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1799), {'pos': 101, 'offset': -1})
+        self.assertEqual(self.gene.get_coding_distance(1200), {'pos': 100, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1201), {'pos': 100, 'offset': 1})
+        self.assertEqual(self.gene.get_coding_distance(1798), {'pos': 101, 'offset': -2})
+        self.assertEqual(self.gene.get_coding_distance(1799), {'pos': 101, 'offset': -1})
         
-        # check that sites sufficiently distant from an exon raise an error, or
-        # sites upstream of a gene, just outside the CDS, but within an exon
-        with self.assertRaises(RuntimeError):
-            self.gene.chrom_pos_to_cds(1215)
-        with self.assertRaises(RuntimeError):
-            self.gene.chrom_pos_to_cds(1098)
+        # # check that sites sufficiently distant from an exon raise an error, or
+        # # sites upstream of a gene, just outside the CDS, but within an exon
+        # with self.assertRaises(RuntimeError):
+        #     self.gene.get_coding_distance(1215)
+        # with self.assertRaises(RuntimeError):
+        #     self.gene.get_coding_distance(1098)
+        self.assertEqual(self.gene.get_coding_distance(1215), {'pos': 100, 'offset': 15})
+        self.assertEqual(self.gene.get_coding_distance(1098), {'pos': -2, 'offset': 0})
         
         # check that sites in a different exon are counted correctly
-        self.assertEqual(self.gene.chrom_pos_to_cds(1799), {'pos': 101, 'offset': -1})
+        self.assertEqual(self.gene.get_coding_distance(1799), {'pos': 101, 'offset': -1})
         
         # check that sites on the reverse strand still give the correct CDS
         self.gene = self.construct_gene(strand="-")
-        self.assertEqual(self.gene.chrom_pos_to_cds(1900), {'pos': 0, 'offset': 0})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1890), {'pos': 10, 'offset': 0})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1799), {'pos': 100, 'offset': -1})
-        self.assertEqual(self.gene.chrom_pos_to_cds(1792), {'pos': 100, 'offset': -8})
+        self.assertEqual(self.gene.get_coding_distance(1900), {'pos': 0, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1890), {'pos': 10, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1799), {'pos': 100, 'offset': 1})
+        self.assertEqual(self.gene.get_coding_distance(1792), {'pos': 100, 'offset': 8})
+        self.assertEqual(self.gene.get_coding_distance(1792), {'pos': 100, 'offset': 8})
         
-        self.assertEqual(self.gene.chrom_pos_to_cds(1200), {'pos': 101, 'offset': 0})
+        self.assertEqual(self.gene.get_coding_distance(1205), {'pos': 101, 'offset': -5})
+        self.assertEqual(self.gene.get_coding_distance(1200), {'pos': 101, 'offset': 0})
     

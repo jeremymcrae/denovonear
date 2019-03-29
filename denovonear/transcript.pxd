@@ -1,3 +1,4 @@
+# cython: language_level=3, boundscheck=False
 '''
 Copyright (c) 2015 Genome Research Ltd.
 
@@ -41,13 +42,12 @@ cdef extern from "tx.h":
         int get_cds_start()
         int get_cds_end()
         
-        bool in_exons(int)
-        Region find_closest_exon(int)
-        Region find_closest_exon(int, vector[Region])
+        bool is_exonic(int)
+        int closest_exon_num(int)
+        Region get_closest_exon(int)
         bool in_coding_region(int)
-        int get_exon_containing_position(int, vector[Region]) except +
-        int get_coding_distance(int, int) except +
-        CDS_coords chrom_pos_to_cds(int) except +
+        CDS_coords to_closest_exon(int)
+        CDS_coords get_coding_distance(int) except +
         
         int get_position_on_chrom(int, int) except +
         int get_codon_number_for_cds_position(int)
@@ -61,10 +61,15 @@ cdef extern from "tx.h":
         string reverse_complement(string)
         string get_centered_sequence(int, int) except +
         string get_codon_sequence(int) except +
+        string get_seq_in_region(int, int) except +
         string translate(string) except +
         
         Codon get_codon_info(int) except +
         int get_boundary_distance(int) except +
+        string outside_gene_variant(int, int, string);
+        string outside_cds_variant(CDS_coords, CDS_coords);
+        string intronic_variant(CDS_coords, CDS_coords);
+        string consequence(int, int, string);
     
     cdef struct CDS_coords:
         int position

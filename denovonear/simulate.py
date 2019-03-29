@@ -37,7 +37,7 @@ def get_p_value(transcript, rates, iterations, consequence, de_novos):
     
     weights = rates[consequence]
     
-    cds_positions = [ transcript.chrom_pos_to_cds(x)['pos'] for x in de_novos ]
+    cds_positions = [ transcript.get_coding_distance(x)['pos'] for x in de_novos ]
     distances = get_distances(cds_positions)
     observed = geomean(distances)
     

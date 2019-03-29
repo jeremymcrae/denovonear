@@ -32,6 +32,7 @@ class Tx {
     char tx_strand;
     int cds_min;
     int cds_max;
+    int cds_length;
     std::vector<Region> exons;
     std::vector<Region> cds;
     std::string cds_sequence = "";
@@ -84,13 +85,13 @@ class Tx {
     int get_cds_start();
     int get_cds_end();
     
-    bool in_exons(int position);
-    Region find_closest_exon(int position);
-    Region find_closest_exon(int position, std::vector<Region> & ranges);
-    bool in_coding_region(int position);
-    int get_exon_containing_position(int position, std::vector<Region> & ranges);
-    int get_coding_distance(int pos_1, int pos_2);
-    CDS_coords chrom_pos_to_cds(int pos_1);
+    bool is_exonic(int pos);
+    int closest_exon_num(int pos);
+    int closest_exon_num(int pos, std::vector<Region> group);
+    Region get_closest_exon(int pos);
+    bool in_coding_region(int pos);
+    CDS_coords to_closest_exon(int pos);
+    CDS_coords get_coding_distance(int pos);
     
     int get_position_on_chrom(int cds_position, int offset=0);
     int get_codon_number_for_cds_position(int cds_position);
@@ -105,6 +106,7 @@ class Tx {
     
     std::string reverse_complement(std::string seq);
     std::string get_centered_sequence(int pos, int length=3);
+    std::string get_seq_in_region(int start, int end);
     std::string get_codon_sequence(int codon_number);
     std::string translate(std::string seq);
     

@@ -139,7 +139,7 @@ class TestSiteRatesPy(unittest.TestCase):
         
         # a position near the start site, but upstream of the CDS will raise a
         # different error
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(ValueError):
             self.transcript.get_codon_info(95)
         
         # check the first base of the CDS
