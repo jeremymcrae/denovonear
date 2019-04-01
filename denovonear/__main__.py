@@ -128,7 +128,7 @@ def get_mutation_rates(transcripts, mut_dict, ensembl):
     if combined is None:
         raise ValueError('no tx found')
     
-    length = combined.get_coding_distance(combined.get_cds_end())
+    length = combined.get_coding_distance(combined.get_cds_end())['pos']
     
     return rates, combined, length
 
