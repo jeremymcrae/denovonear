@@ -1,3 +1,4 @@
+# cython: language_level=3, boundscheck=False
 """
 Copyright (c) 2015 Genome Research Ltd.
 
