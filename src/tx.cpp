@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <stdexcept>
+#include <iostream>
 
 #include "tx.h"
 
@@ -286,7 +287,7 @@ CDS_coords Tx::get_coding_distance(int pos) {
     
     bool fwd = get_strand() == '+';
     bool after = alt > first;
-    // bool positive = (fwd & after) | (!fwd & !after);
+    bool positive = (fwd & after) | (!fwd & !after);
     // use positive coding position if the transcript is either:
     //   a) on the + strand and the site is 3' of CDS start
     //   b) on the - strand and the site is 5' of CDS start
@@ -304,14 +305,13 @@ CDS_coords Tx::get_coding_distance(int pos) {
             dist_2 = (fwd) ? (pos - exons[alt].end) - 1 : (exons[alt].end - pos) + 1;
         }
         
-        first += (first < alt) ? 1 : -1;
-        int lo = std::min(first, alt);
+        int lo = std::min(first, alt) + 1;
         int hi = std::max(first, alt);
         delta = dist_1 + dist_2;
         for (int i=lo; i < hi; i++) {
             int left = exons[i].start;
             int right = exons[i].end;
-            delta += (fwd & after) ? (right - left) + 1 : (left - right) - 1;
+            delta += (positive) ? (right - left) + 1 : (left - right) - 1;
         }
     }
     
