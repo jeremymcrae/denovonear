@@ -95,11 +95,11 @@ def get_de_novos_in_transcript(transcript, de_novos):
         # will raise an error, which we catch and pass on. It's better to do
         # this, rather than use the function in_coding_region(), since that
         # function does not allow for splice site variants.
-        try:
-            transcript.chrom_pos_to_cds(de_novo)
+        site = transcript.get_coding_distance(de_novo)
+        cds_length = transcript.get_coding_distance(transcript.get_cds_end())
+        within_cds = site['pos'] >= 0 and site['pos'] < cds_length['pos']
+        if within_cds and (transcript.in_coding_region(de_novo) or abs(site['offset']) < 9):
             in_transcript.append(de_novo)
-        except RuntimeError:
-            continue
     
     return in_transcript
     
