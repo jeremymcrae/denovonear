@@ -66,9 +66,6 @@ cdef extern from "tx.h":
         
         Codon get_codon_info(int) except +
         int get_boundary_distance(int) except +
-        string outside_gene_variant(int, int, string);
-        string outside_cds_variant(CDS_coords, CDS_coords);
-        string intronic_variant(CDS_coords, CDS_coords);
         string consequence(int, int, string);
     
     cdef struct CDS_coords:
