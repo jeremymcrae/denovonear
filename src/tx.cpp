@@ -179,7 +179,7 @@ bool Tx::is_exonic(int pos) {
     */
     
     Region exon = get_closest_exon(pos);
-    return (pos >= exon.start) & (pos <= exon.end);
+    return (pos >= exon.start) && (pos <= exon.end);
 }
 
 bool compareRegion(const Region& a, int b) {
@@ -207,15 +207,18 @@ int Tx::closest_exon_num(int pos, std::vector<Region> group) {
         return idx;
     }
     
-    Region a = exons[idx - 1];
-    Region b = exons[idx];
+    // get the exon, and the preceding exon (lower bound finds exon after pos)
+    Region a = group[idx - 1];
+    Region b = group[idx];
     
-    if ((pos >= a.start) & (pos <= a.end)) {
+    // if the position is within an exon, return that exon number
+    if ((pos >= a.start) && (pos <= a.end)) {
         return idx - 1;
-    } else if ((pos >= b.start) & (pos <= b.end)) {
+    } else if ((pos >= b.start) && (pos <= b.end)) {
         return idx;
     }
     
+    // pos lies after the start of a. a is upstream, b is downstream, find closest.
     int delta_a = std::min(std::abs(pos - a.start), std::abs(pos - a.end));
     int delta_b = std::min(std::abs(pos - b.start), std::abs(pos - b.end));
     
@@ -244,7 +247,7 @@ bool Tx::in_coding_region(int pos) {
     */
     int idx = closest_exon_num(pos, cds);
     Region region = cds[idx];
-    return (pos >= region.start) & (pos <= region.end);
+    return (pos >= region.start) && (pos <= region.end);
 }
 
 CDS_coords Tx::to_closest_exon(int pos) {
