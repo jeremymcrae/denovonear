@@ -66,7 +66,7 @@ cdef extern from "tx.h":
         
         Codon get_codon_info(int) except +
         int get_boundary_distance(int) except +
-        string consequence(int, int, string);
+        string consequence(int, int, string) except +
     
     cdef struct CDS_coords:
         int position

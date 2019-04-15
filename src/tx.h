@@ -62,10 +62,13 @@ class Tx {
         {"TTA", "L"}, {"TTC", "F"}, {"TTG", "L"}, {"TTT", "F"}};
     
     std::unordered_map<int, int> exon_to_cds;
-    // std::map<int, int> exon_to_cds;
     void _cache_exon_cds_positions();
     
     void _fix_cds_length();
+    bool overlaps_cds(int start, int end);
+    std::string outside_gene_cq(int start, int end, std::string alt);
+    std::string intronic_cq(int start, int end);
+    std::string coding_cq(int start, int end, std::string alt);
 
  public:
     Tx(std::string transcript_id, std::string chromosome, int start_pos,
@@ -113,6 +116,7 @@ class Tx {
     Codon get_codon_info(int bp);
     int get_boundary_distance(int bp);
     
+    std::string consequence(int start, int end, std::string alt);
 };
 
 #endif  // DENOVONEAR_TX_H_

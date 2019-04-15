@@ -354,7 +354,7 @@ cdef class Transcript:
     def get_codon_info(self, pos):
         codon = dict(self.thisptr.get_codon_info(pos))
         
-        if codon['codon_number'] == -1:
+        if codon['codon_number'] == -9999999:
             codon['codon_number'] = None
             codon['intra_codon'] = None
             codon['codon_seq'] = None
@@ -371,5 +371,5 @@ cdef class Transcript:
     def get_boundary_distance(self, pos):
         return self.thisptr.get_boundary_distance(pos)
     
-    # def consequence(self, start, end, alt):
-    #     return self.thisptr.consequence(start, end, alt)
+    def consequence(self, start, end, alt):
+        return self.thisptr.consequence(start, end, alt.encode('utf8')).decode('utf8')

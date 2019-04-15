@@ -631,7 +631,7 @@ Codon Tx::get_codon_info(int bp) {
     
     // define the default values for the codon positions. We check these later
     // in python and convert to None if they are still the defaults.
-    int codon_number = -1;
+    int codon_number = -9999999;
     int intra_codon = -1;
     std::string codon_seq = "";
     std::string initial_aa = "";
@@ -667,4 +667,123 @@ int Tx::get_boundary_distance(int bp) {
     }
     
     return distance;
+}
+
+bool Tx::overlaps_cds(int start, int end) {
+    /* checks if a genomic range overlaps any exon range
+    */
+    
+    // find the
+    int idx = closest_exon_num(start, cds);
+    int prev = std::max(0, idx - 1);
+    int post = std::min((int) cds.size(), idx + 1);
+    
+    if (start <= cds[idx].end && cds[idx].start < end) {
+        return true;
+    } else if (start < cds[prev].end && cds[prev].start < end) {
+        return true;
+    } else if (start < cds[post].end && cds[post].start < end) {
+        return true;
+    }
+    return false;
+}
+
+std::string Tx::outside_gene_cq(int start, int end, std::string alt) {
+    if ((end < tx_start) & ((tx_start - end) < 5000)) {
+        return "upstream_gene_variant";
+    } else if ((start > tx_end) & ((start - tx_end) < 5000)) {
+        return "downstream_gene_variant";
+    }
+    return "intergenic_variant";
+}
+
+std::string Tx::intronic_cq(int start, int end) {
+    /* figure out consequence for a site not in coding region
+    */
+    // TODO: figure out for variants spanning an exon
+    CDS_coords start_coord = get_coding_distance(start);
+    CDS_coords end_coord = get_coding_distance(end);
+    
+    bool intronic = (start_coord.offset != 0) & (end_coord.offset != 0);
+    if (!intronic) {
+        if (end_coord.position <= 0) {
+            return "5_prime_UTR_variant";
+        } else if (start_coord.position >= cds_length) {
+            return "3_prime_UTR_variant";
+        }
+    }
+    
+    // ok, now we have intronic variants, so we check for splice variants first
+    int delta = std::min(std::abs(start_coord.offset), std::abs(end_coord.offset));
+    if ((delta < 3) & (start_coord.offset < 0)) {
+        return "splice_acceptor_variant";
+    } else if ((delta < 3) & (start_coord.offset > 0)) {
+        return "splice_donor_variant";
+    } else if (delta < 9) {
+        return "splice_region_variant";
+    }
+    
+    return "intron_variant";
+}
+
+std::string Tx::coding_cq(int start, int end, std::string alt) {
+    if (get_strand() == '-') {
+        alt = reverse_complement(alt);
+    }
+    // TODO: figure out initial and mutated amino acids
+    Codon codon = get_codon_info(start);
+    std::string initial_aa = codon.initial_aa;
+    codon.codon_seq.replace(codon.intra_codon, 1, alt);
+    std::string mutated_aa = translate(codon.codon_seq);
+    
+    if (initial_aa != "*" && mutated_aa == "*") { return "stop_gained"; }
+    if (initial_aa == "*" && mutated_aa != "*") { return "stop_lost"; }
+    
+    if (initial_aa != mutated_aa) {
+        if (codon.codon_number == 0) {
+            return "start_lost";
+        }
+        return "missense_variant";
+    }
+    
+    if (codon.codon_number == 0) {
+        return "start_retained_variant";
+    } else if (get_codon_number_for_cds_position(cds_length - 1) == codon.codon_number) {
+        return "stop_retained_variant";
+    }
+    return "synonymous_variant";
+}
+
+std::string Tx::consequence(int start, int end, std::string alt) {
+    // TODO: need to realign alt against ref sequence, and strip down to alternate bases
+    
+    if (start > end) {
+        throw std::invalid_argument("start position is less than end position");
+    }
+    
+    if ((end < tx_start) | (start > tx_end)) {
+        return outside_gene_cq(start, end, alt);
+    }
+    
+    if (!overlaps_cds(start, end)) {
+        return intronic_cq(start, end);
+    }
+    
+    // at this point we know that the site lies within the gene boundary, and
+    // at least partially overlaps the CDS
+    std::string ref = get_seq_in_region(start, end+1);
+    int ref_len = ref.size();
+    int alt_len = alt.size();
+    int delta = ref_len - alt_len;
+    if (ref.size() != alt.size()) {
+        if ((delta % 3) != 0) {
+            return "frameshift_variant";
+        } else if (ref_len > alt_len) {
+            return "inframe_deletion";
+        } else if (alt_len > ref_len) {
+            return "inframe_insertion";
+        }
+    }
+    
+    return coding_cq(start, end, alt);
 }
