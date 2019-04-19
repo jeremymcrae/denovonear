@@ -689,10 +689,19 @@ bool Tx::overlaps_cds(int start, int end) {
 }
 
 std::string Tx::outside_gene_cq(int start, int end, std::string alt) {
+    bool fwd = get_strand() == '+';
     if ((end < tx_start) & ((tx_start - end) < 5000)) {
-        return "upstream_gene_variant";
+        if (fwd) {
+            return "upstream_gene_variant";
+        } else {
+            return "downstream_gene_variant";
+        }
     } else if ((start > tx_end) & ((start - tx_end) < 5000)) {
-        return "downstream_gene_variant";
+        if (fwd) {
+            return "downstream_gene_variant";
+        } else {
+            return "upstream_gene_variant";
+        }
     }
     return "intergenic_variant";
 }
@@ -700,6 +709,21 @@ std::string Tx::outside_gene_cq(int start, int end, std::string alt) {
 std::string Tx::intronic_cq(int start, int end) {
     /* figure out consequence for a site not in coding region
     */
+    // figure out if we are in a very short intron
+    auto idx = closest_exon_num(start);
+    auto exon = exons[idx];
+    int intron_length;
+    if (exon.end < start) {
+        auto other = exons[idx + 1];
+        intron_length = other.start - exon.end;
+    } else {
+        auto other = exons[idx - 1];
+        intron_length = exon.start - other.end;
+    }
+    if (intron_length < 10) {
+        return "coding_sequence_variant";
+    }
+    
     // TODO: figure out for variants spanning an exon
     CDS_coords start_coord = get_coding_distance(start);
     CDS_coords end_coord = get_coding_distance(end);
@@ -754,9 +778,30 @@ std::string Tx::coding_cq(int start, int end, std::string alt) {
     return "synonymous_variant";
 }
 
-std::string Tx::consequence(int start, int end, std::string alt) {
-    // TODO: need to realign alt against ref sequence, and strip down to alternate bases
+int min_len(std::string a, std::string b) {
+    return std::min(a.size(), b.size());
+}
+
+void Tx::trim_alleles(int& start, int& end, std::string& alt) {
+    /* realign alt against ref sequence, and strip down to alternate bases
+    */
+    std::string ref = get_seq_in_region(start, end + 1);
+    // trim the front of the alleles
+    while ((min_len(ref, alt) > 0) && (ref.size() > 1) && (alt[0] == ref[0])) {
+        ref.erase(0, 1);
+        alt.erase(0, 1);
+        start += 1;
+    }
     
+    // trim the back of the alleles
+    while ((min_len(ref, alt) > 0) && (ref.size() > 1) && (alt.back() == ref.back())) {
+        ref.pop_back();
+        alt.pop_back();
+        end -= 1;
+    }
+}
+
+std::string Tx::consequence(int start, int end, std::string alt) {
     if (start > end) {
         throw std::invalid_argument("start position is less than end position");
     }
@@ -764,6 +809,9 @@ std::string Tx::consequence(int start, int end, std::string alt) {
     if ((end < tx_start) | (start > tx_end)) {
         return outside_gene_cq(start, end, alt);
     }
+    
+    // TODO: need to realign alt against ref sequence, and strip down to alternate bases
+    trim_alleles(start, end, alt);
     
     if (!overlaps_cds(start, end)) {
         return intronic_cq(start, end);

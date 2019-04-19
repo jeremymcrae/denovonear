@@ -24,6 +24,8 @@ struct Codon {
     int offset;
 };
 
+int min_len(std::string a, std::string b);
+
 class Tx {
     std::string name;
     std::string chrom;
@@ -65,6 +67,7 @@ class Tx {
     void _cache_exon_cds_positions();
     
     void _fix_cds_length();
+    void trim_alleles(int& start, int& end, std::string& alt);
     bool overlaps_cds(int start, int end);
     std::string outside_gene_cq(int start, int end, std::string alt);
     std::string intronic_cq(int start, int end);
