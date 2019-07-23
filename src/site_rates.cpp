@@ -86,14 +86,20 @@ std::string SitesChecks::check_consequence(std::string initial_aa,
     } else if ( initial_aa != mutated_aa ) {
         // include the site if it mutates to a different amino acid.
         cq = "missense";
-    } else if ( _tx.in_coding_region(position) && boundary_dist < 4 ) {
-        // catch splice region variants within the exon, and in the appropriate
-        // region of the intron (note that loss of function splice_donor and
-        // splice_acceptor variants have been excluded when we spotted nonsense).
-        cq = "splice_region";
-    } else if ( !_tx.in_coding_region(position) && boundary_dist < 9 ) {
-        // check for splice_region_variant inside intron
-        cq = "splice_region";
+    } else if (_tx.in_coding_region(position)) {
+        if ( boundary_dist < 4) {
+          // catch splice region variants within the exon, and in the appropriate
+          // region of the intron (note that loss of function splice_donor and
+          // splice_acceptor variants have been excluded when we spotted nonsense).
+          cq = "splice_region";
+        }
+    } else {
+        if (boundary_dist < 9) {
+            // check for splice_region_variant inside intron
+            cq = "splice_region";
+        } else {
+            cq = "intronic";
+        }
     }
     
     return cq;

@@ -622,10 +622,7 @@ Codon Tx::get_codon_info(int bp) {
     bool in_coding = in_coding_region(bp);
     CDS_coords site = get_coding_distance(bp);
     
-    // ignore positions outside the exons that are too distant from a boundary
-    if (not in_coding and get_boundary_distance(bp) >= 9) {
-        throw std::invalid_argument( "position too distant from an exon" );
-    } else if ((site.position < 0) | (site.position > cds_length)) {
+    if ((site.position < 0) | (site.position > cds_length)) {
         throw std::invalid_argument( "position not inside CDS region" );
     }
     
