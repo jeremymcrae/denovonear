@@ -13,42 +13,21 @@ from denovonear.simulate import get_p_value
 def fishers_method(values):
     """ function to combine p values, using Fisher's method
     
+    We occasionally have multiple P values for a mutation type, obtained from
+    alternative transcripts for the gene. If we have only one P value for the
+    gene for the mutation type, we just use that value, if we don't have any
+    data, we use "NA", otherwise combine p-values using Fisher's method.
+    
     Args:
         x: list of P-values for a gene
     
     Returns:
         combined P-value
     """
-    
     values = [ x for x in values if not isnan(x) ]
-    
     # use Fisher's combined method to estimate the P value from multiple
     # P-values. The chi square statistic is -2*sum(ln(P-values))
     return chi2.sf(-2 * sum(map(log, values)), 2 * len(values))
-
-def combine_p_values(probs):
-    """ Combine the P values from different transcripts.
-    
-    This returns P values for each mutation type for a gene. We occasionally
-    have multiple P values for a mutation type, obtained from different
-    transcripts for the gene. If we have only one P value for the gene for the
-    mutation type, we just use that value, if we don't have any data, we use
-    "NA", otherwise we combine the P values from different transcripts using
-    Fisher's combined test.
-    
-    Args:
-        probs: Dictionary of lists of P values from different transcripts,
-            indexed by functional type.
-    
-    Returns:
-        Dictionary of P values, indexed by the mutation type
-    """
-    
-    fixed_probs = {}
-    for key in probs:
-        fixed_probs[key] = fishers_method(probs[key])
-    
-    return fixed_probs
 
 def cluster_de_novos(symbol, de_novos, iterations=1000000, ensembl=None, mut_dict=None):
     """ analysis proximity cluster of de novos in a single gene
@@ -112,7 +91,7 @@ def cluster_de_novos(symbol, de_novos, iterations=1000000, ensembl=None, mut_dic
     for key in dists:
         dists[key] = ",".join([ str(x) for x in dists[key] ])
     
-    probs = combine_p_values(probs)
+    probs = {k: fishers_method(probs[k]) for k in probs}
     probs.update(dists)
     
     return probs

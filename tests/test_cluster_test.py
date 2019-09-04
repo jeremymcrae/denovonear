@@ -8,7 +8,7 @@ import math
 
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_mutation_rates
-from denovonear.cluster_test import fishers_method, cluster_de_novos, combine_p_values
+from denovonear.cluster_test import fishers_method, cluster_de_novos
 
 class TestClusterTestPy(unittest.TestCase):
     """ unit test the genic test
@@ -70,13 +70,3 @@ class TestClusterTestPy(unittest.TestCase):
         with self.assertRaises(ValueError):
             p_values = [0, 0.01]
             fishers_method(p_values)
-    
-    def test_combine_p_values(self):
-        """ check that combine_p_values() works correctly
-        """
-        
-        probs = {"miss_prob": [0.01, 0.001], "nons_prob": [0.01, 0.01]}
-        data = combine_p_values(probs)
-        
-        self.assertAlmostEqual(data['miss_prob'], 0.0001251292546)
-        self.assertAlmostEqual(data['nons_prob'], 0.0010210340371)
