@@ -12,8 +12,6 @@ from urllib.error import HTTPError, URLError
 
 from denovonear.ensembl_cache import EnsemblCache
 
-logging.basicConfig(filename='ensembl_requests.log', level=logging.WARNING)
-
 class EnsemblRequest(object):
     """ Uses the Ensembl REST API to obtain gene information from Ensembl.
     

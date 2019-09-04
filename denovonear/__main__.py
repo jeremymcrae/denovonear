@@ -5,6 +5,7 @@ within a single gene.
 import os
 import sys
 import argparse
+import logging
 
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_mutation_rates
@@ -174,6 +175,7 @@ def get_options():
     parent.add_argument("--cache-folder",
         default=os.path.join(os.path.expanduser('~'), ".cache", 'denovonear'),
         help="where to cache Ensembl data (default is ~/.cache/denovonear)")
+    parent.add_argument("--log", default='ensembl_requests.log', help="where to write log files")
     
     subparsers = parser.add_subparsers()
     
@@ -223,6 +225,7 @@ def get_options():
 def main():
     
     args = get_options()
+    logging.basicConfig(filename=args.log, level=logging.WARNING)
     
     ensembl = EnsemblRequest(args.cache_folder, args.genome_build.lower())
     mut_dict = load_mutation_rates(args.rates)
