@@ -3,8 +3,7 @@ from math import log, isnan
 
 from scipy.stats import chi2
 
-from denovonear.load_gene import get_deprecated_gene_ids, load_gene, \
-    get_de_novos_in_transcript
+from denovonear.load_gene import load_gene, get_de_novos_in_transcript
 from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos

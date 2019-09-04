@@ -3,22 +3,6 @@
 
 from denovonear.transcript import Transcript
 
-
-def get_deprecated_gene_ids(filename):
-    """ gets a dict of the gene IDs used during in DDD datasets that have been
-    deprecated in favour of other gene IDs
-    """
-    
-    deprecated = {}
-    with open(filename) as handle:
-        for line in handle:
-            line = line.strip().split()
-            old = line[0]
-            new = line[1]
-            deprecated[old] = new
-    
-    return deprecated
-
 def get_transcript_lengths(ensembl, transcript_ids):
     """ finds the protein length for ensembl transcript IDs for a gene
     
