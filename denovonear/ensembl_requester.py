@@ -2,21 +2,13 @@
 transcripts from Ensembl.
 """
 
-from __future__ import print_function
-
 import sys
 import json
 import time
 import logging
 
-IS_PYTHON3 = sys.version_info[0] == 3
-
-if IS_PYTHON3:
-    import urllib.request as request
-    from urllib.error import HTTPError, URLError
-else:
-    import urllib2 as request
-    from urllib2 import HTTPError, URLError
+import urllib.request as request
+from urllib.error import HTTPError, URLError
 
 from denovonear.ensembl_cache import EnsemblCache
 
@@ -41,7 +33,7 @@ class EnsemblRequest(object):
             genome_build: string indicating the genome build ("grch37" or "grch38")
         """
         
-        self.cache = EnsemblCache(cache_folder, genome_build)
+        self.cache = EnsemblCache(cache_folder)
         
         self.prior_time = time.time() - 1
         self.rate_limit = 0.067
@@ -49,23 +41,6 @@ class EnsemblRequest(object):
         server_dict = {"grch37": "grch37.", "grch38": ""}
         
         self.server = "http://{}rest.ensembl.org".format(server_dict[genome_build])
-        
-        self.check_ensembl_api_version()
-    
-    def check_ensembl_api_version(self):
-        """ check the ensembl api version matches a currently working version
-        
-        This function is included so when the api version changes, we notice the
-        change, and we can manually check the responses for the new version.
-        """
-        
-        self.attempt = 0
-        headers = {"content-type": "application/json"}
-        ext = "/info/rest"
-        r = self.ensembl_request(ext, headers)
-        
-        response = json.loads(r)
-        self.cache.set_ensembl_api_version(response["release"])
     
     def open_url(self, url, headers):
         """ open url with python libraries
@@ -79,7 +54,7 @@ class EnsemblRequest(object):
         req = request.Request(url, headers=headers)
         
         try:
-            handler = request.urlopen(req)
+            handler = request.urlopen(req, timeout=600)
         except HTTPError as error:
             # if we get a http error, we still process the status code, since a
             # later step deals with different status codes differently.
@@ -91,8 +66,6 @@ class EnsemblRequest(object):
         
         status_code = handler.getcode()
         response = handler.read()
-        if IS_PYTHON3:
-            response = response.decode("utf-8")
         
         # parse the headers into a key, value dictionary
         headers = dict(zip(map(str.lower, handler.headers.keys()), handler.headers.values()))
@@ -135,7 +108,7 @@ class EnsemblRequest(object):
         # simply re-request the data
         if requested_headers["content-type"] == "application/json":
             try:
-                json.loads(response)
+                json.loads(response.decode('utf8'))
             except ValueError:
                 now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
                 logging.warning("{}\t{}\t{}\t{}\t{}".format(now,
@@ -145,7 +118,7 @@ class EnsemblRequest(object):
         
         self.cache.cache_url_data(self.server + ext, response)
         
-        return response
+        return response.decode('utf8')
     
     def get_genes_for_hgnc_id(self, hgnc_symbol):
         """ obtain the ensembl gene IDs that correspond to a HGNC symbol
