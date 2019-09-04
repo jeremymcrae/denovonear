@@ -1,21 +1,9 @@
+dist: xenial
 language: python
 python:
-  - 2.7
-  - 3.4
   - 3.6
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - libatlas-base-dev
-      - gfortran
-      - gcc-4.9
-      - g++-4.9
-env:
-    - CC=gcc-4.9 CXX=g++-4.9
+  - 3.7
 before_install:
- - pip install --upgrade pip setuptools wheel
  - pip install --only-binary=all scipy cython coveralls
 install:
  - python setup.py install
