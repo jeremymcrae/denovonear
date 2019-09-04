@@ -69,7 +69,7 @@ class EnsemblRequest(object):
         headers = dict(zip(map(str.lower, handler.headers.keys()), handler.headers.values()))
         
         now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        logging.warning("{}\t{}\t{}".format(now, status_code, url))
+        logging.info("{}\t{}\t{}".format(now, status_code, url))
         
         return response, status_code, headers
     

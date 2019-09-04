@@ -225,7 +225,7 @@ def get_options():
 def main():
     
     args = get_options()
-    logging.basicConfig(filename=args.log, level=logging.WARNING)
+    logging.basicConfig(filename=args.log, level=logging.INFO)
     
     ensembl = EnsemblRequest(args.cache_folder, args.genome_build.lower())
     mut_dict = load_mutation_rates(args.rates)
