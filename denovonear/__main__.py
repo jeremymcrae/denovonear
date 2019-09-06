@@ -4,10 +4,11 @@ within a single gene.
 
 import os
 import sys
+import asyncio
 import argparse
 import logging
 
-from denovonear.ensembl_requester import EnsemblRequest
+from denovonear.rate_limiter import RateLimiter
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.cluster_test import cluster_de_novos
@@ -18,7 +19,7 @@ from denovonear.site_specific_rates import SiteRates
 from denovonear.frameshift_rate import include_frameshift_rates
 from denovonear.log_transform_rates import log_transform
 
-def clustering(ensembl, mut_dict, output, args):
+async def clustering(ensembl, mut_dict, output, args):
     
     de_novos = load_de_novos(args.input)
     
@@ -30,7 +31,7 @@ def clustering(ensembl, mut_dict, output, args):
         if len(de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]) < 2:
             continue
         
-        probs = cluster_de_novos(symbol, de_novos[symbol], iterations, ensembl, mut_dict)
+        probs = await cluster_de_novos(symbol, de_novos[symbol], ensembl, iterations, mut_dict)
         
         if probs is None:
             continue
@@ -40,7 +41,7 @@ def clustering(ensembl, mut_dict, output, args):
         output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "nonsense",
             len(de_novos[symbol]["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
 
-def find_transcripts(ensembl, mut_dict, output, args):
+async def find_transcripts(ensembl, mut_dict, output, args):
     
     de_novos = load_de_novos(args.de_novos)
     
@@ -55,9 +56,9 @@ def find_transcripts(ensembl, mut_dict, output, args):
         # minimum set of transcripts to contain the de novos
         try:
             if args.all_transcripts:
-                counts = count_de_novos_per_transcript(ensembl, symbol, func_events)
+                counts = await count_de_novos_per_transcript(ensembl, symbol, func_events)
             elif args.minimal_transcripts:
-                counts = minimise_transcripts(ensembl, symbol, func_events)
+                counts = await minimise_transcripts(ensembl, symbol, func_events)
         except (ValueError, IndexError):
             print("error occured with {0}".format(symbol))
             continue
@@ -91,7 +92,7 @@ def load_genes(path):
     
     return transcripts
 
-def get_mutation_rates(transcripts, mut_dict, ensembl):
+async def get_mutation_rates(transcripts, mut_dict, ensembl):
     """ determines mutation rates per functional category for transcripts
     
     Args:
@@ -109,7 +110,7 @@ def get_mutation_rates(transcripts, mut_dict, ensembl):
     
     for tx_id in transcripts:
         try:
-            tx = construct_gene_object(ensembl, tx_id)
+            tx = await construct_gene_object(ensembl, tx_id)
         except ValueError:
             continue
         
@@ -133,7 +134,7 @@ def get_mutation_rates(transcripts, mut_dict, ensembl):
     
     return rates, combined, length
 
-def gene_rates(ensembl, mut_dict, output, args):
+async def gene_rates(ensembl, mut_dict, output, args):
     
     transcripts = load_genes(args.genes)
     
@@ -144,7 +145,7 @@ def gene_rates(ensembl, mut_dict, output, args):
     for symbol in sorted(transcripts):
         print(symbol)
         try:
-            rates, tx, length = get_mutation_rates(transcripts[symbol],
+            rates, tx, length = await get_mutation_rates(transcripts[symbol],
                 mut_dict, ensembl)
             # log transform rates, for consistency with Samocha et al.
             line = "{}\t{}\t{}\t{}".format(symbol, tx.get_chrom(), length, log_transform(rates))
@@ -172,9 +173,6 @@ def get_options():
     parent.add_argument("--genome-build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "
         "that the de novo coordinates are based on (GRCh37 or GRCh38")
-    parent.add_argument("--cache-folder",
-        default=os.path.join(os.path.expanduser('~'), ".cache", 'denovonear'),
-        help="where to cache Ensembl data (default is ~/.cache/denovonear)")
     parent.add_argument("--log", default='ensembl_requests.log', help="where to write log files")
     
     subparsers = parser.add_subparsers()
@@ -222,16 +220,19 @@ def get_options():
     
     return args
 
-def main():
-    
+async def runner():
     args = get_options()
-    logging.basicConfig(filename=args.log, level=logging.INFO)
+    FORMAT = '%(asctime)-15s %(message)s'
+    logging.basicConfig(filename=args.log, format=FORMAT, level=logging.INFO)
     
-    ensembl = EnsemblRequest(args.cache_folder, args.genome_build.lower())
-    mut_dict = load_mutation_rates(args.rates)
-    output = open(args.out, "wt")
-    
-    args.func(ensembl, mut_dict, output, args)
+    async with RateLimiter(per_second=15) as ensembl:
+        mut_dict = load_mutation_rates(args.rates)
+        with open(args.out, "wt") as output:
+            await args.func(ensembl, mut_dict, output, args)
+
+def main():
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(runner())
 
 if __name__ == '__main__':
     main()

@@ -2,27 +2,24 @@
 
 import os
 import unittest
-import tempfile
-import shutil
+import asyncio
 import math
 
-from denovonear.ensembl_requester import EnsemblRequest
-from denovonear.load_mutation_rates import load_mutation_rates
+from denovonear.rate_limiter import RateLimiter
 from denovonear.cluster_test import fishers_method, cluster_de_novos
+
+async def call(func, *args, **kwargs):
+    ''' call ensembl rest API function
+    '''
+    async with RateLimiter(15) as ensembl:
+        return await func(*args, ensembl=ensembl, **kwargs)
+
+def _run(func, *args, **kwargs):
+    return asyncio.get_event_loop().run_until_complete(call(func, *args, **kwargs))
 
 class TestClusterTestPy(unittest.TestCase):
     """ unit test the genic test
     """
-    
-    @classmethod
-    def setUpClass(cls):
-        cls.temp_dir = tempfile.mkdtemp()
-        cls.ensembl = EnsemblRequest(cls.temp_dir, 'grch37')
-        cls.mut_dict = load_mutation_rates()
-    
-    @classmethod
-    def tearDownClass(cls):
-        shutil.rmtree(cls.temp_dir)
     
     def test_cluster_de_novos(self):
         """ check that cluster_de_novos() runs correctly
@@ -32,8 +29,7 @@ class TestClusterTestPy(unittest.TestCase):
         de_novos = {'missense': [42975003, 42975003, 42975003, 42975013],
             'nonsense': []}
         
-        p_values = cluster_de_novos(symbol, de_novos, 1000000,
-            self.ensembl, self.mut_dict)
+        p_values = _run(cluster_de_novos, symbol, de_novos, iterations=1000000)
         
         self.assertAlmostEqual(p_values['miss_prob'], 3e-06, delta=3e-6)
         self.assertEqual(p_values['miss_dist'], '2.3')

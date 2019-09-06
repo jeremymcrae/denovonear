@@ -1,9 +1,17 @@
 """ functions to load genes, and identify transcripts containing de novos.
 """
 
+import asyncio
+
 from denovonear.transcript import Transcript
 
-def get_transcript_lengths(ensembl, transcript_ids):
+from denovonear.ensembl_requester import (get_protein_seq_for_transcript,
+    get_genomic_seq_for_transcript, get_cds_seq_for_transcript,
+    get_cds_ranges_for_transcript, get_exon_ranges_for_transcript,
+    get_genes_for_hgnc_id, get_transcript_ids_for_ensembl_gene_id,
+    get_previous_symbol)
+
+async def get_transcript_lengths(ensembl, transcript_ids):
     """ finds the protein length for ensembl transcript IDs for a gene
     
     Args:
@@ -14,20 +22,20 @@ def get_transcript_lengths(ensembl, transcript_ids):
     Returns:
         dictionary of lengths (in amino acids), indexed by transcript IDs
     """
+    tasks = [get_protein_seq_for_transcript(ensembl, x) for x in transcript_ids]
+    seqs = await asyncio.gather(*tasks, return_exceptions=True)
     
-    transcripts = {}
-    for transcript_id in transcript_ids:
-        # get the transcript's protein sequence via the ensembl REST API
-        try:
-            seq = ensembl.get_protein_seq_for_transcript(transcript_id)
-        except ValueError:
-            continue
-        
-        transcripts[transcript_id] = len(seq)
+    # associate tx_ids to the protein sequences, but remove failures
+    transcripts = dict(zip(transcript_ids, seqs))
+    for key in list(transcripts.keys()):
+        if not isinstance(transcripts[key], str):
+            del transcripts[key]
+        else:
+            transcripts[key] = len(transcripts[key])
     
     return transcripts
 
-def construct_gene_object(ensembl, transcript_id):
+async def construct_gene_object(ensembl, transcript_id):
     """ creates an Transcript object for a gene from ensembl databases
     
     Args:
@@ -42,22 +50,18 @@ def construct_gene_object(ensembl, transcript_id):
         ValueError if CDS from genomic sequence given gene coordinates and CDS
         retrieved from Ensembl do not match.
     """
-    
-    # get the sequence for the identified transcript
-    (chrom, start, end, strand, genomic_sequence) = ensembl.get_genomic_seq_for_transcript(transcript_id, expand=10)
-    cds_sequence = ensembl.get_cds_seq_for_transcript(transcript_id)
-    
-    # get the locations of the exons and cds from ensembl
-    cds_ranges = ensembl.get_cds_ranges_for_transcript(transcript_id)
-    exon_ranges = ensembl.get_exon_ranges_for_transcript(transcript_id)
+    tasks = [get_genomic_seq_for_transcript(ensembl, transcript_id, expand=10),
+        get_cds_seq_for_transcript(ensembl, transcript_id),
+        get_cds_ranges_for_transcript(ensembl, transcript_id),
+        get_exon_ranges_for_transcript(ensembl, transcript_id)]
+    (chrom, start, end, strand, genomic), cds_seq, cds, exons = await asyncio.gather(*tasks)
     
     # start a Transcript object with the locations and sequence
     transcript = Transcript(transcript_id, chrom, start, end, strand)
-    transcript.set_exons(exon_ranges, cds_ranges)
-    transcript.set_cds(cds_ranges)
-    
-    transcript.add_cds_sequence(cds_sequence)
-    transcript.add_genomic_sequence(genomic_sequence, offset=10)
+    transcript.set_exons(exons, cds)
+    transcript.set_cds(cds)
+    transcript.add_cds_sequence(cds_seq)
+    transcript.add_genomic_sequence(genomic, offset=10)
     
     return transcript
 
@@ -86,38 +90,42 @@ def get_de_novos_in_transcript(transcript, de_novos):
             in_transcript.append(de_novo)
     
     return in_transcript
-    
-def get_transcript_ids(ensembl, gene_id):
+
+def flatten(values):
+    return [x for sub in values for x in sub]
+
+async def get_transcript_ids(ensembl, symbol):
     """ gets transcript IDs for a gene.
     
     Args:
         ensembl: EnsemblRequest object to request data from ensembl
-        gene_id: HGNC symbol for gene
+        symbol: HGNC symbol for gene
     
     Returns:
         dictionary of transcript ID: transcript lengths for all transcripts
         for a given HGNC symbol.
     """
     
-    ensembl_genes = ensembl.get_genes_for_hgnc_id(gene_id)
-    transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, [gene_id])
+    genes = await get_genes_for_hgnc_id(ensembl, symbol)
+    tasks = [get_transcript_ids_for_ensembl_gene_id(ensembl, x, symbol) for x in genes]
+    transcript_ids = flatten(await asyncio.gather(*tasks))
     
     # sometimes we get HGNC symbols that do not match the ensembl rest version
     # that we are currentl using. We can look for earlier HGNC symbols for
     # the gene using the service at rest.genenames.org
-    alt_symbols = []
+    symbols = []
     if len(transcript_ids) == 0:
-        alt_symbols = ensembl.get_previous_symbol(gene_id)
-        genes = [ensembl.get_genes_for_hgnc_id(symbol) for symbol in alt_symbols]
-        genes = [item for sublist in genes for item in sublist]
-        ensembl_genes += genes
-        symbols = [gene_id] + alt_symbols
+        symbols = await get_previous_symbol(ensembl, symbol)
+        tasks = [get_genes_for_hgnc_id(ensembl, s) for s in symbols]
+        genes += flatten(await asyncio.gather(*tasks))
+        symbols = [symbol] + symbols
         
-        transcript_ids = ensembl.get_transcript_ids_for_ensembl_gene_ids(ensembl_genes, symbols)
+        tasks = [get_transcript_ids_for_ensembl_gene_id(ensembl, x, symbols) for x in genes]
+        transcript_ids = flatten(await asyncio.gather(*tasks))
     
-    return get_transcript_lengths(ensembl, transcript_ids)
+    return await get_transcript_lengths(ensembl, transcript_ids)
 
-def load_gene(ensembl, gene_id, de_novos=[]):
+async def load_gene(ensembl, gene_id, de_novos=[]):
     """ sort out all the necessary sequences and positions for a gene
     
     Args:
@@ -130,11 +138,11 @@ def load_gene(ensembl, gene_id, de_novos=[]):
         list of Transcript objects for gene, including genomic ranges and sequences
     """
     
-    transcripts = minimise_transcripts(ensembl, gene_id, de_novos)
+    transcripts = await minimise_transcripts(ensembl, gene_id, de_novos)
     
     genes = []
     for transcript_id in transcripts:
-        gene = construct_gene_object(ensembl, transcript_id)
+        gene = await construct_gene_object(ensembl, transcript_id)
         genes.append(gene)
     
     if len(genes) == 0:
@@ -142,7 +150,7 @@ def load_gene(ensembl, gene_id, de_novos=[]):
     
     return genes
     
-def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
+async def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
     """ count de novos in transcripts for a gene.
     
     Args:
@@ -155,7 +163,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
         dictionary of lengths and de novo counts, indexed by transcript IDs.
     """
     
-    transcripts = get_transcript_ids(ensembl, gene_id)
+    transcripts = await get_transcript_ids(ensembl, gene_id)
     
     # TODO: allow for genes without any coding sequence.
     if len(transcripts) == 0:
@@ -165,7 +173,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
     counts = {}
     for key in transcripts:
         try:
-            gene = construct_gene_object(ensembl, key)
+            gene = await construct_gene_object(ensembl, key)
             total = len(get_de_novos_in_transcript(gene, de_novos))
             if total > 0:
                 counts[key] = {}
@@ -176,7 +184,7 @@ def count_de_novos_per_transcript(ensembl, gene_id, de_novos=[]):
     
     return counts
 
-def minimise_transcripts(ensembl, gene_id, de_novos):
+async def minimise_transcripts(ensembl, gene_id, de_novos):
     """ get a set of minimal transcripts to contain all the de novos.
     
     We identify the minimal number of transcripts to contain all de novos. This
@@ -197,7 +205,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     if len(de_novos) == 0:
         return {}
     
-    counts = count_de_novos_per_transcript(ensembl, gene_id, de_novos)
+    counts = await count_de_novos_per_transcript(ensembl, gene_id, de_novos)
     
     if len(counts) == 0:
         return {}
@@ -212,7 +220,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     max_transcripts = {x: counts[x] for x in counts if x in tx_ids}
     
     # find which de novos occur in the transcript with the most de novos
-    gene = construct_gene_object(ensembl, next(iter(max_transcripts)))
+    gene = await construct_gene_object(ensembl, next(iter(max_transcripts)))
     denovos_in_gene = get_de_novos_in_transcript(gene, de_novos)
     
     # trim the de novos to the ones not in the current transcript
@@ -220,8 +228,7 @@ def minimise_transcripts(ensembl, gene_id, de_novos):
     
     # and recursively return the transcripts in the current transcript, along
     # with transcripts for the reminaing de novos
-    max_transcripts.update(minimise_transcripts(ensembl, gene_id, leftovers))
+    update = await minimise_transcripts(ensembl, gene_id, leftovers)
+    max_transcripts.update(update)
     
     return max_transcripts
-
-    

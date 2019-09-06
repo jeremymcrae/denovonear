@@ -19,28 +19,29 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+import asyncio
 import unittest
 import tempfile
-import shutil
+from pathlib import Path
 
 from denovonear.load_gene import get_transcript_lengths, construct_gene_object, \
     get_de_novos_in_transcript, get_transcript_ids, load_gene, \
     count_de_novos_per_transcript, minimise_transcripts
 from denovonear.transcript import Transcript
-from denovonear.ensembl_requester import EnsemblRequest
+from denovonear.rate_limiter import RateLimiter
+
+async def call(func, *args, **kwargs):
+    ''' call ensembl rest API function
+    '''
+    async with RateLimiter(15) as ensembl:
+        return await func(ensembl, *args, **kwargs)
+
+def _run(func, *args, **kwargs):
+    return asyncio.get_event_loop().run_until_complete(call(func, *args, **kwargs))
 
 class TestLoadGenePy(unittest.TestCase):
     """ unit test functions to load genes
     """
-    
-    @classmethod
-    def setUpClass(self):
-        self.temp_dir = tempfile.mkdtemp()
-        self.ensembl = EnsemblRequest(self.temp_dir, genome_build="grch37")
-    
-    @classmethod
-    def tearDownClass(self):
-        shutil.rmtree(self.temp_dir)
     
     def set_transcript(self):
         """ construct a transcript for a known gene
@@ -111,14 +112,14 @@ class TestLoadGenePy(unittest.TestCase):
         transcript_ids = ["ENST00000392509", "ENST00000242577", "ENST00000549649"]
         lengths = {'ENST00000242577': 89, 'ENST00000392509': 89, 'ENST00000549649': 42}
         
-        self.assertEqual(get_transcript_lengths(self.ensembl, transcript_ids), lengths)
+        self.assertEqual(_run(get_transcript_lengths, transcript_ids), lengths)
     
     def test_construct_gene_object(self):
         """
         """
         
         transcript_id = "ENST00000242577"
-        transcript = construct_gene_object(self.ensembl, transcript_id)
+        transcript = _run(construct_gene_object, transcript_id)
         
         expected = self.set_transcript()
         
@@ -154,7 +155,7 @@ class TestLoadGenePy(unittest.TestCase):
         """
         
         hgnc = "DYNLL1"
-        lengths = get_transcript_ids(self.ensembl, hgnc)
+        lengths = _run(get_transcript_ids, hgnc)
         
         expected = {'ENST00000548342': 89,
             'ENST00000549989': 89, 'ENST00000392509': 89,
@@ -173,7 +174,7 @@ class TestLoadGenePy(unittest.TestCase):
         # check against
         hgnc = "DYNLL1"
         sites = [120934226, 120936012]
-        transcripts = load_gene(self.ensembl, hgnc, sites)
+        transcripts = _run(load_gene, hgnc, sites)
         
         # define the expected transcript, and make sure that it is in the list
         # of suitable transcripts. There can be multiple transcripts return if
@@ -185,7 +186,7 @@ class TestLoadGenePy(unittest.TestCase):
         # then we raise an error.
         sites = [100, 200]
         with self.assertRaises(IndexError):
-            transcripts = load_gene(self.ensembl, hgnc, sites)
+            transcripts = _run(load_gene, hgnc, sites)
     
     def test_count_de_novos_per_transcript(self):
         """ test that we count de novos in transcripts correctly
@@ -193,7 +194,7 @@ class TestLoadGenePy(unittest.TestCase):
         
         hgnc = "DYNLL1"
         sites = [120934226, 120936012]
-        counts = count_de_novos_per_transcript(self.ensembl, hgnc, sites)
+        counts = _run(count_de_novos_per_transcript, hgnc, sites)
         
         expected = {'ENST00000549649': {'len': 42, 'n': 1},
             'ENST00000548214': {'len': 67, 'n': 1},
@@ -218,7 +219,7 @@ class TestLoadGenePy(unittest.TestCase):
         # run through a test case for a single gene
         hgnc = "DYNLL1"
         sites = [120934226, 120936012]
-        counts = minimise_transcripts(self.ensembl, hgnc, sites)
+        counts = _run(minimise_transcripts, hgnc, sites)
         expected = {'ENST00000242577': {'len': 89, 'n': 2},
             'ENST00000392508': {'len': 89, 'n': 2},
             'ENST00000392509': {'len': 89, 'n': 2},
@@ -228,8 +229,8 @@ class TestLoadGenePy(unittest.TestCase):
         self.assertEqual(counts, expected)
         
         # check that when we don't have any de novos, we return an empty list
-        self.assertEqual(minimise_transcripts(self.ensembl, hgnc, []), {})
+        self.assertEqual(_run(minimise_transcripts, hgnc, []), {})
         
         # check that when none of the de novos are in a transcript, we return
         # an empty list.
-        self.assertEqual(minimise_transcripts(self.ensembl, hgnc, [100]), {})
+        self.assertEqual(_run(minimise_transcripts, hgnc, [100]), {})

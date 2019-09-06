@@ -4,7 +4,6 @@ from math import log, isnan
 from scipy.stats import chi2
 
 from denovonear.load_gene import load_gene, get_de_novos_in_transcript
-from denovonear.ensembl_requester import EnsemblRequest
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.site_specific_rates import SiteRates
@@ -29,7 +28,7 @@ def fishers_method(values):
     # P-values. The chi square statistic is -2*sum(ln(P-values))
     return chi2.sf(-2 * sum(map(log, values)), 2 * len(values))
 
-def cluster_de_novos(symbol, de_novos, iterations=1000000, ensembl=None, mut_dict=None):
+async def cluster_de_novos(symbol, de_novos, ensembl, iterations=1000000, mut_dict=None):
     """ analysis proximity cluster of de novos in a single gene
     
     Args:
@@ -45,9 +44,6 @@ def cluster_de_novos(symbol, de_novos, iterations=1000000, ensembl=None, mut_dic
         and synonymous de novos events. Missing data is represented by "NA".
     """
     
-    if ensembl is None:
-        ensembl = EnsemblRequest('cache', 'grch37')
-    
     if mut_dict is None:
         mut_dict = load_mutation_rates()
     
@@ -58,7 +54,7 @@ def cluster_de_novos(symbol, de_novos, iterations=1000000, ensembl=None, mut_dic
     # required to contain all the de novos, unless we can't find any coding
     # transcripts that contain the de novos.
     try:
-        transcripts = load_gene(ensembl, symbol, missense + nonsense)
+        transcripts = await load_gene(ensembl, symbol, missense + nonsense)
     except IndexError as e:
         print(e)
         return None
