@@ -8,6 +8,7 @@ import sys
 import time
 import random
 import zlib
+from pathlib import Path
 import json
 from datetime import datetime
 from urllib.parse import urlparse
@@ -23,14 +24,15 @@ class EnsemblCache(object):
         Args:
             cache_folder: path to the cache
         """
-        if not os.path.exists(cache_folder):
-            os.mkdir(cache_folder)
+        cache_folder = Path(cache_folder)
+        if not cache_folder.exists():
+            cache_folder.mkdir()
         
         # generate a database with tables if it doesn't already exist
-        path = os.path.join(cache_folder, "ensembl_cache.db")
-        if not os.path.exists(path):
+        path = cache_folder / "ensembl_cache.db"
+        if not path.exists():
             try:
-                with sqlite3.connect(path) as conn:
+                with sqlite3.connect(str(path)) as conn:
                     with conn as cursor:
                         cursor.execute("CREATE TABLE ensembl " \
                             "(key text PRIMARY KEY, genome_build text, " \
@@ -38,8 +40,9 @@ class EnsemblCache(object):
             except sqlite3.OperationalError:
                 time.sleep(random.uniform(1, 5))
         
-        self.conn = sqlite3.connect(path)
+        self.conn = sqlite3.connect(str(path))
         self.conn.row_factory = sqlite3.Row
+        self.cursor = self.conn.cursor()
     
     def get_cached_data(self, url):
         """ get cached data for a url if stored in the cache and not outdated
@@ -51,11 +54,9 @@ class EnsemblCache(object):
             data if data in cache, else None
         """
         key, build = self.get_key_from_url(url)
-        with self.conn as conn:
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM ensembl WHERE key=? AND genome_build=?",
-                (key, build))
-        row = cursor.fetchone()
+        self.cursor.execute("SELECT * FROM ensembl WHERE key=? AND genome_build=?",
+            (key, build))
+        row = self.cursor.fetchone()
         
         # if the data has been cached, check that it is not out of date
         if row is not None:
@@ -85,8 +86,8 @@ class EnsemblCache(object):
         cmd = "INSERT OR REPLACE INTO ensembl " \
             "(key, genome_build, cache_date, api_version, data) VALUES (?,?,?,?,?)"
         try:
-            with self.conn as cursor:
-                cursor.execute(cmd, t)
+            with self.conn as conn:
+                conn.execute(cmd, t)
         except sqlite3.OperationalError:
             # if we hit a sqlite locking error, wait a random time so conflicting
             # instances are less likely to reconflict, then retry
