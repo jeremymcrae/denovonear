@@ -203,8 +203,11 @@ int Tx::closest_exon_num(int pos, std::vector<Region> group) {
         @returns number of exon containing the position
     */
     int idx = std::lower_bound(group.begin(), group.end(), pos, compareRegion) - group.begin();
+    int size = group.size();
     if (idx == 0) {
         return idx;
+    } else if (idx == size and pos > group[idx - 1].end) {
+        return idx - 1;
     }
     
     // get the exon, and the preceding exon (lower bound finds exon after pos)
