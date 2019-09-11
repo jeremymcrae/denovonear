@@ -25,7 +25,7 @@ class RateLimiter:
         self.RATE = per_second
         self.updated_at = time.monotonic()
     async def __aenter__(self):
-        self.client = aiohttp.ClientSession()
+        self.client = aiohttp.ClientSession(trust_env=True)
         return self
     async def __aexit__(self, *err):
         await self.client.close()
