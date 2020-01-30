@@ -676,7 +676,7 @@ bool Tx::overlaps_cds(int start, int end) {
     // find the
     int idx = closest_exon_num(start, cds);
     int prev = std::max(0, idx - 1);
-    int post = std::min((int) cds.size(), idx + 1);
+    int post = std::min((int) cds.size() - 1, idx + 1);
     
     if (start <= cds[idx].end && cds[idx].start < end) {
         return true;
@@ -806,7 +806,7 @@ std::string Tx::consequence(int start, int end, std::string alt) {
         throw std::invalid_argument("start position is less than end position");
     }
     
-    if ((end < tx_start) | (start > tx_end)) {
+    if ((end <= tx_start) | (start >= tx_end)) {
         return outside_gene_cq(start, end, alt);
     }
     
