@@ -564,7 +564,9 @@ std::string Tx::get_seq_in_region(int start, int end) {
     }
     int pos = start - get_start() + gdna_offset;
     int length = end - start;
-    return genomic_sequence.substr(pos, length);
+    std::string seq = genomic_sequence.substr(pos, length);
+    std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
+    return seq;
 }
 
 std::string Tx::get_codon_sequence(int codon) {
