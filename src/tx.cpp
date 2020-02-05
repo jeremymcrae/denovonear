@@ -546,20 +546,17 @@ std::string Tx::get_centered_sequence(int pos, int length) {
     if (pos < 0) {
         throw std::invalid_argument( "sequence position < 0" );
     }
-    if (pos <= get_start() - gdna_offset || pos >= get_end() + gdna_offset) {
-        throw std::invalid_argument( "sequence position not in gene range" );
-    }
     if (length % 2 != 1) {
         throw std::invalid_argument( "length is not an odd number") ;
     }
     
-    int sequence_pos = pos - get_start() + gdna_offset - floor(length/2);
-    
-    return genomic_sequence.substr(sequence_pos, length);
+    int start = pos - floor(length/2);
+    int end = start + length;
+    return get_seq_in_region(start, end);
 }
 
 std::string Tx::get_seq_in_region(int start, int end) {
-    if (end <= get_start() - gdna_offset || start >= get_end() + gdna_offset) {
+    if (start < get_start() - gdna_offset || end > get_end() + gdna_offset) {
         throw std::invalid_argument( "sequence position not in gene range" );
     }
     int pos = start - get_start() + gdna_offset;
