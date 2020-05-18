@@ -1,5 +1,6 @@
 # denovonear code
 include MANIFEST.in
+include pyproject.toml
 include scripts/*.py
 include denovonear/*.cpp
 include denovonear/*.py
