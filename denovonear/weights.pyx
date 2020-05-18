@@ -108,7 +108,7 @@ cdef class WeightedChoice:
         return self.thisptr.get_summed_rate()
 
 cdef extern from "simulate.h":
-    vector[int] _get_distances(vector[int])
+    void _get_distances(vector[int], vector[int] &)
     bool _has_zero(vector[int])
     double _geomean(vector[int])
     bool _halt_permutation(double, int, double, double)
@@ -124,8 +124,9 @@ def get_distances(vector[int] positions):
     Returns:
         list of pairwise distances between sites
     """
-    
-    return _get_distances(positions)
+    cdef vector[int] distances
+    _get_distances(positions, distances)
+    return distances
 
 def has_zero(vector[int] distances):
     """ figure out whether any of the pairwise distances is zero
