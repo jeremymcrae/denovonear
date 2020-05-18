@@ -107,8 +107,7 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
     */
     
     // use a vector to return the mean distances, easier to call from python
-    std::vector<double> mean_distances;
-    mean_distances.reserve(iterations);
+    std::vector<double> mean_distances(iterations);
     
     int distance_len = (de_novo_count - 1) * (de_novo_count) / 2;
     int distances[distance_len];
@@ -124,7 +123,7 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
         // geometric mean distance of all the distances
         _get_distances(positions, de_novo_count, distances);
         
-        mean_distances.push_back(_geomean(distances, distance_len));
+        mean_distances[n] = _geomean(distances, distance_len);
     }
     
     // make sure the mean distances are sorted, so we can quickly merge with
