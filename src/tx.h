@@ -38,7 +38,7 @@ class Tx {
     std::vector<Region> exons;
     std::vector<Region> cds;
     std::string cds_sequence = "";
-    int gdna_offset;
+    int gdna_offset=0;
     std::string genomic_sequence = "";
     
     std::unordered_map<char, char> transdict = {
