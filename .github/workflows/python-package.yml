@@ -36,5 +36,5 @@ jobs:
         python -m coverage run --source=./denovonear -m unittest discover
     - name: Coveralls
       uses: coverallsapp/github-action@master
-      env:
+      with:
         github-token: ${{ secrets.github_token }}
