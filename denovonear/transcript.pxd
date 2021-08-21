@@ -27,6 +27,7 @@ from libcpp cimport bool
 cdef extern from "tx.h":
     cdef cppclass Tx:
         Tx(string, string, int, int, char) except +
+        Tx() except +
         
         void set_exons(vector[vector[int]], vector[vector[int]]) except +
         void set_cds(vector[vector[int]]) except +
