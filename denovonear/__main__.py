@@ -13,7 +13,7 @@ from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.cluster_test import cluster_de_novos
 
-from denovonear.load_gene import (construct_gene_object,
+from denovonear.load_gene import (load_gene, construct_gene_object,
     count_de_novos_per_transcript, minimise_transcripts)
 from denovonear.site_specific_rates import SiteRates
 from denovonear.frameshift_rate import include_frameshift_rates
@@ -51,14 +51,15 @@ async def find_transcripts(ensembl, mut_dict, output, args):
         print(symbol)
         func_events = de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]
         
+        transcripts = await load_gene(ensembl, symbol, minimize=False)
         # find the counts per transcript, depending on whether we want to count
         # for all transcripts containing one or more de novos, or to find the
         # minimum set of transcripts to contain the de novos
         try:
             if args.all_transcripts:
-                counts = await count_de_novos_per_transcript(ensembl, symbol, func_events)
+                counts = count_de_novos_per_transcript(transcripts, func_events)
             elif args.minimal_transcripts:
-                counts = await minimise_transcripts(ensembl, symbol, func_events)
+                counts = minimise_transcripts(transcripts, func_events)
         except (ValueError, IndexError):
             print("error occured with {0}".format(symbol))
             continue
