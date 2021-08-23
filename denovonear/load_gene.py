@@ -82,8 +82,7 @@ async def get_transcript_ids(ensembl, symbol):
         symbol: HGNC symbol for gene
     
     Returns:
-        dictionary of transcript ID: transcript lengths for all transcripts
-        for a given HGNC symbol.
+       list of transcript IDs for a given HGNC symbol.
     """
     
     genes = await get_genes_for_hgnc_id(ensembl, symbol)
