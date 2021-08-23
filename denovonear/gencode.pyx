@@ -84,14 +84,15 @@ cdef class Gene:
     cdef _to_Transcript(self, Tx tx):
         ''' construct Transcript (python object) from Tx (c++ object)
         '''
+        offset = 10
         start = tx.get_start()
         end = tx.get_end()
         exons = self._convert_exons(tx.get_exons())
         cds = self._convert_exons(tx.get_cds())
-        seq = __genome_[self.chrom][start-1:end-1].seq
+        seq = __genome_[self.chrom][start-1-offset:end-1+offset].seq
         strand = self.strand
         tx_id = tx.get_name().decode('utf8')
-        return Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq)
+        return Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq, offset=offset)
     
     @property
     def transcripts(self):
