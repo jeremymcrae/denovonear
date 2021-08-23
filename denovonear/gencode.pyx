@@ -10,13 +10,14 @@ from libcpp.map cimport map
 
 from pyfaidx import Fasta
 
-from denovonear.transcript cimport Tx, Region
+from denovonear.transcript cimport Tx, Region, CDS_coords
 from denovonear.transcript import Transcript
 
 cdef extern from "gencode.h" namespace "gencode":
     cdef struct NamedTx:
         string symbol
         Tx tx
+        bool is_principal
     
     vector[NamedTx] open_gencode(string)
 
@@ -25,6 +26,7 @@ __genome_ = None
 cdef class Gene:
     cdef string symbol
     cdef vector[Tx] _transcripts
+    cdef vector[bool] _principal
     cdef str _chrom
     cdef int _start, _end
     def __cinit__(self, string symbol):
@@ -32,8 +34,9 @@ cdef class Gene:
         self.start = 999999999
         self.end = -999999999
     
-    cdef add_tx(self, Tx tx):
+    cdef add_tx(self, Tx tx, bool is_principal):
         self._transcripts.push_back(tx)
+        self._principal.push_back(is_principal)
         self.chrom = tx.get_chrom().decode('utf8')
         self.start = min(self.start, tx.get_start())
         self.end = max(self.end, tx.get_end())
@@ -70,7 +73,7 @@ cdef class Gene:
             return chr(self._transcripts[0].get_strand())
         raise IndexError('no transcripts in gene yet')
     
-    cdef convert_exons(self, vector[Region] exons):
+    cdef _convert_exons(self, vector[Region] exons):
         ''' convert vector of exon Regions to list of lists
         
         We need exons and CDS as lists of lists for constructing the python 
@@ -78,23 +81,63 @@ cdef class Gene:
         '''
         return [[y.start, y.end] for y in exons]
     
+    cdef _to_Transcript(self, Tx tx):
+        ''' construct Transcript (python object) from Tx (c++ object)
+        '''
+        start = tx.get_start()
+        end = tx.get_end()
+        exons = self._convert_exons(tx.get_exons())
+        cds = self._convert_exons(tx.get_cds())
+        seq = __genome_[self.chrom][start-1:end-1].seq
+        strand = self.strand
+        tx_id = tx.get_name().decode('utf8')
+        return Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq)
+    
     @property
     def transcripts(self):
         ''' get list of Transcripts for gene, with genomic DNA included
         '''
-        converted = []
-        for x in self._transcripts:
-            start = x.get_start()
-            end = x.get_end()
-            exons = self.convert_exons(x.get_exons())
-            cds = self.convert_exons(x.get_cds())
-            seq = __genome_[self.chrom][start-1:end-1].seq
-            strand = self.strand
-            tx_id = x.get_name().decode('utf8')
-            tx = Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq)
-            converted.append(tx)
+        return [self._to_Transcript(x) for x in self._transcripts]
+    
+    cdef int _cds_len(self, Tx tx):
+        ''' get length of coding sequence for a Tx object based transcript
+        '''
+        cdef CDS_coords coords = tx.get_coding_distance(tx.get_cds_end())
+        return coords.position + 1
+    
+    cdef Tx _max_by_cds(self, vector[Tx] transcripts):
+        ''' get longest transcript by CDS length
+        '''
+        cdef Tx max_tx
+        length = 0
+        for tx in transcripts:
+            curr_len = self._cds_len(tx)
+            if curr_len > length:
+                length = curr_len
+                max_tx = tx
+        return max_tx
+    
+    @property
+    def canonical(self):
+        ''' find the canonical transcript for a gene.
         
-        return converted
+        Canonical is defined as:
+            - transcript with longest CDS tagged with appris_principal in the GTF
+            - if no appris_principal tags for any tx, use the tx with longest CDS
+        
+        Occasionally there are multiple transcripts tagged as appris_principal
+        and with the same longest CDS, we use the first one of those.
+        '''
+        cdef vector[Tx] principal
+        for i in range(self._transcripts.size()):
+            if self._principal[i]:
+                principal.push_back(self._transcripts[i])
+        
+        if principal.size() == 0:
+            principal = self._transcripts
+        
+        # cdef Tx tx = self._max_by_cds(principal)
+        return self._to_Transcript(self._max_by_cds(principal))
 
 cdef class Gencode:
     cdef dict genes
@@ -118,7 +161,7 @@ cdef class Gencode:
             if symbol not in self.genes:
                 self.genes[symbol] = Gene(symbol.encode('utf8'))
             curr = self.genes[symbol]
-            curr.add_tx(x.tx)
+            curr.add_tx(x.tx, x.is_principal)
             self.genes[symbol] = curr
         
         self.coords = sorted(((x.chrom, x.start, x.end), symbol) for symbol, x in self.genes.items())
@@ -136,6 +179,10 @@ cdef class Gencode:
         chrom = f'chr{chrom}' if not chrom.startswith('chr') else chrom
         i = bisect.bisect_left(self.coords, ((chrom, pos, pos), 'AAAA'))
         symbol = self.coords[i][1]
+        # TODO: this doesn't necessarily return the closest, instead gene with 
+        # TODO: nearest 5' end. We need to check distance to start and end of
+        # TODO: nearby genes. Also what about to nearest CDS? And what about if
+        # TODO: multiple genes overlap the site?
         return self[symbol]
     
     def in_region(self, chrom, start, end):

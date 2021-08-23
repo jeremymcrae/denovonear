@@ -19,6 +19,7 @@ struct GTFLine {
     std::string symbol;
     std::string tx_id;
     std::string transcript_type;
+    bool is_principal;
 };
 
 class GTF {

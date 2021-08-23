@@ -38,6 +38,8 @@ void get_attributes_fields(GTFLine &info, std::string &line, int offset) {
     info.symbol = line.substr(gene_start, gene_end - gene_start);
     info.tx_id = line.substr(tx_start, tx_end - tx_start);
     info.transcript_type = line.substr(type_start, type_end - type_start);
+    info.is_principal = ((info.feature == "transcript") and
+                         (line.find("appris_principal", type_end) != std::string::npos));
 }
 
 // parse required fields from a GTF line

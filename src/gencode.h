@@ -28,6 +28,7 @@ struct TxInfo {
 struct NamedTx {
     std::string symbol;
     Tx tx;
+    bool is_principal;
 };
 
 // open the gencode annotations GTF, and return Tx objects for each transcript

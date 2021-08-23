@@ -35,6 +35,7 @@ void load_transcripts(std::vector<NamedTx> & transcripts, GTF &gtf_file, bool co
     std::string tx_id = "";
     std::string symbol = "";
     std::string current;
+    bool is_principal = false;
     TxInfo info;
 
     GTFLine gtf;
@@ -67,18 +68,23 @@ void load_transcripts(std::vector<NamedTx> & transcripts, GTF &gtf_file, bool co
             Tx tx = Tx(info.name, info.chrom, info.start, info.end, info.strand[0]);
             tx.set_exons(info.exons, info.cds);
             tx.set_cds(info.cds);
-            transcripts.push_back({symbol, tx});
+            transcripts.push_back({symbol, tx, is_principal});
             info = {};
             tx_id = current;
             cds_range["max"] = 0;
             cds_range["min"] = 999999999;
             symbol = gtf.symbol;
+            is_principal = false;
         }
 
         if (info.name == "") {
             info.name = tx_id;
             info.chrom = gtf.chrom;
             info.strand = gtf.strand;
+        }
+
+        if (gtf.is_principal) {
+            is_principal = true;
         }
 
         if (gtf.feature == "transcript") {
