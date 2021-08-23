@@ -101,6 +101,14 @@ void load_transcripts(std::vector<NamedTx> & transcripts, GTF &gtf_file, bool co
             cds_range["min"] = std::min(std::min(cds_range["min"], gtf.start), gtf.end);
         }
     }
+
+    sort_exons(info.cds);
+    info.cds[0][0] = cds_range["min"];
+    info.cds.back()[1] = cds_range["max"];
+    Tx tx = Tx(info.name, info.chrom, info.start, info.end, info.strand[0]);
+    tx.set_exons(info.exons, info.cds);
+    tx.set_cds(info.cds);
+    transcripts.push_back({symbol, tx, is_principal});
 }
 
 std::vector<NamedTx> open_gencode(std::string path) {
