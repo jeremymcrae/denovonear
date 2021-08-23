@@ -314,6 +314,8 @@ cdef class Transcript:
         return self.thisptr.in_coding_region(position)
     
     def get_coding_distance(self, pos):
+        ''' get distance to CDS start (and intronic offset)
+        '''
         coords = self.thisptr.get_coding_distance(pos)
         
         return {'pos': coords.position, 'offset': coords.offset}
