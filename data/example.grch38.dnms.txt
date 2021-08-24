@@ -1,0 +1,4 @@
+gene_name	chr	pos	consequence	snp_or_indel
+OR4F5	chr1	69500	missense_variant	DENOVO-SNP
+OR4F5	chr1	69450	missense_variant	DENOVO-SNP
+OR4F5	chr1	69400	missense_variant	DENOVO-SNP
