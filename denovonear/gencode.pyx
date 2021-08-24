@@ -152,9 +152,9 @@ cdef class Gencode:
         '''
         logging.info(f'opening genome fasta: {fasta}')
         global __genome_
-        __genome_ = Fasta(fasta)
-        logging.info(f'opening gencode annoations: {gencode}')
-        cdef vector[NamedTx] transcripts = open_gencode(gencode.encode('utf8'))
+        __genome_ = Fasta(str(fasta))
+        logging.info(f'opening gencode annotations: {gencode}')
+        cdef vector[NamedTx] transcripts = open_gencode(str(gencode).encode('utf8'))
         cdef Gene curr
         self.genes = {}
         for x in transcripts:
