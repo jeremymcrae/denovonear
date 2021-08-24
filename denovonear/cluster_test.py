@@ -3,7 +3,8 @@ from math import log, isnan
 
 from scipy.stats import chi2
 
-from denovonear.load_gene import load_gene, get_de_novos_in_transcript
+from denovonear.load_gene import load_gene, get_de_novos_in_transcript, \
+    minimise_transcripts
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.load_de_novos import load_de_novos
 from denovonear.site_specific_rates import SiteRates
@@ -28,7 +29,8 @@ def fishers_method(values):
     # P-values. The chi square statistic is -2*sum(ln(P-values))
     return chi2.sf(-2 * sum(map(log, values)), 2 * len(values))
 
-async def cluster_de_novos(symbol, de_novos, ensembl, iterations=1000000, mut_dict=None):
+async def cluster_de_novos(symbol, de_novos, ensembl, iterations=1000000, 
+        mut_dict=None, gencode=None):
     """ analysis proximity cluster of de novos in a single gene
     
     Args:
@@ -54,7 +56,12 @@ async def cluster_de_novos(symbol, de_novos, ensembl, iterations=1000000, mut_di
     # required to contain all the de novos, unless we can't find any coding
     # transcripts that contain the de novos.
     try:
-        transcripts = await load_gene(ensembl, symbol, missense + nonsense)
+        if gencode:
+            transcripts = gencode[symbol].transcripts
+        else:
+            transcripts = await load_gene(ensembl, symbol, missense + nonsense)
+        minimized = minimise_transcripts(transcripts, missense + nonsense)
+        transcripts = [x for x in transcripts if x.get_name() in minimized]
     except IndexError as e:
         print(e)
         return None

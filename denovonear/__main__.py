@@ -18,6 +18,7 @@ from denovonear.load_gene import (load_gene, construct_gene_object,
 from denovonear.site_specific_rates import SiteRates
 from denovonear.frameshift_rate import include_frameshift_rates
 from denovonear.log_transform_rates import log_transform
+from denovonear.gencode import Gencode
 
 async def clustering(ensembl, mut_dict, output, args):
     
@@ -25,13 +26,15 @@ async def clustering(ensembl, mut_dict, output, args):
     
     output.write("gene_id\tmutation_category\tevents_n\tdist\tprobability\n")
     
+    gencode = None if args.gencode is None else Gencode(args.gencode, args.fasta)
+    
     iterations = 1000000
     for symbol in sorted(de_novos):
         
         if len(de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]) < 2:
             continue
         
-        probs = await cluster_de_novos(symbol, de_novos[symbol], ensembl, iterations, mut_dict)
+        probs = await cluster_de_novos(symbol, de_novos[symbol], ensembl, iterations, mut_dict, gencode)
         
         if probs is None:
             continue
@@ -170,7 +173,13 @@ def get_options():
     parent = argparse.ArgumentParser(add_help=False)
     parent.add_argument("--out", help="output filename")
     parent.add_argument("--rates",
-        help="Path to file containing sequence context-based mutation rates.")
+        help="optional path to file containing sequence context-based mutation rates.")
+    parent.add_argument("--gencode",
+        help="optional path to gencode annotations file. If not provided, gene " \
+            "coordinates will be obtained via the Ensembl REST API.")
+    parent.add_argument("--fasta",
+        help="optional path to genome fasta file. If not provided, gene " \
+            "coordinates will be obtained via the Ensembl REST API.")
     parent.add_argument("--genome-build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "
         "that the de novo coordinates are based on (GRCh37 or GRCh38")
@@ -204,7 +213,7 @@ def get_options():
         "transcripts to contain all de novos.")
     
     ############################################################################
-    # CLI options for identifing transcripts to use
+    # CLI options for getting mutation rates per gene
     rater = subparsers.add_parser("rates", parents=[parent],
         description="determine mutation rates for genes given transcript IDs.")
     rater.add_argument("--genes", help="Path to file "
