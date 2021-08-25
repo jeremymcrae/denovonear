@@ -188,6 +188,11 @@ cdef class Gene:
         
         # cdef Tx tx = self._max_by_cds(principal)
         return self._to_Transcript(self._max_by_cds(principal))
+    
+    def in_any_tx_cds(self, pos):
+        ''' find if a pos is in coding region of any transcript of a gene
+        '''
+        return any(tx.in_coding_region(pos) for tx in self._transcripts)
 
 cdef class Gencode:
     cdef dict genes
@@ -224,17 +229,47 @@ cdef class Gencode:
     def __getitem__(self, symbol):
         return self.genes[symbol]
     
+    def distance(self, gene, chrom, pos):
+        ''' get distance to nearest boundary of a gene
+        '''
+        if gene.chrom != chrom:
+            return None
+        if gene.start <= pos <= gene.end:
+            return 0
+        return min(abs(gene.start - pos), abs(gene.end - pos))
+    
     def nearest(self, chrom, pos):
         ''' find the nearest gene to a genomic chrom, pos coordinate
         '''
         chrom = f'chr{chrom}' if not chrom.startswith('chr') else chrom
         i = bisect.bisect_left(self.coords, ((chrom, pos, pos), 'AAAA'))
-        symbol = self.coords[i][1]
-        # TODO: this doesn't necessarily return the closest, instead gene with 
-        # TODO: nearest 5' end. We need to check distance to start and end of
-        # TODO: nearby genes. Also what about to nearest CDS? And what about if
-        # TODO: multiple genes overlap the site?
-        return self[symbol]
+        i = min(i, len(self.coords) - 1)  # ensure we don't go past the last gene
+        
+        if chrom != self[self.coords[i][1]].chrom:
+            # the gene coords are in a single sorted list (by chrom and pos), and
+            # we can match to the next chrom, just step back to the previous chrom
+            i -= 1
+        
+        if pos < self[self.coords[i][1]].start:
+            left = self[self.coords[max(i - 1, 0)][1]]
+            right = self[self.coords[i][1]]
+        else:
+            left = self[self.coords[i][1]]
+            right = self[self.coords[min(i + 1, len(self.coords) - 1)][1]]
+        
+        left_delta = self.distance(left, chrom, pos)
+        right_delta = self.distance(right, chrom, pos)
+        
+        if right_delta is None and left_delta is None:
+            raise ValueError(f"can't find any genes on {chrom}")
+        if right_delta is None:
+            return left
+        elif left_delta is None:
+            return right
+        elif left_delta < right_delta:
+            return left
+        else:
+            return right
     
     def in_region(self, chrom, start, end):
         ''' find genes within a genomic region

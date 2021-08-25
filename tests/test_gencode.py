@@ -60,6 +60,8 @@ class TestGencode(unittest.TestCase):
             self.assertEqual(gencode_tx.get_cds_sequence(), ensembl_tx.get_cds_sequence())
     
     def test_gencode_in_region(self):
+        ''' test that in_region pulls out the correct genes
+        '''
         lines = '##format: gtf\n' \
                 'chr1\tHAVANA\tgene\t10\t20\t.\t-\t.\tgene_name "TEST1";\n' \
                 'chr1\tHAVANA\ttranscript\t10\t20\t.\t-\t.\ttranscript_id "ENST_A";gene_name "TEST1"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
@@ -90,6 +92,71 @@ class TestGencode(unittest.TestCase):
         in_region = gencode.in_region('chr1', 10, 2000)
         self.assertEqual(len(in_region), 2)
         self.assertEqual(set(x.symbol for x in in_region), set(["TEST1", "TEST2"]))
+        
+        # no overlapping genes right up to the border of a gene
+        in_region = gencode.in_region('chr1', 0, 10)
+        self.assertEqual(len(in_region), 0)
+        in_region = gencode.in_region('chr1', 20, 30)
+        self.assertEqual(len(in_region), 0)
+        
+        # we find matches if even a single base of the gene is in the region
+        in_region = gencode.in_region('chr1', 0, 11)
+        self.assertEqual(len(in_region), 1)
+    
+    def test_gencode_nearest(self):
+        ''' test that we can find the nearest gene from Gencode
+        '''
+        lines = '##format: gtf\n' \
+                'chr1\tHAVANA\tgene\t10\t20\t.\t-\t.\tgene_name "TEST1";\n' \
+                'chr1\tHAVANA\ttranscript\t10\t20\t.\t-\t.\ttranscript_id "ENST_A";gene_name "TEST1"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr1\tHAVANA\texon\t10\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tCDS\t15\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST2";\n' \
+                'chr1\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_B";gene_name "TEST2"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tCDS\t115\t1100\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n'\
+                'chr2\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST3";\n' \
+                'chr2\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_C";gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr2\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n' \
+                'chr2\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n'
+        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
+            write_gtf(temp.name, lines)
+            make_fasta(fasta.name, ['chr1', 'chr2'])
+            gencode = Gencode(temp.name, fasta.name)
+        
+        self.assertEqual(gencode.nearest('chr1', 5).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 10).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 11).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 21).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 80).symbol, 'TEST2')
+        self.assertEqual(gencode.nearest('chr1', 2000).symbol, 'TEST2')
+        
+        # and look for genes on the final chrom, both before and after the final gene
+        self.assertEqual(gencode.nearest('chr2', 0).symbol, 'TEST3')
+        self.assertEqual(gencode.nearest('chr2', 2000).symbol, 'TEST3')
+        
+        with self.assertRaises(ValueError):
+            gencode.nearest('chrZZZ', 2000)
+    
+    def test_gencode_canonical(self):
+        '''
+        '''
+        lines = '##format: gtf\n' \
+                'chr1\tHAVANA\tgene\t10\t20\t.\t-\t.\tgene_name "TEST1";\n' \
+                'chr1\tHAVANA\ttranscript\t10\t20\t.\t-\t.\ttranscript_id "ENST_A";gene_name "TEST1"; transcript_type "protein_coding";\n' \
+                'chr1\tHAVANA\texon\t10\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tCDS\t15\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST1";\n' \
+                'chr1\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_B";gene_name "TEST1"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST1"; transcript_type "protein_coding"\n'
+        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
+            write_gtf(temp.name, lines)
+            make_fasta(fasta.name, ['chr1', 'chr2'])
+            gencode = Gencode(temp.name, fasta.name)
+        
+        gene = gencode['TEST1']
+        canonical = gene.canonical
+        self.assertEqual(canonical.symbol, 'ENST_B')
     
     def test_parse_gtf_gene_line(self):
         ''' test we can parse a GTF line for a gene feature
