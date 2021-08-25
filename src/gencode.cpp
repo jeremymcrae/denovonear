@@ -114,11 +114,11 @@ void load_transcripts(std::vector<NamedTx> & transcripts, GTF &gtf_file, bool co
     }
 }
 
-std::vector<NamedTx> open_gencode(std::string path) {
+std::vector<NamedTx> open_gencode(std::string path, bool coding) {
     GTF gtf_file(path);
     std::vector<NamedTx> transcripts;
     transcripts.reserve(80000);
-    load_transcripts(transcripts, gtf_file, true);
+    load_transcripts(transcripts, gtf_file, coding);
     return transcripts;
 }
 

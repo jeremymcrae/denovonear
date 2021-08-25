@@ -13,13 +13,59 @@ from pyfaidx import Fasta
 from denovonear.transcript cimport Tx, Region, CDS_coords
 from denovonear.transcript import Transcript
 
+cdef extern from "gtf.h" namespace "gencode":
+    cdef struct GTFLine:
+        string chrom
+        string feature
+        int start
+        int end
+        string strand
+        string symbol
+        string tx_id
+        string transcript_type
+        bool is_principal
+        
+    GTFLine parse_gtfline(string line)
+
 cdef extern from "gencode.h" namespace "gencode":
     cdef struct NamedTx:
         string symbol
         Tx tx
         bool is_principal
     
-    vector[NamedTx] open_gencode(string)
+    vector[NamedTx] open_gencode(string, bool)
+
+cpdef _parse_gtfline(string line):
+    ''' python function for unit testing GTF parsing
+    '''
+    return parse_gtfline(line)
+
+cdef _convert_exons(vector[Region] exons):
+    ''' convert vector of exon Regions to list of lists
+    
+    We need exons and CDS as lists of lists for constructing the python 
+    Transcript object.
+    '''
+    return [[y.start, y.end] for y in exons]
+
+cpdef _open_gencode(gtf_path, coding=True):
+    ''' python function for unit testing loading transcripts from GTF
+    '''
+    cdef vector[NamedTx] _transcripts = open_gencode(gtf_path.encode('utf8'), coding)
+    
+    transcripts = []
+    for x in _transcripts:
+        tx = x.tx
+        chrom = tx.get_chrom().decode('utf8')
+        start = tx.get_start()
+        end = tx.get_end()
+        exons = _convert_exons(tx.get_exons())
+        cds = _convert_exons(tx.get_cds())
+        strand = chr(tx.get_strand())
+        tx_id = tx.get_name().decode('utf8')
+        transcript = Transcript(tx_id, chrom, start, end, strand, exons, cds, offset=0)
+        transcripts.append((x.symbol.decode('utf8'), transcript, x.is_principal))
+    return transcripts
 
 __genome_ = None
 
@@ -143,18 +189,19 @@ cdef class Gene:
 cdef class Gencode:
     cdef dict genes
     cdef list coords
-    def __cinit__(self, gencode, fasta):
+    def __cinit__(self, gencode, fasta, coding_only=True):
         ''' initialise Gencode
         
         Args:
             gencode: path to gencode annotations file
             fasta: path to fasta for genome matching annotations build
+            coding: restrict to protein_coding only by default
         '''
         logging.info(f'opening genome fasta: {fasta}')
         global __genome_
         __genome_ = Fasta(str(fasta))
         logging.info(f'opening gencode annotations: {gencode}')
-        cdef vector[NamedTx] transcripts = open_gencode(str(gencode).encode('utf8'))
+        cdef vector[NamedTx] transcripts = open_gencode(str(gencode).encode('utf8'), coding_only)
         cdef Gene curr
         self.genes = {}
         for x in transcripts:
@@ -203,3 +250,10 @@ cdef class Gencode:
         
         genes = (self.genes[self.coords[i][1]] for i in range(left, right))
         return [x for x in genes if x.chrom == chrom]
+    
+    def __exit__(self):
+        ''' cleanup at exit
+        '''
+        global __genome_
+        __genome_.close()
+        __genome_ = None

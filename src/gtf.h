@@ -22,7 +22,10 @@ struct GTFLine {
     bool is_principal;
 };
 
-class GTF {
+GTFLine parse_gtfline(std::string &line);
+
+class GTF
+{
     // we need to allow for gzipped GTFs or not, so prepare handles for both.
     // This is wasteful, but only one will open and unsure of an easier way.
     std::ifstream handle;

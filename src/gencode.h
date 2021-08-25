@@ -32,7 +32,7 @@ struct NamedTx {
 };
 
 // open the gencode annotations GTF, and return Tx objects for each transcript
-std::vector<NamedTx> open_gencode(std::string path);
+std::vector<NamedTx> open_gencode(std::string path, bool coding=true);
 
 } // namespace
 
