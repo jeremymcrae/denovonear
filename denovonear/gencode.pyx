@@ -70,13 +70,13 @@ cpdef _open_gencode(gtf_path, coding_only=True):
 __genome_ = None
 
 cdef class Gene:
-    cdef string symbol
+    cdef string _symbol
     cdef vector[Tx] _transcripts
     cdef vector[bool] _principal
     cdef str _chrom
     cdef int _start, _end
     def __cinit__(self, string symbol):
-        self.symbol = symbol
+        self._symbol = symbol
         self.start = 999999999
         self.end = -999999999
     
@@ -88,9 +88,12 @@ cdef class Gene:
         self.end = max(self.end, tx.get_end())
     
     def __repr__(self):
-        symbol = self.symbol.decode('utf8')
         chrom = self.chrom
-        return f'Gene("{symbol}", {chrom}:{self.start}-{self.end})'
+        return f'Gene("{self.symbol}", {chrom}:{self.start}-{self.end})'
+    
+    @property
+    def symbol(self):
+        return self._symbol.decode('utf8')
     
     @property
     def chrom(self):
