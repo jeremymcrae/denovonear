@@ -48,10 +48,10 @@ cdef _convert_exons(vector[Region] exons):
     '''
     return [[y.start, y.end] for y in exons]
 
-cpdef _open_gencode(gtf_path, coding=True):
+cpdef _open_gencode(gtf_path, coding_only=True):
     ''' python function for unit testing loading transcripts from GTF
     '''
-    cdef vector[NamedTx] _transcripts = open_gencode(gtf_path.encode('utf8'), coding)
+    cdef vector[NamedTx] _transcripts = open_gencode(gtf_path.encode('utf8'), coding_only)
     
     transcripts = []
     for x in _transcripts:
