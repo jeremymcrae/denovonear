@@ -22,6 +22,13 @@ def write_gtf(path, lines):
         for line in lines:
             output.write(line)
 
+def make_fasta(path, chroms):
+    with open(path, 'wt') as output:
+        for chrom in chroms:
+            output.write(f'>{chrom}\n')
+            lines = ['A' * 50 + '\n'] * 50
+            output.writelines(lines)
+
 class TestGencode(unittest.TestCase):
     
     def setUp(self):
@@ -51,6 +58,38 @@ class TestGencode(unittest.TestCase):
             self.assertEqual(gencode_tx.get_exons(), ensembl_tx.get_exons())
             self.assertEqual(gencode_tx.get_cds(), ensembl_tx.get_cds())
             self.assertEqual(gencode_tx.get_cds_sequence(), ensembl_tx.get_cds_sequence())
+    
+    def test_gencode_in_region(self):
+        lines = '##format: gtf\n' \
+                'chr1\tHAVANA\tgene\t10\t20\t.\t-\t.\tgene_name "TEST1";\n' \
+                'chr1\tHAVANA\ttranscript\t10\t20\t.\t-\t.\ttranscript_id "ENST_A";gene_name "TEST1"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr1\tHAVANA\texon\t10\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tCDS\t15\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST2";\n' \
+                'chr1\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_B";gene_name "TEST2"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n' \
+                'chr1\tHAVANA\tCDS\t115\t1100\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n'\
+                'chr2\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST3";\n' \
+                'chr2\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_C";gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr2\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n' \
+                'chr2\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n'
+        
+        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
+            write_gtf(temp.name, lines)
+            make_fasta(fasta.name, ['chr1', 'chr2'])
+            gencode = Gencode(temp.name, fasta.name)
+        
+        # check different region selections, just by examining the number of 
+        # genes, and their HGNC symbols. In other parts we check gene setup, so
+        # we don't need to repeat that here
+        in_region = gencode.in_region('chr1', 0, 5)
+        self.assertEqual(len(in_region), 0)
+        in_region = gencode.in_region('chr1', 10, 30)
+        self.assertEqual(len(in_region), 1)
+        self.assertEqual(in_region[0].symbol, "TEST1")
+        in_region = gencode.in_region('chr1', 10, 2000)
+        self.assertEqual(len(in_region), 2)
+        self.assertEqual(set(x.symbol for x in in_region), set(["TEST1", "TEST2"]))
     
     def test_parse_gtf_gene_line(self):
         ''' test we can parse a GTF line for a gene feature
