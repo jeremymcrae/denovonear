@@ -15,59 +15,29 @@ you can use your own rates, or even longer sequence contexts, such as 5-mers or
 pip install denovonear
 ```
 
-
 ### Usage
-Analyse *de novo* mutations within python:
-
-```py
-from denovonear.cluster_test import cluster_de_novos
-
-symbol = 'PPP2R5D'
-de_novos = {'missense': [42975003, 42975003, 42975003, 42975013], 'nonsense': []}
-p_values = cluster_de_novos(symbol, de_novos, iterations=1000000)
-```
-
-Pull out site-specific rates by creating Transcript objects, then get the
-rates by consequence at each site
-
-```py
-from denovonear.ensembl_requester import EnsemblRequest
-from denovonear.load_mutation_rates import load_mutation_rates
-from denovonear.load_gene import construct_gene_object
-from denovonear.site_specific_rates import SiteRates
-
-# convenience object to extract transcript coordinates and sequence from Ensembl
-ensembl = EnsemblRequest(cache_folder='cache', genome_build='grch37')
-transcript = construct_gene_object(ensembl, 'ENST00000346085')
-mut_rates = load_mutation_rates()
-
-rates = SiteRates(transcript, mut_rates)
-
-# rates are stored by consequence, but you can iterate through to find all
-# possible sites in and around the CDS:
-for cq in ['missense', 'nonsense', 'splice_lof', 'synonymous']:
-    for site in rates[cq]:
-        site['pos'] = transcript.get_position_on_chrom(site['pos'], site['offset'])
-
-# or if you just want the summed rate
-rates['missense'].get_summed_rate()
-```
-
-You can also analyse de novo clustering via the denovonear command:
+Analyse *de novo* mutations with the CLI tool:
 
 ```sh
 denovonear cluster \
-   --in data/example_de_novos.txt \
+   --in data/example.grch38.dnms.txt \
+   --gencode data/example.grch38.gtf \
+   --fasta data/example.grch38.fa \
    --out output.txt
 ```
 
-That command uses a minimal example de novo input file, included in the git
-repository. The input is a tab-separated file with a line for each de novo
-event. The columns are HGNC symbol, chromosome, position, VEP consequence for
-the variant, and whether the de novo is a SNP or indel (the analysis excludes
-indels).
+explanation of options:
+ - `--in`: path to tab-separated table of de novo mutations. See example table below for columns, or `example.grch38.dnms.txt` in data folder.
+ - `--gencode`: path to GENCODE annotations in 
+   [GTF format](https://www.ensembl.org/info/website/upload/gff.html) for 
+   transcripts and exons e.g. 
+   [example release](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/gencode.v38.annotation.gtf.gz). Can be gzipped, or uncompressed.
+ - `--fasta`: path to genome fasta, matching genome build of gencode file
 
-Other options are:
+If the --gencode or --fasta options are skipped (e.g. `denovonear cluster --in 
+INFILE --out OUTFILE`), gene annotations will be retrieved via an ensembl web 
+service. For that, you might need to specify `--genome-build grch38` to ensure
+the gene coordinates match your de novo mutation coordinates.
 
 * `--rates PATH_TO_RATES`
 * `--cache-folder PATH_TO_CACHE_DIR`
@@ -83,6 +53,51 @@ The cache folder defaults to making a folder named "cache" within the working
 directory. The genome build indicates which genome build the coordinates of the
 de novo variants are based on, and defaults to GRCh37.
 
+#### Example de novo table
+
+gene_name | chr | pos | consequence | snp_or_indel
+ ---      | --- | --- | ---         |  ---
+OR4F5 | chr1 | 69500 | missense_variant | DENOVO-SNP
+OR4F5 | chr1 | 69450 | missense_variant | DENOVO-SNP
+
+### Python usage
+
+```py
+from denovonear.gencode import Gencode
+from denovonear.cluster_test import cluster_de_novos
+
+gencode = Gencode('./data/example.grch38.gtf', './data/example.grch38.fa')
+symbol = 'OR4F5'
+de_novos = {'missense': [69500, 69450, 69400], 'nonsense': []}
+p_values = cluster_de_novos(symbol, de_novos, gencode[symbol], iterations=1000000)
+```
+
+Pull out site-specific rates by creating Transcript objects, then get the
+rates by consequence at each site
+
+```py
+from denovonear.rate_limiter import RateLimiter
+from denovonear.load_mutation_rates import load_mutation_rates
+from denovonear.load_gene import construct_gene_object
+from denovonear.site_specific_rates import SiteRates
+
+# extract transcript coordinates and sequence from Ensembl
+async with RateLimiter(per_second=15) as ensembl:
+    transcript = await construct_gene_object(ensembl, 'ENST00000346085')
+
+mut_rates = load_mutation_rates()
+rates = SiteRates(transcript, mut_rates)
+
+# rates are stored by consequence, but you can iterate through to find all
+# possible sites in and around the CDS:
+for cq in ['missense', 'nonsense', 'splice_lof', 'synonymous']:
+    for site in rates[cq]:
+        site['pos'] = transcript.get_position_on_chrom(site['pos'], site['offset'])
+
+# or if you just want the summed rate
+rates['missense'].get_summed_rate()
+```
+
 ### Identify transcripts containing de novo events
 
 You can identify transcripts containing de novos events with the
@@ -92,12 +107,12 @@ transcripts to contain all de novos (where transcripts are prioritised on the
 basis of number of de novo events, and length of coding sequence). Transcripts
 can be identified with:
 
-.. code:: bash
-
+```sh
     denovonear transcripts \
         --de-novos data/example_de_novos.txt \
         --out output.txt \
         --all-transcripts
+```
 
 Other options are:
 
