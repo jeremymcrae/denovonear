@@ -147,9 +147,13 @@ void SitesChecks::check_position(int bp) {
     std::vector<std::string> alts(bases);
     alts.erase(std::find(alts.begin(), alts.end(), seq.substr(mid_pos, 1)));
     
+    std::string mutated_aa;
+    std::string alt_seq;
+    std::string ref;
+    std::string category;
     for (auto &alt : alts) {
-        std::string mutated_aa = initial_aa;
-        std::string alt_seq = seq.substr(0, mid_pos) + alt +
+        mutated_aa = initial_aa;
+        alt_seq = seq.substr(0, mid_pos) + alt +
             seq.substr(mid_pos + 1, kmer_length - mid_pos);
         
         double rate = mut_dict[seq][alt_seq];
@@ -157,11 +161,11 @@ void SitesChecks::check_position(int bp) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
         
-        std::string category = check_consequence(initial_aa, mutated_aa, bp);
+        category = check_consequence(initial_aa, mutated_aa, bp);
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
-        std::string ref = seq.substr(mid_pos, 1);
+        ref = seq.substr(mid_pos, 1);
         if (_tx.get_strand() != fwd) {
             ref = transdict[ref];
             alt = transdict[alt];
