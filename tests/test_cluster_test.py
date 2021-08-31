@@ -5,6 +5,7 @@ import unittest
 import asyncio
 import math
 
+from denovonear.load_gene import load_gene
 from denovonear.rate_limiter import RateLimiter
 from denovonear.cluster_test import fishers_method, cluster_de_novos
 
@@ -29,7 +30,8 @@ class TestClusterTestPy(unittest.TestCase):
         de_novos = {'missense': [42975003, 42975003, 42975003, 42975013],
             'nonsense': []}
         
-        p_values = _run(cluster_de_novos, symbol, de_novos, iterations=1000000)
+        gene = _run(load_gene, gene_id=symbol)
+        p_values = cluster_de_novos(symbol, de_novos, gene, iterations=1000000)
         
         self.assertAlmostEqual(p_values['miss_prob'], 3e-06, delta=3e-6)
         self.assertEqual(p_values['miss_dist'], '2.3')

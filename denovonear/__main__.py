@@ -20,21 +20,42 @@ from denovonear.frameshift_rate import include_frameshift_rates
 from denovonear.log_transform_rates import log_transform
 from denovonear.gencode import Gencode
 
-async def clustering(ensembl, mut_dict, output, args):
+async def _load_gencode(symbols):
+    ''' load gene coords and sequence via ensembl
+    '''
+    gencode = Gencode()
+    async with RateLimiter(per_second=15) as ensembl:
+        tasks = [load_gene(ensembl, symbol) for symbol in symbols]
+        genes = await asyncio.gather(*tasks)
+        for gene in genes:
+            gencode.add_gene(gene)
+        return gencode
+
+def load_gencode(symbols, gencode=None, fasta=None):
+    ''' load genes from gencode annotations file, with ensembl as backup
+    '''
+    if gencode and fasta:
+        return Gencode(gencode, fasta)
     
+    # use ensembl as backup if gencode file not available. This restricts the
+    # asynchronous calls to within one section, and ensures they are called together
+    return asyncio.get_event_loop().run_until_complete(_load_gencode(symbols))
+
+def clustering(args, output):
+    
+    mut_dict = load_mutation_rates(args.rates)
     de_novos = load_de_novos(args.input)
+    gencode = load_gencode(de_novos, args.gencode, args.fasta)
     
     output.write("gene_id\tmutation_category\tevents_n\tdist\tprobability\n")
     
-    gencode = None if args.gencode is None else Gencode(args.gencode, args.fasta)
-    
     iterations = 1000000
     for symbol in sorted(de_novos):
-        
+        logging.info(f'checking {symbol}')
         if len(de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]) < 2:
             continue
         
-        probs = await cluster_de_novos(symbol, de_novos[symbol], ensembl, iterations, mut_dict, gencode)
+        probs = cluster_de_novos(symbol, de_novos[symbol], gencode[symbol], iterations, mut_dict)
         
         if probs is None:
             continue
@@ -44,17 +65,20 @@ async def clustering(ensembl, mut_dict, output, args):
         output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "nonsense",
             len(de_novos[symbol]["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
 
-async def find_transcripts(ensembl, mut_dict, output, args):
+def find_transcripts(args, output):
     
+    mut_dict = load_mutation_rates(args.rates)
     de_novos = load_de_novos(args.de_novos)
+    gencode = load_gencode(de_novos, args.gencode, args.fasta)
     
     output.write("hgnc_symbol\ttranscript_id\tlength\tde_novos\n")
     
     for symbol in sorted(de_novos):
-        print(symbol)
+        logging.info(f'checking {symbol}')
         func_events = de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]
         
-        transcripts = await load_gene(ensembl, symbol, minimize=False)
+        transcripts = gencode[symbol].transcripts
+        
         # find the counts per transcript, depending on whether we want to count
         # for all transcripts containing one or more de novos, or to find the
         # minimum set of transcripts to contain the de novos
@@ -64,7 +88,7 @@ async def find_transcripts(ensembl, mut_dict, output, args):
             elif args.minimal_transcripts:
                 counts = minimise_transcripts(transcripts, func_events)
         except (ValueError, IndexError):
-            print("error occured with {0}".format(symbol))
+            logging.error(f"error occured with {symbol}")
             continue
         
         # write the transcript details to a file
@@ -96,13 +120,12 @@ def load_genes(path):
     
     return transcripts
 
-async def get_mutation_rates(transcripts, mut_dict, ensembl):
+def get_mutation_rates(transcripts, mut_dict):
     """ determines mutation rates per functional category for transcripts
     
     Args:
         transcripts: list of transcript IDs for a gene
         mut_dict: dictionary of local sequence context mutation rates
-        ensembl: EnsemblRequest object, to retrieve information from Ensembl.
     
     Returns:
         tuple of (rates, merged transcript, and transcript CDS length)
@@ -112,11 +135,7 @@ async def get_mutation_rates(transcripts, mut_dict, ensembl):
         'splice_region': 0, 'synonymous': 0}
     combined = None
     
-    for tx_id in transcripts:
-        try:
-            tx = await construct_gene_object(ensembl, tx_id)
-        except ValueError:
-            continue
+    for tx in transcripts:
         
         if len(tx.get_cds_sequence()) % 3 != 0:
             raise ValueError("anomalous_coding_sequence")
@@ -138,23 +157,27 @@ async def get_mutation_rates(transcripts, mut_dict, ensembl):
     
     return rates, combined, length
 
-async def gene_rates(ensembl, mut_dict, output, args):
-    
+def gene_rates(args, output):
+    ''' calculate per-consequence mutation rates per gene
+    '''
+    mut_dict = load_mutation_rates(args.rates)
     transcripts = load_genes(args.genes)
+    gencode = load_gencode(transcripts, args.gencode, args.fasta)
     
     header = ['transcript_id', 'chrom', 'length', 'missense_rate', 'nonsense_rate',
         'splice_lof_rate', 'splice_region_rate', 'synonymous_rate']
     output.write('\t'.join(header) + "\n")
     
     for symbol in sorted(transcripts):
-        print(symbol)
+        tx_ids = set(transcripts[symbol])
+        gene = gencode[symbol]
+        txs = [x for x in gene.transcripts if x.get_name().split('.')[0] in tx_ids]
         try:
-            rates, tx, length = await get_mutation_rates(transcripts[symbol],
-                mut_dict, ensembl)
+            rates, tx, length = get_mutation_rates(txs, mut_dict)
             # log transform rates, for consistency with Samocha et al.
             line = "{}\t{}\t{}\t{}".format(symbol, tx.get_chrom(), length, log_transform(rates))
         except (ValueError, KeyError) as error:
-            print("{}\t{}\n".format(symbol, error))
+            logging.error(f"{symbol}\t{error}\n")
             line = "{}\t{}\tNA\tNA\tNA\tNA\tNA\tNA".format(symbol, tx.get_chrom())
         
         output.write(line + '\n')
@@ -171,7 +194,7 @@ def get_options():
     ############################################################################
     # CLI options in common
     parent = argparse.ArgumentParser(add_help=False)
-    parent.add_argument("--out", help="output filename")
+    parent.add_argument("--out", default=sys.stdout, help="output filename")
     parent.add_argument("--rates",
         help="optional path to file containing sequence context-based mutation rates.")
     parent.add_argument("--gencode",
@@ -183,7 +206,7 @@ def get_options():
     parent.add_argument("--genome-build", choices=["grch37",
         "GRCh37", "grch38", "GRCh38"], default="grch37", help="Genome build "
         "that the de novo coordinates are based on (GRCh37 or GRCh38")
-    parent.add_argument("--log", default='ensembl_requests.log', help="where to write log files")
+    parent.add_argument("--log", default=sys.stdout, help="where to write log files")
     
     subparsers = parser.add_subparsers()
     
@@ -230,19 +253,23 @@ def get_options():
     
     return args
 
-async def runner():
-    args = get_options()
-    FORMAT = '%(asctime)-15s %(message)s'
-    logging.basicConfig(filename=args.log, format=FORMAT, level=logging.INFO)
-    
-    async with RateLimiter(per_second=15) as ensembl:
-        mut_dict = load_mutation_rates(args.rates)
-        with open(args.out, "wt") as output:
-            await args.func(ensembl, mut_dict, output, args)
+def open_output(path):
+    ''' open output, which could be standard out
+    '''
+    try:
+        output = open(path, 'wt')
+    except TypeError:
+        output = path
+    return output
 
 def main():
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(runner())
+    args = get_options()
+    FORMAT = '%(asctime)-15s %(message)s'
+    log = open(args.log, 'at') if isinstance(args.log, str) else args.log
+    logging.basicConfig(stream=log, format=FORMAT, level=logging.INFO)
+    
+    output = open_output(args.out)
+    args.func(args, output)
 
 if __name__ == '__main__':
     main()

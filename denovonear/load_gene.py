@@ -4,6 +4,7 @@
 import asyncio
 
 from denovonear.transcript import Transcript
+from denovonear.gencode import Gencode, Gene
 
 from denovonear.ensembl_requester import (get_protein_seq_for_transcript,
     get_genomic_seq_for_transcript, get_cds_seq_for_transcript,
@@ -104,41 +105,31 @@ async def get_transcript_ids(ensembl, symbol):
     
     return transcript_ids
 
-async def load_gene(ensembl, gene_id, de_novos=[], minimize=True):
+async def load_gene(ensembl, gene_id):
     """ sort out all the necessary sequences and positions for a gene
     
     Args:
         ensembl: EnsemblRequest object to request data from ensembl
         gene_id: HGNC symbol for gene
-        de_novos: list of de novo positions, so we can check they all fit in
-            the gene transcript
-        minimize: to get minimal set of transcripts containing the de novos
         
     Returns:
-        list of Transcript objects for gene, including genomic ranges and sequences
+        Gene object, containing info for each transcript
     """
     
     tx_ids = await get_transcript_ids(ensembl, gene_id)
     
-    transcripts = []
+    gene = Gene(gene_id)
     for tx_id in tx_ids:
         try:
             tx = await construct_gene_object(ensembl, tx_id)
         except ValueError:
             pass
-        transcripts.append(tx)
+        gene.add_transcript(tx)
     
-    if len(transcripts) == 0:
+    if len(gene.transcripts) == 0:
         raise IndexError(f"{gene_id} lacks coding transcripts")
     
-    if minimize:
-        minimised = minimise_transcripts(transcripts, de_novos)
-        transcripts = [x for x in transcripts if x.get_name() in minimised]
-        
-        if len(transcripts) == 0:
-            raise IndexError(f"{gene_id}: no suitable transcripts")
-    
-    return transcripts
+    return gene
 
 def count_de_novos_per_transcript(transcripts, de_novos=[]):
     """ count de novos in transcripts for a gene.

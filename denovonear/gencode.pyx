@@ -75,7 +75,9 @@ cdef class Gene:
     cdef vector[bool] _principal
     cdef str _chrom
     cdef int _start, _end
-    def __cinit__(self, string symbol):
+    def __cinit__(self, symbol):
+        if isinstance(symbol, str):
+            symbol = symbol.encode('utf8')
         self._symbol = symbol
         self.start = 999999999
         self.end = -999999999
@@ -86,6 +88,40 @@ cdef class Gene:
         self.chrom = tx.get_chrom().decode('utf8')
         self.start = min(self.start, tx.get_start())
         self.end = max(self.end, tx.get_end())
+    
+    def add_transcript(self, _tx):
+        ''' add a Transcript to the gene object
+        
+        This ends up coping the data from the Transcript object, rather than
+        reusing the Tx object contained in the Trnascript, but it's not too much
+        time wasted, so long as we don't do this millions of times.
+        '''
+        assert isinstance(_tx, Transcript)
+        # construct a new Tx obect by copying out the relevant data
+        cdef string tx_id = _tx.get_name().encode('utf8')
+        cdef string chrom = _tx.get_chrom().encode('utf8')
+        cdef int start = _tx.get_start()
+        cdef int end = _tx.get_end()
+        cdef char strand = ord(_tx.get_strand())
+        cdef vector[vector[int]] exons
+        cdef vector[vector[int]] cds
+        cdef vector[int] exon
+        for x in _tx.get_exons():
+            exon = [x['start'], x['end']]
+            exons.push_back(exon)
+        for x in _tx.get_cds():
+            exon = [x['start'], x['end']]
+            cds.push_back(exon)
+        
+        cdef Tx tx = Tx(tx_id, chrom, start, end, strand)
+        tx.set_exons(exons, cds)
+        tx.set_cds(cds)
+        
+        cdef string seq = _tx.get_genomic_sequence().encode('utf8')
+        cdef int offset = _tx.get_genomic_offset()
+        if len(seq) > 0:
+            tx.add_genomic_sequence(seq, offset)
+        self.add_tx(tx, False)
     
     def __repr__(self):
         chrom = self.chrom
@@ -133,12 +169,16 @@ cdef class Gene:
     cdef _to_Transcript(self, Tx tx):
         ''' construct Transcript (python object) from Tx (c++ object)
         '''
-        offset = 10
+        offset = 10 if tx.get_genomic_offset() == 0 else tx.get_genomic_offset()
         start = tx.get_start()
         end = tx.get_end()
         exons = self._convert_exons(tx.get_exons())
         cds = self._convert_exons(tx.get_cds())
-        seq = __genome_[self.chrom][start-1-offset:end-1+offset].seq
+        seq = tx.get_genomic_sequence().decode('utf8')
+        if seq == '':
+            seq = None
+        if seq is None and __genome_ is not None:
+            seq = __genome_[self.chrom][start-1-offset:end-1+offset].seq
         strand = self.strand
         tx_id = tx.get_name().decode('utf8')
         return Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq, offset=offset)
@@ -197,7 +237,7 @@ cdef class Gene:
 cdef class Gencode:
     cdef dict genes
     cdef list coords
-    def __cinit__(self, gencode, fasta, coding_only=True):
+    def __cinit__(self, gencode=None, fasta=None, coding_only=True):
         ''' initialise Gencode
         
         Args:
@@ -205,21 +245,26 @@ cdef class Gencode:
             fasta: path to fasta for genome matching annotations build
             coding: restrict to protein_coding only by default
         '''
-        logging.info(f'opening genome fasta: {fasta}')
-        global __genome_
-        __genome_ = Fasta(str(fasta))
-        logging.info(f'opening gencode annotations: {gencode}')
-        cdef vector[NamedTx] transcripts = open_gencode(str(gencode).encode('utf8'), coding_only)
-        cdef Gene curr
         self.genes = {}
-        for x in transcripts:
-            symbol = x.symbol.decode('utf8')
-            if symbol not in self.genes:
-                self.genes[symbol] = Gene(symbol.encode('utf8'))
-            curr = self.genes[symbol]
-            curr.add_tx(x.tx, x.is_principal)
-            self.genes[symbol] = curr
-        
+        if fasta:
+            logging.info(f'opening genome fasta: {fasta}')
+            global __genome_
+            __genome_ = Fasta(str(fasta))
+        logging.info(f'opening gencode annotations: {gencode}')
+        cdef vector[NamedTx] transcripts
+        cdef Gene curr
+        if gencode is not None:
+            transcripts = open_gencode(str(gencode).encode('utf8'), coding_only)
+            for x in transcripts:
+                symbol = x.symbol.decode('utf8')
+                if symbol not in self.genes:
+                    self.genes[symbol] = Gene(symbol.encode('utf8'))
+                curr = self.genes[symbol]
+                curr.add_tx(x.tx, x.is_principal)
+                self.genes[symbol] = curr
+        self._sort()
+    
+    def _sort(self):
         self.coords = sorted(((x.chrom, x.start, x.end), symbol) for symbol, x in self.genes.items())
     
     def __repr__(self):
@@ -229,6 +274,13 @@ cdef class Gencode:
     def __getitem__(self, symbol):
         return self.genes[symbol]
     
+    def add_gene(self, gene):
+        ''' add another gene to the Gencode object
+        '''
+        if gene.symbol not in self.genes:
+            self.genes[gene.symbol] = gene
+        self._sort()
+        
     def distance(self, gene, chrom, pos):
         ''' get distance to nearest boundary of a gene
         '''

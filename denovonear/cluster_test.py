@@ -29,16 +29,16 @@ def fishers_method(values):
     # P-values. The chi square statistic is -2*sum(ln(P-values))
     return chi2.sf(-2 * sum(map(log, values)), 2 * len(values))
 
-async def cluster_de_novos(symbol, de_novos, ensembl, iterations=1000000, 
-        mut_dict=None, gencode=None):
+def cluster_de_novos(symbol, de_novos, gene, iterations=1000000, 
+        mut_dict=None):
     """ analysis proximity cluster of de novos in a single gene
     
     Args:
         symbol: HGNC symbol for a gene
         de_novos: dictionary of de novo positions for the HGNC gene,
         indexed by functional type
+        gene: denovnonear.gencode.Gene object
         iterations: number of simulations to run
-        ensembl: EnsemblRequest object, for obtaing info from ensembl
         mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence
     
     Returns:
@@ -55,15 +55,11 @@ async def cluster_de_novos(symbol, de_novos, ensembl, iterations=1000000,
     # load the set of transcripts that are the  minimum set of transcripts
     # required to contain all the de novos, unless we can't find any coding
     # transcripts that contain the de novos.
-    try:
-        if gencode:
-            transcripts = gencode[symbol].transcripts
-        else:
-            transcripts = await load_gene(ensembl, symbol, missense + nonsense)
-        minimized = minimise_transcripts(transcripts, missense + nonsense)
-        transcripts = [x for x in transcripts if x.get_name() in minimized]
-    except IndexError as e:
-        print(e)
+    transcripts = gene.transcripts
+    minimized = minimise_transcripts(transcripts, missense + nonsense)
+    transcripts = [x for x in transcripts if x.get_name() in minimized]
+    
+    if len(transcripts) == 0:
         return None
     
     probs = {"miss_prob": [], "nons_prob": []}

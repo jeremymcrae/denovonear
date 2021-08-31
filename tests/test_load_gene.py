@@ -183,19 +183,22 @@ class TestLoadGenePy(unittest.TestCase):
         # check against
         hgnc = "DYNLL1"
         sites = [120934226, 120936012]
-        transcripts = _run(load_gene, hgnc, sites)
+        gene = _run(load_gene, hgnc)
+        counts = minimise_transcripts(gene.transcripts, sites)
         
         # define the expected transcript, and make sure that it is in the list
         # of suitable transcripts. There can be multiple transcripts return if
         # more than one transcript of the maximal length includes all de novos.
         expected = self.set_transcript()
-        self.assertIn(expected, transcripts)
+        self.assertIn(expected.get_name(), counts)
         
         # and make sure if none of the de novos fall in a suitable transcript,
-        # then we raise an error.
+        # then we get an empty dict.
         sites = [100, 200]
-        with self.assertRaises(IndexError):
-            transcripts = _run(load_gene, hgnc, sites)
+        gene = _run(load_gene, hgnc)
+        transcripts = gene.transcripts
+        counts = minimise_transcripts(transcripts, sites)
+        self.assertEqual(counts, {})
     
     def test_count_de_novos_per_transcript(self):
         """ test that we count de novos in transcripts correctly
