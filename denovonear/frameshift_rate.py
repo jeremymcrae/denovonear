@@ -1,5 +1,6 @@
 
 import math
+import sys
 
 def include_frameshift_rates(path):
     """ add per-gene frameshift mutation rates to the output file
@@ -16,6 +17,9 @@ def include_frameshift_rates(path):
     Args:
         path: path to the output mutation rates (for the nonsense, missense etc)
     """
+    
+    if path == sys.stdout:
+        raise ValueError("can't get frameshift rates when writing to standard out")
     
     with open(path) as handle:
         lines = [ x.strip().split('\t') for x in handle ]
