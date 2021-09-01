@@ -393,7 +393,7 @@ void Tx::add_cds_sequence(std::string cds_dna) {
 // @param gdna string for genomic sequence. If the transcript strand is '-',
 //    then the DNA sequence will be for the - strand, so we need to
 //    reorient the DNA to the + strand.
-void Tx::add_genomic_sequence(std::string gdna, int offset=0) 
+void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
     if ( cds.size() == 0 ) {
         std::string msg = "You need to add CDS coordinates before adding"
             "genomic sequence!";
