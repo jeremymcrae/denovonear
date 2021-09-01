@@ -6,11 +6,8 @@
 
 #include "site_rates.h"
 
+// get the lowest and highest positions of a transcripts coding sequence
 Region _get_gene_range(Tx & tx) {
-    /**
-        get the lowest and highest positions of a transcripts coding sequence
-    */
-    
     int boundary_1 = tx.get_cds_start();
     int boundary_2 = tx.get_cds_end();
     
@@ -20,22 +17,17 @@ Region _get_gene_range(Tx & tx) {
     return Region {start, end};
 }
 
+// find the amino acid resulting from a base change to a codon
+//
+// @param tx transcript object for a gene
+// @param base alternate base (e.g. 'G') to introduce
+// @param codon DNA sequence of a single codon
+// @param intra_codon position within the codon to be altered (0-based)
+// @returns single character amino acid code translated from the altered
+//     codon.
 std::string _get_mutated_aa(Tx & tx, std::string base, std::string codon, int intra_codon) {
-    /**
-        find the amino acid resulting from a base change to a codon
-        
-        @tx transcript object for a gene
-        @base alternate base (e.g. 'G') to introduce
-        @codon DNA sequence of a single codon
-        @intra_codon position within the codon to be altered (0-based)
-    
-        @returns single character amino acid code translated from the altered
-            codon.
-    */
-      
     // figure out what the mutated codon is
     codon.replace(intra_codon, 1, base);
-    
     return tx.translate(codon);
 }
 
@@ -60,19 +52,16 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
     }
 }
 
+// initialise a WeightedChoice object for each consequence category
 void SitesChecks::initialise_choices() {
-    // initialise a WeightedChoice object for each consequence category
     for (auto category : categories) {
         rates[category] = Chooser();
     }
 }
 
+// get the consequence of an amino acid change (or not)
 std::string SitesChecks::check_consequence(std::string initial_aa,
         std::string mutated_aa, int position) {
-    /**
-         get the consequence of an amino acid change (or not)
-     */
-    
     std::string cq = "synonymous";
     
     if ( initial_aa != "*" && mutated_aa == "*" ) {
@@ -105,13 +94,10 @@ std::string SitesChecks::check_consequence(std::string initial_aa,
     return cq;
 }
 
+// add the consequence specific rates for the alternates for a variant
+//
+// @param bp genomic position of the variant
 void SitesChecks::check_position(int bp) {
-    /**
-        add the consequence specific rates for the alternates for a variant
-        
-        @bp genomic position of the variant
-    */
-    
     // ignore sites within masked regions (typically masked because the
     // site has been picked up on alternative transcript)
     if ( has_mask && masked.in_coding_region(bp) ) {

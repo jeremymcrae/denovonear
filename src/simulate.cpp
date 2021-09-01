@@ -5,7 +5,6 @@
 
 #include "weighted_choice.h"
 
-//
 // gets the distances between all the pairs of elements from a list
 //
 // @param sites array of positions
@@ -125,7 +124,7 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
     return mean_distances;
 }
 
-// @brief halt permutations if the P value could never be significant.
+// halt permutations if the P value could never be significant.
 //
 // assess whether the P-value could never fall below 0.1, and cut out after a
 // smaller number of iterations, in order to minimise run time. Figure out the
