@@ -116,7 +116,7 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
     for (int n=0; n < iterations; n++) {
         // randomly select de novo sites for the iteration
         for (int i=0; i < de_novo_count; i++) {
-            positions[i] = choices.choice().pos;
+            positions[i] = choices.choice_pos_only();
         }
         
         // convert the positions into distances between all pairs, and get the

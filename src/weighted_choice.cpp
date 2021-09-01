@@ -43,15 +43,11 @@ void Chooser::add_choice(int site, double prob, std::string ref, std::string alt
     reset_sampler();
 }
 
-AlleleChoice Chooser::choice() {
-    /**
-        chooses a random element using a set of probability weights
-        
-        @returns AlleleChoice struct containing the pos, ref and alt
-    */
-    
+// get index to randomly sampled element, using weighted probabilities
+int Chooser::sampled_index() {
     if (cumulative.empty()) {
-        return AlleleChoice {-1, "N", "N", 0.0, 0};
+        return -1;
+        // return AlleleChoice {-1, "N", "N", 0.0, 0};
     }
     
     // get a random float between 0 and the cumulative sum
@@ -59,9 +55,28 @@ AlleleChoice Chooser::choice() {
     
     // figure out where in the list a random probability would fall
     auto pos = std::lower_bound(cumulative.begin(), cumulative.end(), number);
-    int offset = pos - cumulative.begin();
-    
-    return sites[offset];
+    return pos - cumulative.begin();
+}
+
+// randomly sample a site, but only return the site position
+// 
+// This is a fast version for when we only want the site position, and want to
+// avoid constructing a full AlleleChoice while returning.
+int Chooser::choice_pos_only() {
+    int idx = sampled_index();
+    if (idx >= 0) {
+        return sites[idx].pos;
+    }
+    return -1;
+}
+
+// randomly sample a site
+AlleleChoice Chooser::choice() {
+    int idx = sampled_index();
+    if (idx >= 0) {
+        return sites[idx];
+    }
+    return AlleleChoice {-1, "N", "N", 0.0, 0};
 }
 
 double Chooser::get_summed_rate() {

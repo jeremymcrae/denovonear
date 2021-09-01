@@ -25,6 +25,8 @@ class Chooser {
  public:
     Chooser();
     void add_choice(int site, double prob, std::string ref="N", std::string alt="N", int offset=0);
+    int sampled_index();
+    int choice_pos_only();
     AlleleChoice choice();
     double get_summed_rate();
     int len() { return sites.size() ;};
