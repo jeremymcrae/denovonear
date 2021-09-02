@@ -592,16 +592,15 @@ Codon Tx::get_codon_info(int bp) {
     std::string codon_seq = "";
     std::string initial_aa = "";
     
-    CDS_coords cds_pos = get_coding_distance(bp);
     if (in_coding) {
-        codon_number = get_codon_number_for_cds_position(cds_pos.position);
-        intra_codon = get_position_within_codon(cds_pos.position);
+        codon_number = get_codon_number_for_cds_position(site.position);
+        intra_codon = get_position_within_codon(site.position);
         codon_seq = get_codon_sequence(codon_number);
         initial_aa = translate(codon_seq);
     }
     
-    return Codon {cds_pos.position, codon_seq, intra_codon, codon_number,
-        initial_aa, cds_pos.offset};
+    return Codon {site.position, codon_seq, intra_codon, codon_number,
+        initial_aa, site.offset};
 }
 
 // get the distance in bp for a variant to the nearest exon boundary

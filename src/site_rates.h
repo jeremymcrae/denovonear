@@ -40,7 +40,7 @@ class SitesChecks {
     void initialise_choices();
     
     void check_position(int bp);
-    std::string check_consequence(std::string initial_aa, std::string mutated_aa, int position);
+    std::string check_consequence(std::string & initial_aa, std::string & mutated_aa, int & position);
     
  private:
     Tx _tx;

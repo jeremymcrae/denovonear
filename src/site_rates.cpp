@@ -60,14 +60,15 @@ void SitesChecks::initialise_choices() {
 }
 
 // get the consequence of an amino acid change (or not)
-std::string SitesChecks::check_consequence(std::string initial_aa,
-        std::string mutated_aa, int position) {
+std::string SitesChecks::check_consequence(std::string & initial_aa,
+        std::string & mutated_aa, int & position) {
     std::string cq = "synonymous";
     
+    bool in_coding = _tx.in_coding_region(position);
     if ( initial_aa != "*" && mutated_aa == "*" ) {
         // checks if two amino acids are a nonsense (eg stop_gained) mutation
         cq = "nonsense";
-    } else if ( !_tx.in_coding_region(position) && boundary_dist < 3 ) {
+    } else if ( !in_coding && boundary_dist < 3 ) {
         // check if a variant has a splice_donor or splice_acceptor consequence
         // These variants are defined as being the two intronic base-pairs
         // adjacent to the intron/exon boundary.
@@ -75,7 +76,7 @@ std::string SitesChecks::check_consequence(std::string initial_aa,
     } else if ( initial_aa != mutated_aa ) {
         // include the site if it mutates to a different amino acid.
         cq = "missense";
-    } else if (_tx.in_coding_region(position)) {
+    } else if (in_coding) {
         if ( boundary_dist < 4) {
           // catch splice region variants within the exon, and in the appropriate
           // region of the intron (note that loss of function splice_donor and
