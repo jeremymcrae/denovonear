@@ -35,10 +35,10 @@ class TestGeomeanPy(unittest.TestCase):
         self.assertEqual(geomean([0]), 0)
         self.assertEqual(geomean([1]), 1)
         self.assertEqual(geomean([1, 1]), 1)
-        self.assertEqual(geomean([1, 2]), 1.4142135623730951)
-        self.assertEqual(geomean([10]), 10)
-        self.assertEqual(geomean([0, 900, 900]), 92.2860120092046)
-        self.assertEqual(geomean([10, 890, 900]), 200.08329863520368)
+        self.assertAlmostEqual(geomean([1, 2]), 1.4142135623730951, places=15)
+        self.assertAlmostEqual(geomean([10]), 10, places=14)
+        self.assertAlmostEqual(geomean([0, 900, 900]), 92.2860120092046, places=13)
+        self.assertAlmostEqual(geomean([10, 890, 900]), 200.08329863520368, places=12)
         
         # check that if we try to get the mean distance for a list with fewer
         # than two positions in it, we get an error, since we can't estimate any
