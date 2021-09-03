@@ -4,8 +4,6 @@
 #include <algorithm>
 #include <stdexcept>
 
-#include <iostream>
-
 #include "site_rates.h"
 
 // get the lowest and highest positions of a transcripts coding sequence
@@ -101,7 +99,6 @@ std::string SitesChecks::check_consequence(std::string & initial_aa,
 //
 // @param bp genomic position of the variant
 void SitesChecks::check_position(int bp) {
-    if (bp == 2684742) { std::cout << "checking position: " << bp << "\n"; }
     // ignore sites within masked regions (typically masked because the
     // site has been picked up on alternative transcript)
     if ( has_mask && masked.in_coding_region(bp) ) {
@@ -113,8 +110,7 @@ void SitesChecks::check_position(int bp) {
         bp > std::max(_tx.get_cds_start(), _tx.get_cds_end())) {
         return ;
     }
-    
-    if (bp == 2684742) { std::cout << " - getting seq and distance\n";}
+
     std::string seq = _tx.get_centered_sequence(bp, kmer_length);
     boundary_dist = _tx.get_boundary_distance(bp);
     
@@ -122,8 +118,7 @@ void SitesChecks::check_position(int bp) {
     if (_tx.get_strand() != fwd) {
         seq = _tx.reverse_complement(seq);
     }
-    
-    if (bp == 2684742) { std::cout << " - getting codon info\n";}
+
     Codon codon;
     try {
         codon = _tx.get_codon_info(bp);
@@ -135,56 +130,41 @@ void SitesChecks::check_position(int bp) {
     int cds_pos = codon.cds_pos;
     int offset = codon.offset;
 
-    if (bp == 2684742) { std::cout << " - assigning alts\n";}
-    // std::cout << " - assigning alts\n";
     // drop the initial base, since we want to mutate to other bases
     std::vector<char> alts(bases);
-    if (bp == 2684742) { std::cout << " - dropping ref from alts\n";}
     char ref = seq[mid_pos];
-    if (bp == 2684742) { std::cout << "initial_aa: " << initial_aa << "\n";}
-    if (bp == 2684742) { std::cout << "boundary_dist: " << boundary_dist << "\n"; }
-    if (bp == 2684742) { std::cout << "seq: " << seq << "\n";}
-    if (bp == 2684742) { std::cout << "ref: " << ref << "\n";}
-    if (bp == 2684742) { std::cout << "alts: " << alts[0] << alts[1] << alts[2] << alts[3] << "\n";}
-    alts.erase(std::find(alts.begin(), alts.end(), ref));
+    auto matches = std::find(alts.begin(), alts.end(), ref);
+    if (matches != std::end(alts)) {
+        alts.erase(matches);
+    }
     
-    if (bp == 2684742) { std::cout << " - preparing variables\n";}
     std::string mutated_aa;
     std::string alt_seq = seq;
     std::string category;
     for (auto &alt : alts) {
         mutated_aa = initial_aa;
-        // alt_seq = seq.substr(0, mid_pos) + alt +
-        //     seq.substr(mid_pos + 1, kmer_length - mid_pos);
-        if (bp == 2684742) {std::cout << " - - checking alt: " << alt <<"\n";}
-        
         alt_seq[mid_pos] = alt;
         
-        // std::cout << " - - getting mutated AA\n";
         double rate = mut_dict[seq][alt_seq];
         if ( initial_aa.size() != 0 ) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
-        
-        // std::cout << " - - checking consequence\n";
+
         category = check_consequence(initial_aa, mutated_aa, bp);
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
-        // std::cout << " - - flipping alleles\n";
         if (_tx.get_strand() != fwd) {
             ref = transdict[ref];
             alt = transdict[alt];
         }
         
-        // std::cout << " - - adding choice\n";
         if (use_cds_coords) {
             rates[category].add_choice(cds_pos, rate, ref, alt, offset);
         } else {
             rates[category].add_choice(bp, rate, ref, alt, 0);
         }
         
-        // std::cout << " - - checking lof\n";
         if (category == "nonsense" || category == "splice_lof") {
             rates["loss_of_function"].add_choice(cds_pos, rate, ref, alt, offset);
         }
