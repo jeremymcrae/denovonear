@@ -144,7 +144,7 @@ void SitesChecks::check_position(int bp) {
             seq.substr(mid_pos + 1, kmer_length - mid_pos);
         
         double rate = mut_dict[seq][alt_seq];
-        if ( initial_aa != "" ) {
+        if ( initial_aa.size() != 0 ) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
         
