@@ -27,7 +27,7 @@ void Chooser::reset_sampler() {
 // @param offset number of bases the position is offset from the true chromosomal
 //     site. This is relevant for non-CDS sites, such as within splice
 //     regions.
-void Chooser::add_choice(int site, double prob, std::string ref, std::string alt, int offset) {
+void Chooser::add_choice(int site, double prob, char ref, char alt, int offset) {
     // keep track of the cumulative sum for each added site
     double cumulative_sum = get_summed_rate() + prob;
     cumulative.push_back(cumulative_sum);
@@ -68,7 +68,7 @@ AlleleChoice Chooser::choice() {
     if (idx >= 0) {
         return sites[idx];
     }
-    return AlleleChoice {-1, "N", "N", 0.0, 0};
+    return AlleleChoice {-1, 'N', 'N', 0.0, 0};
 }
 
 //  gets the cumulative sum for all the current choices.

@@ -24,10 +24,10 @@ class SitesChecks {
     int kmer_length;
     int mid_pos;
     
-    std::unordered_map<std::string, std::string> transdict = {
-        {"A", "T"}, {"T", "A"}, {"G", "C"}, {"C", "G"}};
+    std::unordered_map<char, char> transdict = {
+        {'A', 'T'}, {'T', 'A'}, {'G', 'C'}, {'C', 'G'}};
     
-    std::vector<std::string> bases = {"A", "C", "G", "T"};
+    std::vector<char> bases = {'A', 'C', 'G', 'T'};
     std::vector<std::string> categories = {"missense", "nonsense", "synonymous",
         "splice_lof", "splice_region", "loss_of_function", "intronic"};
 
@@ -51,6 +51,6 @@ class SitesChecks {
 };
 
 Region _get_gene_range(Tx & tx);
-std::string _get_mutated_aa(Tx & tx, std::string base, std::string codon, int intra_codon);
+std::string _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon);
 
 #endif  // DENOVONEAR_SITESCHECKS_H_

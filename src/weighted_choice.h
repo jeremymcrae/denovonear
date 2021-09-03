@@ -7,8 +7,8 @@
 
 struct AlleleChoice {
     int pos;
-    std::string ref;
-    std::string alt;
+    char ref;
+    char alt;
     double prob;
     
     // allow for splice altering sites outside the CDS
@@ -24,7 +24,7 @@ class Chooser {
 
  public:
     Chooser();
-    void add_choice(int site, double prob, std::string ref="N", std::string alt="N", int offset=0);
+    void add_choice(int site, double prob, char ref='N', char alt='N', int offset=0);
     int sampled_index();
     int choice_pos_only();
     AlleleChoice choice();

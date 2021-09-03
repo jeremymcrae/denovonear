@@ -47,8 +47,8 @@ cdef class WeightedChoice:
         iter = self.thisptr.iter(self.pos)
         self.pos += 1
         
-        return {"pos": iter.pos, "ref": iter.ref.decode('utf8'),
-            "alt": iter.alt.decode('utf8'), 'prob': iter.prob, "offset": iter.offset}
+        return {"pos": iter.pos, "ref": chr(iter.ref),
+            "alt": chr(iter.alt), 'prob': iter.prob, "offset": iter.offset}
     
     def append(self, WeightedChoice other):
         ''' combines the sites from two WeightedChoice objects
@@ -71,14 +71,10 @@ cdef class WeightedChoice:
             ref: string for reference allele
             alt: string for alternate allele
         """
-        
-        ref = ref.encode('utf8')
-        alt = alt.encode('utf8')
-        
         if len(ref) > 1 or len(alt) > 1:
-            raise TypeError("requires single base alleles: {}, {}".format(ref, alt))
+            raise TypeError(f"requires single base alleles: {ref}, {alt}")
         
-        self.thisptr.add_choice(site, prob, ref, alt, offset)
+        self.thisptr.add_choice(site, prob, ord(ref), ord(alt), offset)
     
     def choice(self):
         """ chooses a random element using a set of probability weights
@@ -86,8 +82,7 @@ cdef class WeightedChoice:
         Returns:
             the name of the randomly selected element (e.g. position)
         """
-        
-        return self.choice_with_alleles()["pos"]
+        return self.thisptr.choice_pos_only()
     
     def choice_with_alleles(self):
         """ chooses a random element, but include alleles in output
@@ -99,8 +94,8 @@ cdef class WeightedChoice:
         
         choice = self.thisptr.choice()
         
-        return {"pos": choice.pos, "ref": choice.ref.decode('utf8'),
-            "alt": choice.alt.decode('utf8'), "offset": choice.offset}
+        return {"pos": choice.pos, "ref": chr(choice.ref),
+            "alt": chr(choice.alt), "offset": choice.offset}
     
     def get_summed_rate(self):
         """ return the cumulative probability for the object

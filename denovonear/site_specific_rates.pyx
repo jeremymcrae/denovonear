@@ -22,7 +22,7 @@ cdef extern from "site_rates.h":
         string check_consequence(string, string, int)
     
     cdef Region _get_gene_range(Tx)
-    cdef string _get_mutated_aa(Tx, string, string, int) except +
+    cdef string _get_mutated_aa(Tx, char, string, int) except +
 
 cdef class SiteRates:
     cdef SitesChecks *_checks  # hold a C++ instance which we're wrapping
@@ -81,7 +81,6 @@ def get_gene_range(Transcript tx):
 
 def get_mutated_aa(Transcript tx,  base, codon, intra_codon):
     
-    base = base.encode('utf8')
     codon = codon.encode('utf8')
     
-    return _get_mutated_aa(deref(tx.thisptr), base, codon, intra_codon).decode('utf8')
+    return _get_mutated_aa(deref(tx.thisptr), ord(base), codon, intra_codon).decode('utf8')
