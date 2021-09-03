@@ -178,7 +178,7 @@ cdef class Gene:
         if seq == '':
             seq = None
         if seq is None and __genome_ is not None:
-            seq = __genome_[self.chrom][start-1-offset:end-1+offset].seq
+            seq = __genome_[self.chrom][start-1-offset:end-1+offset].seq.upper()
         strand = self.strand
         tx_id = tx.get_name().decode('utf8')
         return Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq, offset=offset)
