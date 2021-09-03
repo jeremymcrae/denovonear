@@ -273,6 +273,9 @@ cdef class Gencode:
         return len(self.genes)
     def __getitem__(self, symbol):
         return self.genes[symbol]
+    def __iter__(self):
+        for x in self.genes:
+            yield x
     
     def add_gene(self, gene):
         ''' add another gene to the Gencode object
