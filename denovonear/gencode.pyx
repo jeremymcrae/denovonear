@@ -170,6 +170,7 @@ cdef class Gene:
         ''' construct Transcript (python object) from Tx (c++ object)
         '''
         offset = 10 if tx.get_genomic_offset() == 0 else tx.get_genomic_offset()
+        chrom = tx.get_chrom().decode('utf8')
         start = tx.get_start()
         end = tx.get_end()
         exons = self._convert_exons(tx.get_exons())
@@ -178,10 +179,10 @@ cdef class Gene:
         if seq == '':
             seq = None
         if seq is None and __genome_ is not None:
-            seq = __genome_[self.chrom][start-1-offset:end-1+offset].seq.upper()
+            seq = __genome_[chrom][start-1-offset:end-1+offset].seq.upper()
         strand = self.strand
         tx_id = tx.get_name().decode('utf8')
-        return Transcript(tx_id, self.chrom, start, end, strand, exons, cds, seq, offset=offset)
+        return Transcript(tx_id, chrom, start, end, strand, exons, cds, seq, offset=offset)
     
     @property
     def transcripts(self):
