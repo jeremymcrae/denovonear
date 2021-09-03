@@ -495,9 +495,12 @@ void Tx::_fix_cds_length() {
 std::string Tx::reverse_complement(std::string seq) {
     std::reverse(seq.begin(), seq.end());
     std::string complement;
+    complement.resize(seq.size());
     
+    int i = 0;
     for (auto &base : seq) {
-        complement += transdict[base];
+        complement[i] = transdict[base];
+        i += 1;
     }
     
     return complement;
