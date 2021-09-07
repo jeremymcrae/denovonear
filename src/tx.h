@@ -75,7 +75,7 @@ class Tx {
     int closest_exon_num(int pos, std::vector<Region> group);
     Region get_closest_exon(int pos);
     bool in_coding_region(int pos);
-    CDS_coords to_closest_exon(int pos);
+    CDS_coords to_closest_exon(int pos, Region exon);
     CDS_coords get_coding_distance(int pos);
     
     int get_position_on_chrom(int cds_position, int offset=0);

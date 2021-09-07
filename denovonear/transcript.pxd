@@ -47,7 +47,7 @@ cdef extern from "tx.h":
         int closest_exon_num(int)
         Region get_closest_exon(int)
         bool in_coding_region(int)
-        CDS_coords to_closest_exon(int)
+        CDS_coords to_closest_exon(int, Region)
         CDS_coords get_coding_distance(int) except +
         
         int get_position_on_chrom(int, int) except +
