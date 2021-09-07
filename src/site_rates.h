@@ -39,11 +39,12 @@ class SitesChecks {
     Chooser * __getitem__(std::string category) { return &rates[category]; };
     void initialise_choices();
     
+    Tx _tx;
     void check_position(int bp);
-    std::string check_consequence(std::string & initial_aa, std::string & mutated_aa, int & position);
+    int get_offset(int bp);
+    std::string check_consequence(char & initial_aa, char & mutated_aa, int & offset);
     
  private:
-    Tx _tx;
     Tx masked = Tx("zz", "z", -100, -100, '+');
     void init(std::vector<std::vector<std::string>> mut);
     bool has_mask = false;
@@ -51,6 +52,6 @@ class SitesChecks {
 };
 
 Region _get_gene_range(Tx & tx);
-std::string _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon);
+char _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon);
 
 #endif  // DENOVONEAR_SITESCHECKS_H_

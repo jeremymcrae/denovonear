@@ -8,21 +8,22 @@ from libcpp cimport bool
 from cython.operator cimport dereference as deref
 
 from denovonear.weights cimport Chooser, WeightedChoice
-from denovonear.transcript cimport Tx, Transcript, Region
+from denovonear.transcript cimport Tx, Transcript, Region, Codon
 
 cdef extern from "site_rates.h":
     cdef cppclass SitesChecks:
         SitesChecks(Tx, vector[vector[string]], bool) except +
         SitesChecks(Tx, vector[vector[string]], bool, Tx) except +
         
+        Tx _tx
         void initialise_choices()
         Chooser * __getitem__(string) except +
         
         void check_position(int)
-        string check_consequence(string, string, int)
+        string check_consequence(char, char, int)
     
     cdef Region _get_gene_range(Tx)
-    cdef string _get_mutated_aa(Tx, char, string, int) except +
+    cdef char _get_mutated_aa(Tx, char, string, int) except +
 
 cdef class SiteRates:
     cdef SitesChecks *_checks  # hold a C++ instance which we're wrapping
@@ -71,9 +72,15 @@ cdef class SiteRates:
         self._checks.check_position(bp)
     
     def check_consequence(self, initial_aa, mutated_aa, position):
-        initial_aa = initial_aa.encode('utf8')
-        mutated_aa = mutated_aa.encode('utf8')
-        return self._checks.check_consequence(initial_aa, mutated_aa, position).decode('utf8')
+        if len(initial_aa) == 0:
+            initial_aa = '0'
+        if len(mutated_aa) == 0:
+            mutated_aa = '0'
+        initial_aa = ord(initial_aa)
+        mutated_aa = ord(mutated_aa)
+        self.check_position(position)
+        codon = self._checks._tx.get_codon_info(position)
+        return self._checks.check_consequence(initial_aa, mutated_aa, codon.offset).decode('utf8')
 
 def get_gene_range(Transcript tx):
     region = _get_gene_range(deref(tx.thisptr))
@@ -83,4 +90,4 @@ def get_mutated_aa(Transcript tx,  base, codon, intra_codon):
     
     codon = codon.encode('utf8')
     
-    return _get_mutated_aa(deref(tx.thisptr), ord(base), codon, intra_codon).decode('utf8')
+    return chr(_get_mutated_aa(deref(tx.thisptr), ord(base), codon, intra_codon))

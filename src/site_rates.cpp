@@ -25,10 +25,10 @@ Region _get_gene_range(Tx & tx) {
 // @param intra_codon position within the codon to be altered (0-based)
 // @returns single character amino acid code translated from the altered
 //     codon.
-std::string _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon) {
+char _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon) {
     // figure out what the mutated codon is
     codon[intra_codon] = base;
-    return tx.translate(codon);
+    return tx.translate_codon(codon);
 }
 
 void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
@@ -60,12 +60,12 @@ void SitesChecks::initialise_choices() {
 }
 
 // get the consequence of an amino acid change (or not)
-std::string SitesChecks::check_consequence(std::string & initial_aa,
-        std::string & mutated_aa, int & position) {
+std::string SitesChecks::check_consequence(char & initial_aa,
+        char & mutated_aa, int & offset) {
     std::string cq = "synonymous";
     
-    bool in_coding = _tx.in_coding_region(position);
-    if ( initial_aa != "*" && mutated_aa == "*" ) {
+    bool in_coding = offset == 0;
+    if ( initial_aa != '*' && mutated_aa == '*' ) {
         // checks if two amino acids are a nonsense (eg stop_gained) mutation
         cq = "nonsense";
     } else if ( !in_coding && boundary_dist < 3 ) {
@@ -126,7 +126,7 @@ void SitesChecks::check_position(int bp) {
         return ;
     }
     
-    std::string initial_aa = codon.initial_aa;
+    char initial_aa = codon.initial_aa;
     int cds_pos = codon.cds_pos;
     int offset = codon.offset;
 
@@ -138,7 +138,7 @@ void SitesChecks::check_position(int bp) {
         alts.erase(matches);
     }
     
-    std::string mutated_aa;
+    char mutated_aa;
     std::string alt_seq = seq;
     std::string category;
     for (auto &alt : alts) {
@@ -146,11 +146,11 @@ void SitesChecks::check_position(int bp) {
         alt_seq[mid_pos] = alt;
         
         double rate = mut_dict[seq][alt_seq];
-        if ( initial_aa.size() != 0 ) {
+        if ( initial_aa != '0' ) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
 
-        category = check_consequence(initial_aa, mutated_aa, bp);
+        category = check_consequence(initial_aa, mutated_aa, codon.offset);
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.

@@ -20,7 +20,7 @@ struct Codon {
     std::string codon_seq;
     int intra_codon;
     int codon_number;
-    std::string initial_aa;
+    char initial_aa;
     int offset;
 };
 
@@ -93,6 +93,7 @@ class Tx {
     std::string get_centered_sequence(int pos, int length=3);
     std::string get_seq_in_region(int start, int end);
     std::string get_codon_sequence(int codon_number);
+    char translate_codon(std::string seq);
     std::string translate(std::string seq);
     
     Codon get_codon_info(int bp);

@@ -366,7 +366,7 @@ cdef class Transcript:
             codon['codon_seq'] = codon['codon_seq'].decode('utf8')
         
         if codon['initial_aa'] is not None:
-            codon['initial_aa'] = codon['initial_aa'].decode('utf8')
+            codon['initial_aa'] = chr(codon['initial_aa'])
         
         return codon
     

@@ -82,7 +82,7 @@ cdef extern from "tx.h":
         string codon_seq
         int intra_codon
         int codon_number
-        string initial_aa
+        char initial_aa
         int offset
 
 cdef class Transcript:

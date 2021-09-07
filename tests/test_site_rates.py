@@ -315,7 +315,7 @@ class TestSiteRatesPy(unittest.TestCase):
         
         # check a site just inside the splice region positions
         self.weights.check_position(127)
-        self.assertEqual(self.weights.check_consequence("", "", 128), 'splice_region')
+        self.assertEqual(self.weights.check_consequence("", "", 127), 'splice_region')
         
         # check a site just outside the splice region positions
         self.weights.check_position(130)

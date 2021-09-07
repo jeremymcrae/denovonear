@@ -14,23 +14,23 @@ std::unordered_map<char, char> transdict = {
     {'A', 'T'}, {'C', 'G'}, {'G', 'C'}, {'T', 'A'}, {'U', 'A'},
     {'N', 'N'}};
 
-std::unordered_map<std::string, std::string> aa_code = {
-    {"AAA", "K"}, {"AAC", "N"}, {"AAG", "K"}, {"AAT", "N"},
-    {"ACA", "T"}, {"ACC", "T"}, {"ACG", "T"}, {"ACT", "T"},
-    {"AGA", "R"}, {"AGC", "S"}, {"AGG", "R"}, {"AGT", "S"},
-    {"ATA", "I"}, {"ATC", "I"}, {"ATG", "M"}, {"ATT", "I"},
-    {"CAA", "Q"}, {"CAC", "H"}, {"CAG", "Q"}, {"CAT", "H"},
-    {"CCA", "P"}, {"CCC", "P"}, {"CCG", "P"}, {"CCT", "P"},
-    {"CGA", "R"}, {"CGC", "R"}, {"CGG", "R"}, {"CGT", "R"},
-    {"CTA", "L"}, {"CTC", "L"}, {"CTG", "L"}, {"CTT", "L"},
-    {"GAA", "E"}, {"GAC", "D"}, {"GAG", "E"}, {"GAT", "D"},
-    {"GCA", "A"}, {"GCC", "A"}, {"GCG", "A"}, {"GCT", "A"},
-    {"GGA", "G"}, {"GGC", "G"}, {"GGG", "G"}, {"GGT", "G"},
-    {"GTA", "V"}, {"GTC", "V"}, {"GTG", "V"}, {"GTT", "V"},
-    {"TAA", "*"}, {"TAC", "Y"}, {"TAG", "*"}, {"TAT", "Y"},
-    {"TCA", "S"}, {"TCC", "S"}, {"TCG", "S"}, {"TCT", "S"},
-    {"TGA", "*"}, {"TGC", "C"}, {"TGG", "W"}, {"TGT", "C"},
-    {"TTA", "L"}, {"TTC", "F"}, {"TTG", "L"}, {"TTT", "F"}};
+std::unordered_map<std::string, char> aa_code = {
+    {"AAA", 'K'}, {"AAC", 'N'}, {"AAG", 'K'}, {"AAT", 'N'},
+    {"ACA", 'T'}, {"ACC", 'T'}, {"ACG", 'T'}, {"ACT", 'T'},
+    {"AGA", 'R'}, {"AGC", 'S'}, {"AGG", 'R'}, {"AGT", 'S'},
+    {"ATA", 'I'}, {"ATC", 'I'}, {"ATG", 'M'}, {"ATT", 'I'},
+    {"CAA", 'Q'}, {"CAC", 'H'}, {"CAG", 'Q'}, {"CAT", 'H'},
+    {"CCA", 'P'}, {"CCC", 'P'}, {"CCG", 'P'}, {"CCT", 'P'},
+    {"CGA", 'R'}, {"CGC", 'R'}, {"CGG", 'R'}, {"CGT", 'R'},
+    {"CTA", 'L'}, {"CTC", 'L'}, {"CTG", 'L'}, {"CTT", 'L'},
+    {"GAA", 'E'}, {"GAC", 'D'}, {"GAG", 'E'}, {"GAT", 'D'},
+    {"GCA", 'A'}, {"GCC", 'A'}, {"GCG", 'A'}, {"GCT", 'A'},
+    {"GGA", 'G'}, {"GGC", 'G'}, {"GGG", 'G'}, {"GGT", 'G'},
+    {"GTA", 'V'}, {"GTC", 'V'}, {"GTG", 'V'}, {"GTT", 'V'},
+    {"TAA", '*'}, {"TAC", 'Y'}, {"TAG", '*'}, {"TAT", 'Y'},
+    {"TCA", 'S'}, {"TCC", 'S'}, {"TCG", 'S'}, {"TCT", 'S'},
+    {"TGA", '*'}, {"TGC", 'C'}, {"TGG", 'W'}, {"TGT", 'C'},
+    {"TTA", 'L'}, {"TTC", 'F'}, {"TTG", 'L'}, {"TTT", 'F'}};
 
 // Constructor for Tx class
 Tx::Tx(std::string transcript_id, std::string chromosome,
@@ -550,6 +550,20 @@ std::string Tx::get_codon_sequence(int codon) {
     return cds_sequence.substr(codon * 3, 3);
 }
 
+// translate a single codon to amino acid
+// @param seq codon sequence
+// @returns translated amino acid sequence as single char
+char Tx::translate_codon(std::string codon) {
+    if (codon.size() != 3) {
+        throw std::invalid_argument("translate_codon() needs a 3 bp sequence");
+    }
+    if (aa_code.count(codon) == 0) {
+        std::string msg = "cannot translate codon: " + codon;
+        throw std::invalid_argument(msg);
+    }
+    return aa_code[codon];
+}
+
 // translate a DNA codon to a single character amino acid
 //
 // @param seq codon sequence, or longer DNA sequences.
@@ -558,21 +572,12 @@ std::string Tx::translate(std::string seq) {
     std::transform(seq.begin(), seq.end(), seq.begin(), ::toupper);
     
     std::string protein;
-    int n = 3;
-    int len = seq.size();
-    std::string codon;
+    protein.resize(seq.size() / 3);
     
-    for ( int i=0; i < len; i=i+n ) {
-        codon = seq.substr(i, n);
-        
-        if (aa_code.count(codon) == 0) {
-            std::string msg = "cannot translate codon: " + codon;
-            throw std::invalid_argument( msg );
-        }
-        
-        protein += aa_code[codon];
+    for (uint i=0, j=0; i<seq.size(); i=i+3, j++) {
+        protein[j] = translate_codon(seq.substr(i, 3));
     }
-    
+
     return protein;
 }
 
@@ -594,13 +599,13 @@ Codon Tx::get_codon_info(int bp) {
     int codon_number = -9999999;
     int intra_codon = -1;
     std::string codon_seq = "";
-    std::string initial_aa = "";
+    char initial_aa='0';
     
     if (in_coding) {
         codon_number = get_codon_number_for_cds_position(site.position);
         intra_codon = get_position_within_codon(site.position);
         codon_seq = get_codon_sequence(codon_number);
-        initial_aa = translate(codon_seq);
+        initial_aa = translate_codon(codon_seq);
     }
     
     return Codon {site.position, codon_seq, intra_codon, codon_number,
@@ -709,12 +714,12 @@ std::string Tx::coding_cq(int start, int end, std::string alt) {
     }
     // TODO: figure out initial and mutated amino acids
     Codon codon = get_codon_info(start);
-    std::string initial_aa = codon.initial_aa;
-    codon.codon_seq.replace(codon.intra_codon, 1, alt);
-    std::string mutated_aa = translate(codon.codon_seq);
+    char initial_aa = codon.initial_aa;
+    codon.codon_seq[1] = alt[0];
+    char mutated_aa = translate_codon(codon.codon_seq);
     
-    if (initial_aa != "*" && mutated_aa == "*") { return "stop_gained"; }
-    if (initial_aa == "*" && mutated_aa != "*") { return "stop_lost"; }
+    if (initial_aa != '*' && mutated_aa == '*') { return "stop_gained"; }
+    if (initial_aa == '*' && mutated_aa != '*') { return "stop_lost"; }
     
     if (initial_aa != mutated_aa) {
         if (codon.codon_number == 0) {
