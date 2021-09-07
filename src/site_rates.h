@@ -42,7 +42,7 @@ class SitesChecks {
     Tx _tx;
     void check_position(int bp);
     int get_offset(int bp);
-    std::string check_consequence(char & initial_aa, char & mutated_aa, int & offset);
+    void check_consequence(std::string & cq, char & initial_aa, char & mutated_aa, int & offset);
     
  private:
     Tx masked = Tx("zz", "z", -100, -100, '+');

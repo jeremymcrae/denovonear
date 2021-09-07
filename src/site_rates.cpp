@@ -60,9 +60,8 @@ void SitesChecks::initialise_choices() {
 }
 
 // get the consequence of an amino acid change (or not)
-std::string SitesChecks::check_consequence(char & initial_aa,
+void SitesChecks::check_consequence(std::string & cq, char & initial_aa,
         char & mutated_aa, int & offset) {
-    std::string cq = "synonymous";
     
     bool in_coding = offset == 0;
     if ( initial_aa != '*' && mutated_aa == '*' ) {
@@ -91,8 +90,6 @@ std::string SitesChecks::check_consequence(char & initial_aa,
             cq = "intronic";
         }
     }
-    
-    return cq;
 }
 
 // add the consequence specific rates for the alternates for a variant
@@ -142,6 +139,7 @@ void SitesChecks::check_position(int bp) {
     std::string alt_seq = seq;
     std::string category;
     for (auto &alt : alts) {
+        category = "synonymous";
         mutated_aa = initial_aa;
         alt_seq[mid_pos] = alt;
         
@@ -150,7 +148,7 @@ void SitesChecks::check_position(int bp) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
 
-        category = check_consequence(initial_aa, mutated_aa, codon.offset);
+        check_consequence(category, initial_aa, mutated_aa, codon.offset);
         
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.

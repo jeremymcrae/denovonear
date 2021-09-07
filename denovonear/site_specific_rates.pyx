@@ -20,7 +20,7 @@ cdef extern from "site_rates.h":
         Chooser * __getitem__(string) except +
         
         void check_position(int)
-        string check_consequence(char, char, int)
+        void check_consequence(string, char, char, int)
     
     cdef Region _get_gene_range(Tx)
     cdef char _get_mutated_aa(Tx, char, string, int) except +
@@ -71,16 +71,18 @@ cdef class SiteRates:
     def check_position(self, bp):
         self._checks.check_position(bp)
     
-    def check_consequence(self, initial_aa, mutated_aa, position):
+    cpdef check_consequence(self, initial_aa, mutated_aa, position):
         if len(initial_aa) == 0:
             initial_aa = '0'
         if len(mutated_aa) == 0:
             mutated_aa = '0'
+        cdef string cq = b"synonymous"
         initial_aa = ord(initial_aa)
         mutated_aa = ord(mutated_aa)
         self.check_position(position)
         codon = self._checks._tx.get_codon_info(position)
-        return self._checks.check_consequence(initial_aa, mutated_aa, codon.offset).decode('utf8')
+        self._checks.check_consequence(cq, initial_aa, mutated_aa, codon.offset)
+        return cq.decode('utf8')
 
 def get_gene_range(Transcript tx):
     region = _get_gene_range(deref(tx.thisptr))
