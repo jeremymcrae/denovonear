@@ -187,6 +187,14 @@ int Tx::get_cds_end() {
 // @param position integer chromosome position e.g. 10000000
 bool Tx::is_exonic(int pos) {
     Region exon = get_closest_exon(pos);
+    return is_exonic(pos, exon);
+}
+
+// check if a position lies within an exon
+//
+// @param position integer chromosome position e.g. 10000000
+// @param exon Region for an exon
+bool Tx::is_exonic(int pos, Region exon) {
     return (pos >= exon.start) && (pos <= exon.end);
 }
 
@@ -281,7 +289,7 @@ CDS_coords Tx::get_coding_distance(int pos) {
     int alt = closest_exon_num(pos);
 
     int offset = 0;
-    if ( !is_exonic(pos) ) {
+    if ( !is_exonic(pos, exons[alt]) ) {
         CDS_coords site = to_closest_exon(pos, exons[alt]);
         offset = site.offset;
         pos = site.position;
