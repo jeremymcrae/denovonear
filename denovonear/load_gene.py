@@ -123,7 +123,7 @@ async def load_gene(ensembl, gene_id):
         try:
             tx = await construct_gene_object(ensembl, tx_id)
         except ValueError:
-            pass
+            continue
         gene.add_transcript(tx)
     
     if len(gene.transcripts) == 0:
