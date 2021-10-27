@@ -2,6 +2,7 @@
 """
 
 import asyncio
+import logging
 
 from denovonear.transcript import Transcript
 from denovonear.gencode import Gencode, Gene
@@ -117,12 +118,16 @@ async def load_gene(ensembl, gene_id):
     """
     
     tx_ids = await get_transcript_ids(ensembl, gene_id)
+    logging.info(f'found tx IDs for {gene_id}: {tx_ids}')
     
     gene = Gene(gene_id)
     for tx_id in tx_ids:
+        logging.info(f'constructing: {tx_id}')
         try:
             tx = await construct_gene_object(ensembl, tx_id)
-        except ValueError:
+        except ValueError as e:
+            logging.info(f'failed: {tx_id}')
+            logging.info(e)
             continue
         gene.add_transcript(tx)
     
