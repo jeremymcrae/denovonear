@@ -183,8 +183,7 @@ def minimise_transcripts(transcripts, de_novos):
     
     # find the transcripts with the greatest length, and the most de novos
     max_length = max( counts[k]["len"] for k in max_ids )
-    tx_ids = [ k.get_name() for k in transcripts if counts[k.get_name()]["len"] == max_length ]
-    max_transcripts = {x: counts[x] for x in counts if x in tx_ids}
+    max_transcripts = {x: counts[x] for x in counts if x in max_ids and counts[x]['len'] == max_length}
     
     # find which de novos occur in the transcript with the most de novos
     best = [x for x in transcripts if x.get_name() == next(iter(max_transcripts))][0]
