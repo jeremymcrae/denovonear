@@ -132,7 +132,7 @@ async def load_gene(ensembl, gene_id):
         gene.add_transcript(tx)
     
     if len(gene.transcripts) == 0:
-        raise IndexError(f"{gene_id} lacks coding transcripts")
+        logging.info(f"{gene_id} lacks coding transcripts")
     
     return gene
 

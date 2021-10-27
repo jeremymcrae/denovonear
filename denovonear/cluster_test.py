@@ -52,6 +52,10 @@ def cluster_de_novos(symbol, de_novos, gene, iterations=1000000,
     missense = de_novos["missense"]
     nonsense = de_novos["nonsense"]
     
+    if len(gene.transcripts) == 0:
+        nan = float('nan')
+        return {'miss_dist': nan, 'miss_prob': nan, 'nons_prob': nan, 'nons_dist': nan}
+    
     # load the set of transcripts that are the  minimum set of transcripts
     # required to contain all the de novos, unless we can't find any coding
     # transcripts that contain the de novos.
@@ -60,7 +64,8 @@ def cluster_de_novos(symbol, de_novos, gene, iterations=1000000,
     transcripts = [x for x in transcripts if x.get_name() in minimized]
     
     if len(transcripts) == 0:
-        return None
+        nan = float('nan')
+        return {'miss_dist': nan, 'miss_prob': nan, 'nons_prob': nan, 'nons_dist': nan}
     
     probs = {"miss_prob": [], "nons_prob": []}
     dists = {"miss_dist": [], "nons_dist": []}
