@@ -135,6 +135,10 @@ void SitesChecks::check_position(int bp) {
         alts.erase(matches);
     }
     
+    if (_tx.get_strand() != fwd) {
+        ref = transdict[ref];
+    }
+    
     char mutated_aa;
     std::string alt_seq = seq;
     std::string category;
@@ -153,7 +157,6 @@ void SitesChecks::check_position(int bp) {
         // figure out what the ref and alt alleles are, with respect to
         // the + strand.
         if (_tx.get_strand() != fwd) {
-            ref = transdict[ref];
             alt = transdict[alt];
         }
         
