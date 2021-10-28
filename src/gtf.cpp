@@ -68,7 +68,7 @@ GTFLine parse_gtfline(std::string & line) {
     int source_idx = line.find("\t", chr_idx + 4);
     int feature_idx = line.find("\t", source_idx + 6);
     int start_idx = line.find("\t", feature_idx + 3);
-    int end_idx = line.find("\t", start_idx + 3);
+    int end_idx = line.find("\t", start_idx + 2);
     int score_idx = line.find("\t", end_idx + (end_idx - start_idx));
 
     info.chrom = line.substr(chr_idx, source_idx - chr_idx);
