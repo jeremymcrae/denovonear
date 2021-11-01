@@ -120,6 +120,9 @@ cdef class Gene:
         cdef string seq = _tx.get_genomic_sequence().encode('utf8')
         cdef int offset = _tx.get_genomic_offset()
         if len(seq) > 0:
+            if chr(strand) == '-':
+                _tx.reverse_complement(seq)
+                seq = _tx.reverse_complement(seq).encode('utf8')
             tx.add_genomic_sequence(seq, offset)
         self.add_tx(tx, False)
     
@@ -180,7 +183,9 @@ cdef class Gene:
             seq = None
         if seq is None and __genome_ is not None:
             seq = __genome_[chrom][start-1-offset:end-1+offset].seq.upper()
-        strand = self.strand
+        strand = chr(tx.get_strand())
+        if strand == '-':
+            seq = tx.reverse_complement(seq.encode('utf8')).decode('utf8')
         tx_id = tx.get_name().decode('utf8')
         return Transcript(tx_id, chrom, start, end, strand, exons, cds, seq, offset=offset)
     
