@@ -9,11 +9,6 @@
 
 #include "tx.h"
 
-std::unordered_map<char, char> transdict = {
-    {'a', 't'}, {'c', 'g'}, {'g', 'c'}, {'t', 'a'}, {'u', 'a'},
-    {'A', 'T'}, {'C', 'G'}, {'G', 'C'}, {'T', 'A'}, {'U', 'A'},
-    {'N', 'N'}};
-
 std::unordered_map<std::string, char> aa_code = {
     {"AAA", 'K'}, {"AAC", 'N'}, {"AAG", 'K'}, {"AAT", 'N'},
     {"ACA", 'T'}, {"ACC", 'T'}, {"ACG", 'T'}, {"ACT", 'T'},
@@ -501,6 +496,11 @@ void Tx::_fix_cds_length() {
 
 // reverse complement a DNA or RNA sequence
 std::string Tx::reverse_complement(std::string seq) {
+    static char transdict[128];
+    transdict['a'] = 't'; transdict['c'] = 'g'; transdict['g'] = 'c'; 
+    transdict['t'] = 'a'; transdict['u'] = 'a'; transdict['A'] = 'T'; 
+    transdict['C'] = 'G'; transdict['G'] = 'C'; transdict['T'] = 'A'; 
+    transdict['U'] = 'A'; transdict['N'] = 'N';
     std::reverse(seq.begin(), seq.end());
     std::string complement;
     complement.resize(seq.size());
