@@ -63,7 +63,7 @@ void include_end_codons(std::map<std::string, int> cds_range, TxInfo & info) {
     if (max_idx == last_idx) {
         info.cds.back()[1] = cds_range["max"];
     } else {
-        info.cds[1][1] = info.exons[last_idx][1];  // extend existing CDS
+        info.cds.back()[1] = info.exons[last_idx][1];  // extend existing CDS
         std::vector<int> extra_cds = {info.exons[max_idx][0], cds_range["max"]};
         info.cds.push_back(extra_cds);
     }
