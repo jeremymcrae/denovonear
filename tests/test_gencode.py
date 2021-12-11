@@ -68,11 +68,11 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t10\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
                 'chr1\tHAVANA\tCDS\t15\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n' \
                 'chr1\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST2";\n' \
-                'chr1\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_B";gene_name "TEST2"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr1\tHAVANA\ttranscript\t100\t110\t.\t-\t.\ttranscript_id "ENST_B";gene_name "TEST2"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
                 'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n' \
-                'chr1\tHAVANA\tCDS\t115\t1100\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n'\
+                'chr1\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n'\
                 'chr2\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST3";\n' \
-                'chr2\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_C";gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
+                'chr2\tHAVANA\ttranscript\t100\t110\t.\t-\t.\ttranscript_id "ENST_C";gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n' \
                 'chr2\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n' \
                 'chr2\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n'
         
@@ -112,11 +112,11 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t10\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n',
                 'chr1\tHAVANA\tCDS\t15\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n',
                 'chr1\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST2";\n',
-                'chr1\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_B"; gene_name "TEST2"; transcript_type "protein_coding"; tag "appris_principal_1";\n',
+                'chr1\tHAVANA\ttranscript\t100\t110\t.\t-\t.\ttranscript_id "ENST_B"; gene_name "TEST2"; transcript_type "protein_coding"; tag "appris_principal_1";\n',
                 'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n',
-                'chr1\tHAVANA\tCDS\t115\t1100\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n',
+                'chr1\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n',
                 'chr2\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST3";\n',
-                'chr2\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_C"; gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n',
+                'chr2\tHAVANA\ttranscript\t100\t110\t.\t-\t.\ttranscript_id "ENST_C"; gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n',
                 'chr2\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n',
                 'chr2\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n']
         with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
@@ -147,7 +147,7 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t20\t30\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n',
                 'chr1\tHAVANA\tCDS\t25\t30\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST1"; transcript_type "protein_coding"\n',
                 'chr1\tHAVANA\tgene\t100\t110\t.\t-\t.\tgene_name "TEST1";\n',
-                'chr1\tHAVANA\ttranscript\t100\t100\t.\t-\t.\ttranscript_id "ENST_B"; gene_name "TEST1"; transcript_type "protein_coding";\n',
+                'chr1\tHAVANA\ttranscript\t100\t110\t.\t-\t.\ttranscript_id "ENST_B"; gene_name "TEST1"; transcript_type "protein_coding";\n',
                 'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST1"; transcript_type "protein_coding"\n',
                 'chr1\tHAVANA\tCDS\t110\t100\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST1"; transcript_type "protein_coding"\n',
         ]
