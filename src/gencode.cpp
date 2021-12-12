@@ -42,6 +42,9 @@ uint get_exon_num(std::vector<std::vector<int> > exons, int pos) {
 // as at least one stop codon spans an intron boundary, which messes up the
 // CDS if included as is.
 void include_end_codons(std::map<std::string, int> cds_range, TxInfo & info) {
+    if (info.cds.size() == 0) {
+        return;
+    }
     sort_exons(info.cds);
     sort_exons(info.exons);
 

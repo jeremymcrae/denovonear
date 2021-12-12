@@ -90,6 +90,11 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
         cds.push_back(region);
     }
     
+    if (cds.size() == 0) {
+        // no subsequent adjustments for transcripts without CDS
+        return;
+    }
+    
     cds_min = cds[0].start;
     cds_max = cds.back().end;
     
@@ -398,12 +403,6 @@ void Tx::add_cds_sequence(std::string cds_dna) {
 //    then the DNA sequence will be for the - strand, so we need to
 //    reorient the DNA to the + strand.
 void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
-    if ( cds.size() == 0 ) {
-        std::string msg = "You need to add CDS coordinates before adding"
-            "genomic sequence!";
-        throw std::invalid_argument(msg);
-    }
-    
     char fwd = '+';
     if (get_strand() != fwd) {
         // orient the DNA sequence to the + strand.
