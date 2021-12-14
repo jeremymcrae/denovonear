@@ -55,6 +55,10 @@ def clustering(args, output):
         if len(de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]) < 2:
             continue
         
+        if symbol not in gencode:
+            logging.info(f'cannot find {symbol} in gencode')
+            continue
+        
         probs = cluster_de_novos(symbol, de_novos[symbol], gencode[symbol], iterations, mut_dict)
         
         if probs is None:
