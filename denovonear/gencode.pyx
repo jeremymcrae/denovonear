@@ -239,6 +239,21 @@ cdef class Gene:
         ''' find if a pos is in coding region of any transcript of a gene
         '''
         return any(tx.in_coding_region(pos) for tx in self._transcripts)
+    
+    def distance(self, chrom, pos):
+        ''' get distance to nearest boundary of a gene
+        '''
+        # sanatize the chromosome first
+        if self.chrom.startswith('chr') and not chrom.startswith('chr'):
+            chrom = f'chr{chrom}'
+        elif not self.chrom.startswith('chr') and chrom.startswith('chr'):
+            chrom = chrom[3:]
+        
+        if self.chrom != chrom:
+            return None
+        if self.start <= pos <= self.end:
+            return 0
+        return min(abs(self.start - pos), abs(self.end - pos))
 
 cdef class Gencode:
     cdef dict genes
@@ -290,14 +305,6 @@ cdef class Gencode:
             self.genes[gene.symbol] = gene
         self._sort()
         
-    def distance(self, gene, chrom, pos):
-        ''' get distance to nearest boundary of a gene
-        '''
-        if gene.chrom != chrom:
-            return None
-        if gene.start <= pos <= gene.end:
-            return 0
-        return min(abs(gene.start - pos), abs(gene.end - pos))
     
     def nearest(self, chrom, pos):
         ''' find the nearest gene to a genomic chrom, pos coordinate
@@ -318,8 +325,8 @@ cdef class Gencode:
             left = self[self.coords[i][1]]
             right = self[self.coords[min(i + 1, len(self.coords) - 1)][1]]
         
-        left_delta = self.distance(left, chrom, pos)
-        right_delta = self.distance(right, chrom, pos)
+        left_delta = left.distance(chrom, pos)
+        right_delta = right.distance(chrom, pos)
         
         if right_delta is None and left_delta is None:
             raise ValueError(f"can't find any genes on {chrom}")
