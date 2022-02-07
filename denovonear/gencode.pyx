@@ -172,7 +172,7 @@ cdef class Gene:
     cdef _to_Transcript(self, Tx tx):
         ''' construct Transcript (python object) from Tx (c++ object)
         '''
-        offset = 10 if tx.get_genomic_offset() == 0 else tx.get_genomic_offset()
+        offset = 5 if tx.get_genomic_offset() == 0 else tx.get_genomic_offset()
         chrom = tx.get_chrom().decode('utf8')
         start = tx.get_start()
         end = tx.get_end()
