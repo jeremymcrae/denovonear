@@ -374,6 +374,9 @@ cdef class Gencode:
             list of Gene objects
         '''
         chrom = f'chr{chrom}' if not chrom.startswith('chr') else chrom
+        if chrom not in self.starts:
+            raise ValueError
+        
         # find indices to genes with a start inside the region
         left_start = bisect.bisect_left(self.starts[chrom], (start, 'AAAA'))
         left_end = left_start
