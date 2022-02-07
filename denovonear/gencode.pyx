@@ -377,13 +377,13 @@ cdef class Gencode:
         # find indices to genes with a start inside the region
         left_start = bisect.bisect_left(self.starts[chrom], (start, 'AAAA'))
         left_end = left_start
-        while self.starts[chrom][left_end][0] <= end and left_end < len(self.starts[chrom]):
+        while left_end < len(self.starts[chrom]) and self.starts[chrom][left_end][0] <= end:
             left_end += 1
         
         # find indices to genes with a end inside the region
         right_end = bisect.bisect_right(self.ends[chrom], (end, 'AAAA'))
-        right_start = right_end
-        while self.ends[chrom][right_start][0] >= start and right_start >= 0:
+        right_start = min(right_end, len(self.ends) - 1)
+        while right_start >= 0 and self.ends[chrom][right_start][0] >= start:
             right_start -= 1
         right_start += 1
         
