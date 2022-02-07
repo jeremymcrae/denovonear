@@ -385,7 +385,7 @@ cdef class Gencode:
         
         # find indices to genes with a end inside the region
         right_end = bisect.bisect_right(self.ends[chrom], (end, 'AAAA'))
-        right_start = min(right_end, len(self.ends) - 1)
+        right_start = min(right_end, len(self.ends[chrom]) - 1)
         while right_start >= 0 and self.ends[chrom][right_start][0] >= start:
             right_start -= 1
         right_start += 1

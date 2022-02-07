@@ -88,15 +88,21 @@ class TestGencode(unittest.TestCase):
         self.assertEqual(len(in_region), 0)
         in_region = gencode.in_region('chr1', 10, 30)
         self.assertEqual(len(in_region), 1)
+        in_region = gencode.in_region('chr1', 10, 10)  # check single base overlap
+        self.assertEqual(len(in_region), 1)
         self.assertEqual(in_region[0].symbol, "TEST1")
+        in_region = gencode.in_region('chr1', 5, 30)  # check fully encapsulated gene
+        self.assertEqual(len(in_region), 1)
         in_region = gencode.in_region('chr1', 10, 2000)
         self.assertEqual(len(in_region), 2)
         self.assertEqual(set(x.symbol for x in in_region), set(["TEST1", "TEST2"]))
         
         # no overlapping genes right up to the border of a gene
-        in_region = gencode.in_region('chr1', 0, 10)
+        in_region = gencode.in_region('chr1', 0, 9)
         self.assertEqual(len(in_region), 0)
-        in_region = gencode.in_region('chr1', 20, 30)
+        in_region = gencode.in_region('chr1', 9, 9) # check a single base before
+        self.assertEqual(len(in_region), 0)
+        in_region = gencode.in_region('chr1', 21, 30)
         self.assertEqual(len(in_region), 0)
         
         # we find matches if even a single base of the gene is in the region
@@ -123,20 +129,20 @@ class TestGencode(unittest.TestCase):
             write_gtf(temp.name, lines)
             make_fasta(fasta.name, ['chr1', 'chr2'])
             gencode = Gencode(temp.name, fasta.name)
+            
+            self.assertEqual(gencode.nearest('chr1', 5).symbol, 'TEST1')
+            self.assertEqual(gencode.nearest('chr1', 10).symbol, 'TEST1')
+            self.assertEqual(gencode.nearest('chr1', 11).symbol, 'TEST1')
+            self.assertEqual(gencode.nearest('chr1', 21).symbol, 'TEST1')
+            self.assertEqual(gencode.nearest('chr1', 80).symbol, 'TEST2')
+            self.assertEqual(gencode.nearest('chr1', 2000).symbol, 'TEST2')
         
-        self.assertEqual(gencode.nearest('chr1', 5).symbol, 'TEST1')
-        self.assertEqual(gencode.nearest('chr1', 10).symbol, 'TEST1')
-        self.assertEqual(gencode.nearest('chr1', 11).symbol, 'TEST1')
-        self.assertEqual(gencode.nearest('chr1', 21).symbol, 'TEST1')
-        self.assertEqual(gencode.nearest('chr1', 80).symbol, 'TEST2')
-        self.assertEqual(gencode.nearest('chr1', 2000).symbol, 'TEST2')
-        
-        # and look for genes on the final chrom, both before and after the final gene
-        self.assertEqual(gencode.nearest('chr2', 0).symbol, 'TEST3')
-        self.assertEqual(gencode.nearest('chr2', 2000).symbol, 'TEST3')
-        
-        with self.assertRaises(ValueError):
-            gencode.nearest('chrZZZ', 2000)
+            # and look for genes on the final chrom, both before and after the final gene
+            self.assertEqual(gencode.nearest('chr2', 0).symbol, 'TEST3')
+            self.assertEqual(gencode.nearest('chr2', 2000).symbol, 'TEST3')
+            
+            with self.assertRaises(ValueError):
+                gencode.nearest('chrZZZ', 2000)
     
     def test_gencode_canonical(self):
         ''' test we find the correct canonical transcript
