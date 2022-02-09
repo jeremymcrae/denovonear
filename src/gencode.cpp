@@ -220,7 +220,7 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
         // if the window is too wide to permit a gene to span it, just return
         return symbols;
     }
-    // find genes that encapsulate the region, first find genes that start upstream
+    // for genes that encapsulate the region, first find genes that start upstream
     std::set<std::size_t> starts_before;
     for (; left_idx>=0; left_idx--) {
         GenePoint & edge = chrom_starts[left_idx];
