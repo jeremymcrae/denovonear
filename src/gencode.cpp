@@ -185,7 +185,8 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
     
     std::vector<GenePoint> & chrom_starts = starts[chrom];
     std::vector<GenePoint> & chrom_ends = ends[chrom];
-    std::set<std::string> inside;
+    std::set<std::size_t> inside;
+    std::vector<std::string> symbols;
     
     // find indices to genes with a start inside the region
     int left_idx, right_idx;
@@ -196,7 +197,8 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
         if (edge.pos > end) {
             break;
         } else {
-            inside.insert(edge.symbol);
+            inside.insert(std::hash<std::string>{}(edge.symbol));
+            symbols.push_back(edge.symbol);
         }
         idx += 1;
     }
@@ -209,13 +211,12 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
         GenePoint & edge = chrom_ends[idx];
         if (edge.pos < start) {
             break;
-        } else {
-            inside.insert(edge.symbol);
+        } else if (inside.count(std::hash<std::string>{}(edge.symbol)) == 0) {
+            symbols.push_back(edge.symbol);
         }
         idx -= 1;
     }
 
-    std::vector<std::string> symbols (inside.begin(), inside.end());
     if (abs(end - start) > max_window) {
         // if the window is too wide to permit a gene to span it, just return
         return symbols;
