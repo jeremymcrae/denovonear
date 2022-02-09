@@ -224,21 +224,21 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
     std::set<std::string> starts_before;
     for (; left_idx>=0; left_idx--) {
         GenePoint & edge = chrom_starts[left_idx];
-        starts_before.insert(edge.symbol);
         if (abs(edge.pos - end) > max_window) { // halt if distant from the region
             break;
         }
+        starts_before.insert(edge.symbol);
     }
 
     // find genes that end downstream of the gene
     uint length = chrom_ends.size();
     for (; right_idx<length; right_idx++) {
         GenePoint & edge = chrom_ends[right_idx];
-        if (starts_before.count(edge.symbol) != 0) {
-            symbols.push_back(edge.symbol);
-        }
         if (abs(edge.pos - start) > max_window) { // halt if distant from the region
             break;
+        }
+        if (starts_before.count(edge.symbol) != 0) {
+            symbols.push_back(edge.symbol);
         }
     }
 
