@@ -176,7 +176,7 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
         int max_window=2500000) {
     
     if (chrom.size() < 3 || chrom.substr(0, 3) != "chr") {
-        chrom = "chr" + chrom;
+        chrom.insert(0, "chr");
     }
     
     if (starts.count(chrom) == 0) {
@@ -231,7 +231,7 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
     }
 
     // find genes that end downstream of the gene
-    uint length = chrom_ends.size();
+    int length = (int) chrom_ends.size();
     for (; right_idx<length; right_idx++) {
         GenePoint & edge = chrom_ends[right_idx];
         if (abs(edge.pos - start) > max_window) { // halt if distant from the region
