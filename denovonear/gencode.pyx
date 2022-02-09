@@ -7,6 +7,7 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp cimport bool
 from libcpp.map cimport map
+from libcpp.set cimport set
 
 from pyfaidx import Fasta
 
@@ -33,7 +34,14 @@ cdef extern from "gencode.h" namespace "gencode":
         Tx tx
         bool is_principal
     
+    cdef struct GenePoint:
+        int pos
+        string symbol
+    
     vector[NamedTx] open_gencode(string, bool)
+    set[string] _in_region(string chrom, int start, int end, 
+        map[string, vector[GenePoint]] & starts, map[string, vector[GenePoint]] & ends,
+        int max_window)
 
 cpdef _parse_gtfline(string line):
     ''' python function for unit testing GTF parsing
@@ -256,7 +264,8 @@ cdef class Gene:
         return min(abs(self.start - pos), abs(self.end - pos))
 
 cdef class Gencode:
-    cdef dict genes, starts, ends
+    cdef dict genes
+    cdef map[string, vector[GenePoint]] starts, ends
     def __cinit__(self, gencode=None, fasta=None, coding_only=True):
         ''' initialise Gencode
         
@@ -287,27 +296,30 @@ cdef class Gencode:
     def _sort(self):
         ''' index by starts and ends, to speed finding genes in a region
         '''
-        self.starts = {}
-        self.ends = {}
-        
         for symbol in self.genes:
             gene = self.genes[symbol]
-            chrom = gene.chrom
+            chrom = gene.chrom.encode('utf8')
+            symbol = symbol.encode('utf8')
             
-            # make sure the chromosome is present
-            if chrom not in self.starts:
+            # ensure the chromosome is present
+            if self.starts.count(chrom) == 0:
                 self.starts[chrom] = []
-            if chrom not in self.ends:
+            if self.ends.count(chrom) == 0:
                 self.ends[chrom] = []
             
-            self.starts[chrom].append((gene.start, symbol))
-            self.ends[chrom].append((gene.end, symbol))
+            # self.starts[chrom].push_back(gene.start)
+            # self.ends[chrom].push_back(gene.end)
+            
+            # self.starts_symbols[chrom][gene.start].push_back(symbol)
+            # self.ends_symbols[chrom][gene.end].push_back(symbol)
+            self.starts[chrom].push_back(GenePoint(gene.start, symbol))
+            self.ends[chrom].push_back(GenePoint(gene.end, symbol))
         
         # sort start and end coords by position
-        for x in self.starts:
-            self.starts[x] = sorted(self.starts[x])
-        for x in self.ends:
-            self.ends[x] = sorted(self.ends[x])
+        for x, values in self.starts:
+            self.starts[x] = sorted(values, key=lambda x: x['pos'])
+        for x, values in self.ends:
+            self.ends[x] = sorted(values, key=lambda x: x['pos'])
     
     def __repr__(self):
         return f'Gencode(n_genes={len(self)})'
@@ -326,40 +338,41 @@ cdef class Gencode:
             self.genes[gene.symbol] = gene
         self._sort()
     
-    def nearest(self, chrom, pos):
-        ''' find the nearest gene to a genomic chrom, pos coordinate
-        '''
-        chrom = f'chr{chrom}' if not chrom.startswith('chr') else chrom
+    # def nearest(self, chrom, int pos):
+    #     ''' find the nearest gene to a genomic chrom, pos coordinate
+    #     '''
+    #     chrom = f'chr{chrom}' if not chrom.startswith('chr') else chrom
+    #     chrom = chrom.encode('utf8')
         
-        # first, account for any overlapping genes
-        overlaps = self.in_region(chrom, pos-1, pos+1)  # NOTE: possibly fix?
-        if len(overlaps) > 0:
-            # if we have > 0 prioritise if the position is in the CDS
-            cds_overlaps = [x for x in overlaps if x.in_any_tx_cds(pos)]
-            if len(cds_overlaps) > 0:
-                overlaps = cds_overlaps
-            # prioritise the gene with longest CDS (in the canonical tx)
-            txs = [x.canonical for x in overlaps]
-            lengths = [x.get_coding_distance(x.get_cds_end())['pos'] for x in txs]
-            idx = lengths.index(max(lengths))
-            return overlaps[idx]
+    #     # first, account for any overlapping genes
+    #     overlaps = self.in_region(chrom, pos-1, pos+1)  # NOTE: possibly fix?
+    #     if len(overlaps) > 0:
+    #         # if we have > 0 prioritise if the position is in the CDS
+    #         cds_overlaps = [x for x in overlaps if x.in_any_tx_cds(pos)]
+    #         if len(cds_overlaps) > 0:
+    #             overlaps = cds_overlaps
+    #         # prioritise the gene with longest CDS (in the canonical tx)
+    #         txs = [x.canonical for x in overlaps]
+    #         lengths = [x.get_coding_distance(x.get_cds_end())['pos'] for x in txs]
+    #         idx = lengths.index(max(lengths))
+    #         return overlaps[idx]
         
-        # no overlaps observed, look for the nearest upstream or downstream gene
-        i = bisect.bisect_left(self.starts[chrom], (pos, 'AAAA'))
-        j = bisect.bisect_right(self.ends[chrom], (pos, 'AAAA'))
+    #     # no overlaps observed, look for the nearest upstream or downstream gene
+    #     cdef int i = lower_bound(self.starts[chrom].begin(), self.starts[chrom].end(), pos) - self.starts[chrom].begin()
+    #     cdef int j = upper_bound(self.ends[chrom].begin(), self.ends[chrom].begin(), pos) - self.starts[chrom].begin()
         
-        i = min(i, len(self.starts[chrom]) - 1)
-        j = max(0, len(self.ends[chrom]) - 1)
+    #     i = min(i, self.starts[chrom].size() - 1)
+    #     j = max(0, self.ends[chrom].size() - 1)
         
-        downstream = self[self.starts[chrom][i][1]]
-        upstream = self[self.ends[chrom][j][1]]
+    #     downstream = self[self.starts_symbols[chrom][self.starts[chrom][i]]
+    #     upstream = self[self.ends_symbols[chrom][self.starts[chrom][j]]
         
-        if upstream.distance(chrom, pos) <= downstream.distance(chrom, pos):
-            return upstream
-        else:
-            return downstream
+    #     if upstream.distance(chrom, pos) <= downstream.distance(chrom, pos):
+    #         return upstream
+    #     else:
+    #         return downstream
     
-    def in_region(self, chrom, start, end, max_window=2500000):
+    def in_region(self, str _chrom, int start, int end, int max_window=2500000):
         ''' find genes within a genomic region
         
         Args:
@@ -373,49 +386,11 @@ cdef class Gencode:
         Returns:
             list of Gene objects
         '''
-        chrom = f'chr{chrom}' if not chrom.startswith('chr') else chrom
-        if chrom not in self.starts:
-            raise ValueError
-        
-        # find indices to genes with a start inside the region
-        left_start = bisect.bisect_left(self.starts[chrom], (start, 'AAAA'))
-        left_end = left_start
-        while left_end < len(self.starts[chrom]) and self.starts[chrom][left_end][0] <= end:
-            left_end += 1
-        
-        # find indices to genes with a end inside the region
-        right_end = bisect.bisect_right(self.ends[chrom], (end, 'AAAA'))
-        right_start = min(right_end, len(self.ends[chrom]) - 1)
-        while right_start >= 0 and self.ends[chrom][right_start][0] >= start:
-            right_start -= 1
-        right_start += 1
-        
-        starts_inside = [self.starts[chrom][i][1] for i in range(left_start, left_end)]
-        ends_inside = [self.ends[chrom][i][1] for i in range(right_start, right_end)]
-        
-        # find genes that start upstream of the region
-        starts_before = []
-        chrom_starts = self.starts[chrom]
-        for i in reversed(range(left_start)):
-            gene_start, symbol = chrom_starts[i]
-            starts_before.append(symbol)
-            if abs(gene_start - start) > max_window:  # halt if distant from the region
-                break
-        
-        # find genes that end downstream of the region
-        ends_after = []
-        chrom_ends = self.ends[chrom]
-        length = len(chrom_ends) - 1
-        for i in range(right_end, length):
-            gene_end, symbol = chrom_ends[i]
-            ends_after.append(symbol)
-            if abs(gene_end - end) > max_window: # halt if distant from the region
-                break
-        
-        encapsulating = set(starts_before) & set(ends_after)
-        symbols = set(starts_inside + ends_inside) | encapsulating
-        
-        return [self[x] for x in symbols]
+        # symbols = _in_region(_chrom.encode('utf8'), start, end, self.starts,
+        #     self.ends, self.starts_symbols, self.ends_symbols, max_window)
+        symbols = _in_region(_chrom.encode('utf8'), start, end, self.starts,
+            self.ends, max_window)
+        return [self[x.decode('utf8')] for x in symbols]
     
     def __exit__(self):
         ''' cleanup at exit

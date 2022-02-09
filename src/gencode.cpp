@@ -166,6 +166,109 @@ std::vector<NamedTx> open_gencode(std::string path, bool coding) {
     return transcripts;
 }
 
+bool CompFunc(const GenePoint &l, const GenePoint &r) {
+    return l.pos < r.pos;
+}
+
+std::set<std::string> _in_region(std::string chrom, int start, int end, 
+        std::map<std::string, std::vector<GenePoint>> & starts, 
+        std::map<std::string, std::vector<GenePoint>> & ends,
+        int max_window=2500000) {
+    
+    if (chrom.size() < 3 || chrom.substr(0, 3) != "chr") {
+        chrom = "chr" + chrom;
+    }
+    
+    if (starts.count(chrom) == 0) {
+        throw std::invalid_argument("unknown_chrom: " + chrom);
+    }
+    
+    std::vector<GenePoint> & chrom_starts = starts[chrom];
+    std::vector<GenePoint> & chrom_ends = ends[chrom];
+    std::set<std::string> inside;
+    
+    // find indices to genes with a start inside the region
+    int idx = std::lower_bound(chrom_starts.begin(), chrom_starts.end(), GenePoint {start, "AA"}, CompFunc) - chrom_starts.begin();
+    idx = std::max(0, std::min(idx - 1, (int) chrom_ends.size() - 1));
+    std::cout << " - start_index: " << idx << "\n";
+    while (idx < (int) chrom_starts.size()) {
+        GenePoint & edge = chrom_starts[idx];
+        if (edge.pos > end) {
+            break;
+        } else {
+            std::cout << " - - start_inside: " << edge.symbol << " (at " << edge.pos << " before " << end << ")" << "\n";
+            inside.insert(edge.symbol);
+        }
+        idx += 1;
+    }
+    
+    // find indices to genes with a end inside the region
+    idx = (std::lower_bound(chrom_ends.begin(), chrom_ends.end(), GenePoint {end, "AA"}, CompFunc) - chrom_ends.begin());
+    idx = std::min(std::max(0, idx - 1), (int) chrom_ends.size() - 1);
+    std::cout << " - end_index: " << idx << "\n";
+    while (idx > 0) {
+        GenePoint & edge = chrom_ends[idx];
+        if (edge.pos < start) {
+            break;
+        } else {
+            std::cout << " - - end_inside: " << edge.symbol << " (at " << edge.pos << " after " << start << ")" << "\n";
+            inside.insert(edge.symbol);
+        }
+        idx -= 1;
+    }
+    
+    std::cout << " - inside:";
+    for (auto x : inside) {
+        std::cout << " " << x;
+    }
+    std::cout << "\n";
+    
+    
+    // // find genes that start upstream of the region
+    // std::set<std::string> starts_before;
+    // idx = std::lower_bound(chrom_starts.begin(), chrom_starts.end(), GenePoint{start, "AA"}, CompFunc) - chrom_starts.begin();
+    // idx = std::max(0, std::min(idx - 2, (int) chrom_ends.size() - 1));
+    // for (; idx>0; idx--) {
+    //     GenePoint & edge = chrom_starts[idx];
+    //     starts_before.insert(edge.symbol);
+    //     if (abs(edge.pos - start) > max_window) { // halt if distant from the region
+    //         break;
+    //     }
+    // }
+    
+    // std::cout << " - starts_before:";
+    // for (auto x : starts_before) {
+    //     std::cout << " " << x;
+    // }
+    // std::cout << "\n";
+    
+    // // find genes that end downstream of the region
+    // std::vector<std::string> encapsulating;
+    // idx = (std::lower_bound(chrom_ends.begin(), chrom_ends.end(), GenePoint {end, "AA"}, CompFunc) - chrom_ends.begin());
+    // idx = std::min(std::max(0, idx - 1), (int) chrom_ends.size() - 1);
+    // uint length = chrom_ends.size() - 1;
+    // for (; idx<length; idx++) {
+    //     GenePoint & edge = chrom_ends[idx];
+        
+    //     if (starts_before.count(edge.symbol) != 0) {
+    //         std::cout << " - encapsulating: " << edge.symbol << "\n";
+    //         encapsulating.push_back(edge.symbol);
+    //     }
+    //     // ends_after.push_back(edge.symbol);
+    //     if (abs(edge.pos - end) > max_window) { // halt if distant from the region
+    //         break;
+    //     }
+    // }
+    
+    // // std::sort(chrom_ends[lo], chrom_ends[hi])
+    
+    // // std::vector<std::string> encapsulating;
+    // // std::set_intersection(starts_before.begin(), starts_before.end(), 
+    // //     ends_after.begin(), ends_after.end(), std::back_inserter(encapsulating));
+    // inside.insert(encapsulating.begin(), encapsulating.end());
+    return inside;
+}
+
 } // namespace
 
 // int main() {

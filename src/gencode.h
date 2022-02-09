@@ -31,8 +31,17 @@ struct NamedTx {
     bool is_principal;
 };
 
+struct GenePoint {
+    int pos;
+    std::string symbol;
+};
+
 // open the gencode annotations GTF, and return Tx objects for each transcript
 std::vector<NamedTx> open_gencode(std::string path, bool coding=true);
+std::set<std::string> _in_region(std::string chrom, int start, int end, 
+    std::map<std::string, std::vector<GenePoint>> & starts, 
+    std::map<std::string, std::vector<GenePoint>> & ends,
+    int max_window);
 
 } // namespace
 
