@@ -386,8 +386,6 @@ cdef class Gencode:
         Returns:
             list of Gene objects
         '''
-        # symbols = _in_region(_chrom.encode('utf8'), start, end, self.starts,
-        #     self.ends, self.starts_symbols, self.ends_symbols, max_window)
         symbols = _in_region(_chrom.encode('utf8'), start, end, self.starts,
             self.ends, max_window)
         return [self[x.decode('utf8')] for x in symbols]
