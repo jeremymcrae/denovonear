@@ -189,7 +189,7 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
     
     // find indices to genes with a start inside the region
     int left_idx, right_idx;
-    int idx = std::lower_bound(chrom_starts.begin(), chrom_starts.end(), GenePoint {start, "AA"}, CompFunc) - chrom_starts.begin();
+    int idx = std::lower_bound(chrom_starts.begin(), chrom_starts.end(), GenePoint {start, "A"}, CompFunc) - chrom_starts.begin();
     left_idx = idx - 1;
     while (idx < (int) chrom_starts.size()) {
         GenePoint & edge = chrom_starts[idx];
@@ -202,7 +202,7 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
     }
 
     // find indices to genes with a end inside the region
-    idx = (std::upper_bound(chrom_ends.begin(), chrom_ends.end(), GenePoint {end, "AA"}, CompFunc) - chrom_ends.begin());
+    idx = (std::upper_bound(chrom_ends.begin(), chrom_ends.end(), GenePoint {end, "A"}, CompFunc) - chrom_ends.begin());
     right_idx = idx;
     idx = std::min(idx - 1, (int) chrom_ends.size() - 1);
     while (idx >= 0) {
