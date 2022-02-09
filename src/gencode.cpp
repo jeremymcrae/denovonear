@@ -221,7 +221,8 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
         return symbols;
     }
     // for genes that encapsulate the region, first find genes that start upstream
-    std::set<std::size_t> starts_before;
+    static std::set<std::size_t> starts_before;
+    starts_before.clear();
     for (; left_idx>=0; left_idx--) {
         GenePoint & edge = chrom_starts[left_idx];
         if (abs(edge.pos - end) > max_window) { // halt if distant from the region
