@@ -142,6 +142,7 @@ class TestGencode(unittest.TestCase):
             self.assertEqual(gencode.nearest('chr1', 11).symbol, 'TEST1')
             self.assertEqual(gencode.nearest('chr1', 21).symbol, 'TEST1')
             self.assertEqual(gencode.nearest('chr1', 80).symbol, 'TEST2')
+            self.assertEqual(gencode.nearest('chr1', 105).symbol, 'TEST2')
             self.assertEqual(gencode.nearest('chr1', 2000).symbol, 'TEST2')
         
             # and look for genes on the final chrom, both before and after the final gene
