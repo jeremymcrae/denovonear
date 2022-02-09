@@ -187,6 +187,7 @@ std::vector<std::string> _in_region(std::string chrom, int start, int end,
     std::vector<GenePoint> & chrom_ends = ends[chrom];
     std::set<std::size_t> inside;
     std::vector<std::string> symbols;
+    symbols.reserve(std::max((end - start) / 50000, 1));  // expect 1 gene / 50 kb 
     
     // find indices to genes with a start inside the region
     int left_idx, right_idx;
