@@ -7,7 +7,6 @@ from libcpp.vector cimport vector
 from libcpp.string cimport string
 from libcpp cimport bool
 from libcpp.map cimport map
-from libcpp.set cimport set
 
 from pyfaidx import Fasta
 
@@ -39,7 +38,7 @@ cdef extern from "gencode.h" namespace "gencode":
         string symbol
     
     vector[NamedTx] open_gencode(string, bool)
-    set[string] _in_region(string chrom, int start, int end, 
+    vector[string] _in_region(string chrom, int start, int end, 
         map[string, vector[GenePoint]] & starts, map[string, vector[GenePoint]] & ends,
         int max_window)
 

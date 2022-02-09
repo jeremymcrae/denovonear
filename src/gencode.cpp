@@ -170,7 +170,7 @@ bool CompFunc(const GenePoint &l, const GenePoint &r) {
     return l.pos < r.pos;
 }
 
-std::set<std::string> _in_region(std::string chrom, int start, int end, 
+std::vector<std::string> _in_region(std::string chrom, int start, int end, 
         std::map<std::string, std::vector<GenePoint>> & starts, 
         std::map<std::string, std::vector<GenePoint>> & ends,
         int max_window=2500000) {
@@ -215,28 +215,34 @@ std::set<std::string> _in_region(std::string chrom, int start, int end,
         idx -= 1;
     }
 
-    // find genes that start upstream of the region
+    std::vector<std::string> symbols (inside.begin(), inside.end());
+    if (abs(end - start) > max_window) {
+        // if the window is too wide to permit a gene to span it, just return
+        return symbols;
+    }
+    // find genes that encapsulate the region, first find genes that start upstream
     std::set<std::string> starts_before;
     for (; left_idx>=0; left_idx--) {
         GenePoint & edge = chrom_starts[left_idx];
         starts_before.insert(edge.symbol);
-        if (abs(edge.pos - start) > max_window) { // halt if distant from the region
-            break;
-        }
-    }
-
-    uint length = chrom_ends.size();
-    for (; right_idx<length; right_idx++) {
-        GenePoint & edge = chrom_ends[right_idx];
-        if (starts_before.count(edge.symbol) != 0) {
-            inside.insert(edge.symbol);
-        }
         if (abs(edge.pos - end) > max_window) { // halt if distant from the region
             break;
         }
     }
 
-    return inside;
+    // find genes that end downstream of the gene
+    uint length = chrom_ends.size();
+    for (; right_idx<length; right_idx++) {
+        GenePoint & edge = chrom_ends[right_idx];
+        if (starts_before.count(edge.symbol) != 0) {
+            symbols.push_back(edge.symbol);
+        }
+        if (abs(edge.pos - start) > max_window) { // halt if distant from the region
+            break;
+        }
+    }
+
+    return symbols;
 }
 
 } // namespace
