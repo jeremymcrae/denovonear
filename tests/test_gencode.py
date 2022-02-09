@@ -81,21 +81,28 @@ class TestGencode(unittest.TestCase):
             make_fasta(fasta.name, ['chr1', 'chr2'])
             gencode = Gencode(temp.name, fasta.name)
         
-        # check different region selections, just by examining the number of 
-        # genes, and their HGNC symbols. In other parts we check gene setup, so
-        # we don't need to repeat that here
-        in_region = gencode.in_region('chr1', 0, 5)
-        self.assertEqual(len(in_region), 0)
-        in_region = gencode.in_region('chr1', 10, 30)
-        self.assertEqual(len(in_region), 1)
-        in_region = gencode.in_region('chr1', 10, 10)  # check single base overlap
-        self.assertEqual(len(in_region), 1)
-        self.assertEqual(in_region[0].symbol, "TEST1")
-        in_region = gencode.in_region('chr1', 5, 30)  # check fully encapsulated gene
-        self.assertEqual(len(in_region), 1)
-        in_region = gencode.in_region('chr1', 10, 2000)
-        self.assertEqual(len(in_region), 2)
-        self.assertEqual(set(x.symbol for x in in_region), set(["TEST1", "TEST2"]))
+        genes = gencode.in_region('chr1', 5, 6)  # shouldn't get anything
+        self.assertEqual(genes, [])
+        genes = gencode.in_region('chr1', 5, 15)  # should get TEST1 (via start)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1"]))
+        genes = gencode.in_region('chr1', 5, 25)  # should get TEST1 (via start, end)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1"]))
+        genes = gencode.in_region('chr1', 15, 25)  # should get TEST1 (via end)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1"]))
+        genes = gencode.in_region('chr1', 12, 13) # should get TEST1 (via encapsulate)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1"]))
+        genes = gencode.in_region('chr1', 5, 105) # should get TEST1 (via start, end), TEST2 (via start)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1", "TEST2"]))
+        genes = gencode.in_region('chr1', 5, 115) # should get TEST1 (via start, end), TEST2 (via start, end)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1", "TEST2"]))
+        genes = gencode.in_region('chr1', 15, 105) # should get TEST1 (via end), TEST2 (via start)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST1", "TEST2"]))
+        genes = gencode.in_region('chr1', 25, 105)  # should get TEST2 (via start)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST2"]))
+        genes = gencode.in_region('chr1', 102, 105) # should get TEST2 (via encapsulate)
+        self.assertEqual(set(x.symbol for x in genes), set(["TEST2"]))
+        genes = gencode.in_region('chr1', 120, 150) # shouldn't get anything
+        self.assertEqual(genes, [])
         
         # no overlapping genes right up to the border of a gene
         in_region = gencode.in_region('chr1', 0, 9)
