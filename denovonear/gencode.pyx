@@ -210,7 +210,7 @@ cdef class Gene:
         cdef CDS_coords coords = tx.get_coding_distance(tx.get_cds_end())
         return coords.position + 1
     
-    cdef Tx _max_by_cds(self, vector[Tx] transcripts):
+    cdef Tx _max_by_cds(self, vector[Tx] transcripts) except *:
         ''' get longest transcript by CDS length
         '''
         cdef Tx max_tx
@@ -220,6 +220,31 @@ cdef class Gene:
             if curr_len > length:
                 length = curr_len
                 max_tx = tx
+        if length == 0:
+            raise ValueError('no coding transcripts')
+        return max_tx
+    
+    cdef int _exonic_len(self, Tx tx):
+        ''' get length of exonic sequence for a Tx object based transcript
+        '''
+        length = 0
+        for start, end in _convert_exons(tx.get_exons()):
+            length += abs(end - start) + 1
+        return length
+        # return sum(abs(x.end - x.start) + 1 for x in tx.get_exons())
+    
+    cdef Tx _max_by_exonic(self, vector[Tx] transcripts) except *:
+        ''' get longest transcript by CDS length
+        '''
+        cdef Tx max_tx
+        length = 0
+        for tx in transcripts:
+            curr_len = self._exonic_len(tx)
+            if curr_len > length:
+                length = curr_len
+                max_tx = tx
+        if length == 0:
+            raise ValueError('no exonic transcripts')
         return max_tx
     
     @property
@@ -241,8 +266,13 @@ cdef class Gene:
         if principal.size() == 0:
             principal = self._transcripts
         
-        # cdef Tx tx = self._max_by_cds(principal)
-        return self._to_Transcript(self._max_by_cds(principal))
+        cdef Tx max_tx
+        try:
+            max_tx = self._max_by_cds(principal)
+        except ValueError:
+            max_tx = self._max_by_exonic(principal)
+        
+        return self._to_Transcript(max_tx)
     
     def in_any_tx_cds(self, pos):
         ''' find if a pos is in coding region of any transcript of a gene
