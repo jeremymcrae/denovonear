@@ -19,7 +19,7 @@ struct GTFLine {
     std::string symbol;
     std::string tx_id;
     std::string transcript_type;
-    bool is_principal;
+    int is_canonical;
 };
 
 GTFLine parse_gtfline(std::string &line);

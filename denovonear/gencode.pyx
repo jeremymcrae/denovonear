@@ -24,7 +24,7 @@ cdef extern from "gtf.h" namespace "gencode":
         string symbol
         string tx_id
         string transcript_type
-        bool is_principal
+        int is_canonical
         
     GTFLine parse_gtfline(string line)
 
@@ -32,7 +32,7 @@ cdef extern from "gencode.h" namespace "gencode":
     cdef struct NamedTx:
         string symbol
         Tx tx
-        bool is_principal
+        int is_canonical
     
     cdef struct GenePoint:
         int pos
@@ -73,7 +73,7 @@ cpdef _open_gencode(gtf_path, coding_only=True):
         strand = chr(tx.get_strand())
         tx_id = tx.get_name().decode('utf8')
         transcript = Transcript(tx_id, chrom, start, end, strand, exons, cds, offset=0)
-        transcripts.append((x.symbol.decode('utf8'), transcript, x.is_principal))
+        transcripts.append((x.symbol.decode('utf8'), transcript, x.is_canonical))
     return transcripts
 
 __genome_ = None
@@ -81,7 +81,7 @@ __genome_ = None
 cdef class Gene:
     cdef string _symbol
     cdef vector[Tx] _transcripts
-    cdef vector[bool] _principal
+    cdef vector[int] _canonical
     cdef str _chrom
     cdef int _start, _end
     def __cinit__(self, symbol):
@@ -91,9 +91,9 @@ cdef class Gene:
         self.start = 999999999
         self.end = -999999999
     
-    cdef add_tx(self, Tx tx, bool is_principal):
+    cdef add_tx(self, Tx tx, int is_canonical):
         self._transcripts.push_back(tx)
-        self._principal.push_back(is_principal)
+        self._canonical.push_back(is_canonical)
         self.chrom = tx.get_chrom().decode('utf8')
         self.start = min(self.start, tx.get_start())
         self.end = max(self.end, tx.get_end())
@@ -252,25 +252,28 @@ cdef class Gene:
         ''' find the canonical transcript for a gene.
         
         Canonical is defined as:
+            - transcript with Ensembl_canonical tag (peferred)
             - transcript with longest CDS tagged with appris_principal in the GTF
             - if no appris_principal tags for any tx, use the tx with longest CDS
+            # TODO: for the last case, maybe check the protein coding subset first
         
         Occasionally there are multiple transcripts tagged as appris_principal
         and with the same longest CDS, we use the first one of those.
         '''
-        cdef vector[Tx] principal
+        cdef vector[Tx] canonical
         for i in range(self._transcripts.size()):
-            if self._principal[i]:
-                principal.push_back(self._transcripts[i])
+            max_score = max(self._canonical)
+            if self._canonical[i] == max_score:
+                canonical.push_back(self._transcripts[i])
         
-        if principal.size() == 0:
-            principal = self._transcripts
+        if canonical.size() == 0:
+            canonical = self._transcripts
         
         cdef Tx max_tx
         try:
-            max_tx = self._max_by_cds(principal)
+            max_tx = self._max_by_cds(canonical)
         except ValueError:
-            max_tx = self._max_by_exonic(principal)
+            max_tx = self._max_by_exonic(canonical)
         
         return self._to_Transcript(max_tx)
     
@@ -320,7 +323,7 @@ cdef class Gencode:
                 if symbol not in self.genes:
                     self.genes[symbol] = Gene(symbol.encode('utf8'))
                 curr = self.genes[symbol]
-                curr.add_tx(x.tx, x.is_principal)
+                curr.add_tx(x.tx, x.is_canonical)
                 self.genes[symbol] = curr
         self._sort()
     
