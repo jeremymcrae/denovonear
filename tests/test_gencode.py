@@ -201,7 +201,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'',
             'transcript_type': b'',
-            'is_principal': False,
+            'is_canonical': 0,
             }
         self.assertEqual(obj, expected)
     
@@ -224,7 +224,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'ENST00000335137.3',
             'transcript_type': b'protein_coding',
-            'is_principal': True,
+            'is_canonical': 5,
             }
         self.assertEqual(obj, expected)
     
@@ -248,7 +248,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'ENST00000335137.3',
             'transcript_type': b'protein_coding',
-            'is_principal': False,  ## exons don't get checked for principal tag
+            'is_canonical': 0,  ## exons don't get checked for principal tag
             }
         self.assertEqual(obj, expected)
     
@@ -272,7 +272,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'ENST00000335137.3',
             'transcript_type': b'protein_coding',
-            'is_principal': False,  ## CDS don't get checked for principal tag
+            'is_canonical': 0,  ## CDS don't get checked for principal tag
             }
         self.assertEqual(obj, expected)
     
@@ -295,7 +295,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'ENST00000335137.3',
             'transcript_type': b'protein_coding',
-            'is_principal': False,
+            'is_canonical': 0,
             }
         self.assertEqual(obj, expected)
     
@@ -318,7 +318,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'ENST00000335137.3',
             'transcript_type': b'protein_coding',
-            'is_principal': False,
+            'is_canonical': 0,
             }
         self.assertEqual(obj, expected)
     
@@ -341,7 +341,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'OR4F5',
             'tx_id': b'ENST00000335137.3',
             'transcript_type': b'protein_coding',
-            'is_principal': False,
+            'is_canonical': 0,
             }
         self.assertEqual(obj, expected)
     
@@ -358,7 +358,7 @@ class TestGencode(unittest.TestCase):
             'symbol': b'TEST',
             'tx_id': b'',
             'transcript_type': b'',
-            'is_principal': False,
+            'is_canonical': 0,
             }
         self.assertEqual(obj, expected)
     
