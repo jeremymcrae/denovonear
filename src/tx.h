@@ -45,7 +45,7 @@ class Tx {
     void _cache_exon_cds_positions();
     
     void _fix_cds_length();
-    void trim_alleles(int& start, int& end, std::string& alt);
+    void trim_alleles(int& start, int& end, std::string& ref, std::string& alt);
     bool overlaps_cds(int start, int end);
     std::string outside_gene_cq(int start, int end, std::string alt);
     std::string intronic_cq(int start, int end);
@@ -100,7 +100,7 @@ class Tx {
     Codon get_codon_info(int bp);
     int get_boundary_distance(int bp);
     
-    std::string consequence(int start, int end, std::string alt);
+    std::string consequence(int pos, std::string ref, std::string alt);
 };
 
 #endif  // DENOVONEAR_TX_H_

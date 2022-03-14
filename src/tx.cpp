@@ -748,8 +748,7 @@ int min_len(std::string a, std::string b) {
 }
 
 // realign alt against ref sequence, and strip down to alternate bases
-void Tx::trim_alleles(int& start, int& end, std::string& alt) {
-    std::string ref = get_seq_in_region(start, end + 1);
+void Tx::trim_alleles(int& start, int&end, std::string& ref, std::string& alt) {
     // trim the front of the alleles
     while ((min_len(ref, alt) > 0) && (ref.size() > 1) && (alt[0] == ref[0])) {
         ref.erase(0, 1);
@@ -765,7 +764,9 @@ void Tx::trim_alleles(int& start, int& end, std::string& alt) {
     }
 }
 
-std::string Tx::consequence(int start, int end, std::string alt) {
+std::string Tx::consequence(int pos, std::string ref, std::string alt) {
+    int start = pos;
+    int end = pos + ref.size() - 1;
     if (start > end) {
         throw std::invalid_argument("start position is less than end position");
     }
@@ -775,7 +776,7 @@ std::string Tx::consequence(int start, int end, std::string alt) {
     }
     
     // TODO: need to realign alt against ref sequence, and strip down to alternate bases
-    trim_alleles(start, end, alt);
+    trim_alleles(start, end, ref, alt);
     
     if (!overlaps_cds(start, end)) {
         return intronic_cq(start, end);
@@ -783,7 +784,7 @@ std::string Tx::consequence(int start, int end, std::string alt) {
     
     // at this point we know that the site lies within the gene boundary, and
     // at least partially overlaps the CDS
-    std::string ref = get_seq_in_region(start, end+1);
+    // std::string ref = get_seq_in_region(start, end+1);
     int ref_len = ref.size();
     int alt_len = alt.size();
     int delta = ref_len - alt_len;

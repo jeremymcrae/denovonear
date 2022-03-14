@@ -369,5 +369,6 @@ cdef class Transcript:
     def get_boundary_distance(self, pos):
         return self.thisptr.get_boundary_distance(pos)
     
-    def consequence(self, start, end, alt):
-        return self.thisptr.consequence(start, end, alt.encode('utf8')).decode('utf8')
+    def consequence(self, pos, ref, alt):
+        cq = self.thisptr.consequence(pos, ref.encode('utf8'), alt.encode('utf8'))
+        return cq.decode('utf8')
