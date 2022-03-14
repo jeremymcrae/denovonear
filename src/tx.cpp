@@ -656,13 +656,13 @@ bool Tx::overlaps_cds(int start, int end) {
 
 std::string Tx::outside_gene_cq(int start, int end, std::string alt) {
     bool fwd = get_strand() == '+';
-    if ((end < tx_start) & ((tx_start - end) < 5000)) {
+    if ((end < tx_start) & ((tx_start - end) <= 5000)) {
         if (fwd) {
             return "upstream_gene_variant";
         } else {
             return "downstream_gene_variant";
         }
-    } else if ((start > tx_end) & ((start - tx_end) < 5000)) {
+    } else if ((start > tx_end) & ((start - tx_end) <= 5000)) {
         if (fwd) {
             return "downstream_gene_variant";
         } else {
