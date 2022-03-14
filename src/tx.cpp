@@ -656,13 +656,13 @@ bool Tx::overlaps_cds(int start, int end) {
 
 std::string Tx::outside_gene_cq(int start, int end, std::string alt) {
     bool fwd = get_strand() == '+';
-    if ((end < tx_start) & ((tx_start - end) <= 5000)) {
+    if ((end < tx_start) & ((tx_start - end) < 5000)) {
         if (fwd) {
             return "upstream_gene_variant";
         } else {
             return "downstream_gene_variant";
         }
-    } else if ((start > tx_end) & ((start - tx_end) <= 5000)) {
+    } else if ((start > tx_end) & ((start - tx_end) < 5000)) {
         if (fwd) {
             return "downstream_gene_variant";
         } else {
@@ -787,11 +787,12 @@ std::string Tx::consequence(int pos, std::string ref, std::string alt) {
     // std::string ref = get_seq_in_region(start, end+1);
     int ref_len = ref.size();
     int alt_len = alt.size();
-    int delta = ref_len - alt_len;
-    if (ref.size() != alt.size()) {
+    if (ref_len != alt_len) {
+        int delta = ref_len - alt_len;
         if ((delta % 3) != 0) {
             return "frameshift_variant";
         } else if (ref_len > alt_len) {
+            // TODO: account for new stop sites, or altered splice boundaries
             return "inframe_deletion";
         } else if (alt_len > ref_len) {
             return "inframe_insertion";
