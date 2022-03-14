@@ -677,11 +677,11 @@ std::string Tx::intronic_cq(int start, int end) {
     // figure out if we are in a very short intron
     auto idx = closest_exon_num(start);
     auto exon = exons[idx];
-    int intron_length;
-    if (exon.end < start) {
+    int intron_length = 100;
+    if ((exon.end < start) & (idx < ((int) exons.size() - 1))) {
         auto other = exons[idx + 1];
         intron_length = other.start - exon.end;
-    } else {
+    } else if ((end < exon.start) & (idx > 0)) {
         auto other = exons[idx - 1];
         intron_length = exon.start - other.end;
     }
