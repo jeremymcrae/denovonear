@@ -644,11 +644,11 @@ bool Tx::overlaps_cds(int start, int end) {
     int prev = std::max(0, idx - 1);
     int post = std::min((int) cds.size() - 1, idx + 1);
     
-    if (start <= cds[idx].end && cds[idx].start <= end) {
+    if ((start <= cds[idx].end) && (cds[idx].start <= end)) {
         return true;
-    } else if (start <= cds[prev].end && cds[prev].start <= end) {
+    } else if ((start <= cds[prev].end) && (cds[prev].start <= end)) {
         return true;
-    } else if (start <= cds[post].end && cds[post].start <= end) {
+    } else if ((start <= cds[post].end) && (cds[post].start <= end)) {
         return true;
     }
     return false;
