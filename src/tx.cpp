@@ -722,7 +722,7 @@ std::string Tx::coding_cq(int start, int end, std::string alt) {
     // TODO: figure out initial and mutated amino acids
     Codon codon = get_codon_info(start);
     char initial_aa = codon.initial_aa;
-    codon.codon_seq[1] = alt[0];
+    codon.codon_seq[codon.intra_codon] = alt[0];
     char mutated_aa = translate_codon(codon.codon_seq);
     
     if (initial_aa != '*' && mutated_aa == '*') { return "stop_gained"; }
