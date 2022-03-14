@@ -771,7 +771,7 @@ std::string Tx::consequence(int pos, std::string ref, std::string alt) {
         throw std::invalid_argument("start position is less than end position");
     }
     
-    if ((end <= tx_start) | (start >= tx_end)) {
+    if ((end < tx_start) | (start > tx_end)) {
         return outside_gene_cq(start, end, alt);
     }
     
