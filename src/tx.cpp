@@ -637,6 +637,11 @@ int Tx::get_boundary_distance(int bp) {
     return distance;
 }
 
+// check for overlap of two ranges
+bool overlap(const int & start1, const int & end1, const int & start2, const int & end2) {
+    return (end1 >= start2) && (end2 >= start1);
+}
+
 // checks if a genomic range overlaps any exon range
 bool Tx::overlaps_cds(int start, int end) {
     // find the
@@ -644,11 +649,11 @@ bool Tx::overlaps_cds(int start, int end) {
     int prev = std::max(0, idx - 1);
     int post = std::min((int) cds.size() - 1, idx + 1);
     
-    if ((start <= cds[idx].end) && (cds[idx].start <= end)) {
+    if (overlap(start, end, cds[idx].start, cds[idx].end)) {
         return true;
-    } else if ((start <= cds[prev].end) && (cds[prev].start <= end)) {
+    } else if (overlap(start, end, cds[prev].start, cds[prev].end)) {
         return true;
-    } else if ((start <= cds[post].end) && (cds[post].start <= end)) {
+    } else if (overlap(start, end, cds[post].start, cds[post].end)) {
         return true;
     }
     return false;
@@ -713,6 +718,58 @@ std::string Tx::intronic_cq(int start, int end) {
     }
     
     return "intron_variant";
+}
+
+// check consequences for an indel with some CDS overlap
+std::string Tx::indel_cq(int start, int end, std::string ref, std::string alt) {
+    // find the overlapped exon, then check how much of the indel lies in that
+    int idx = closest_exon_num(start);
+    int prev = std::max(0, idx - 1);
+    int post = std::min((int) exons.size() - 1, idx + 1);
+    
+    Region exon;
+    if (overlap(start, end, exons[idx].start, exons[idx].end)) {
+        exon = exons[idx];
+    } else if (overlap(start, end, exons[prev].start, exons[prev].end)) {
+        exon = exons[prev];
+    } else if (overlap(start, end, exons[post].start, exons[post].end)) {
+        exon = exons[post];
+    }
+    
+    bool deletion = ref.size() > alt.size();
+    bool overlaps_intron = false;
+    if (deletion & (start < exon.start)) {
+        overlaps_intron = true;
+        int offset = exon.start - start;
+        int length = (int) ref.size() - offset;
+        ref = ref.substr(offset, length);
+        alt = "";
+    } else if (deletion & (end > exon.end)) {
+        overlaps_intron = true;
+        int offset = 0;
+        int length = (exon.end - start) + 1;
+        ref = ref.substr(offset, length);
+        alt = "";
+    }
+    
+    int ref_len = ref.size();
+    int alt_len = alt.size();
+    bool inframe = ((ref_len - alt_len) % 3) == 0;
+    if (overlaps_intron & inframe & deletion) {
+        // deletions which overlap the exon boundary, but only excise an inframe
+        // length of the exon should be splice donor instead, since they are
+        // more severe than inframe.
+        return "splice_donor_variant";
+    }
+    
+    if (!inframe) {
+        return "frameshift_variant";
+    } else if (deletion) {
+        // TODO: account for new stop sites, or altered splice boundaries
+        return "inframe_deletion";
+    } else {
+        return "inframe_insertion";
+    }
 }
 
 std::string Tx::coding_cq(int start, int end, std::string alt) {
@@ -784,19 +841,8 @@ std::string Tx::consequence(int pos, std::string ref, std::string alt) {
     
     // at this point we know that the site lies within the gene boundary, and
     // at least partially overlaps the CDS
-    // std::string ref = get_seq_in_region(start, end+1);
-    int ref_len = ref.size();
-    int alt_len = alt.size();
-    if (ref_len != alt_len) {
-        int delta = ref_len - alt_len;
-        if ((delta % 3) != 0) {
-            return "frameshift_variant";
-        } else if (ref_len > alt_len) {
-            // TODO: account for new stop sites, or altered splice boundaries
-            return "inframe_deletion";
-        } else if (alt_len > ref_len) {
-            return "inframe_insertion";
-        }
+    if (ref.size() != alt.size()) {
+        return indel_cq(start, end, ref, alt);
     }
     
     return coding_cq(start, end, alt);
