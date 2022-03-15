@@ -707,6 +707,11 @@ std::string Tx::intronic_cq(int start, int end) {
         }
     }
     
+    // TODO: indels near the splice region can duplicate the local sequence.
+    // TODO: In those cases, the splice site might remain unaltered. This means
+    // TODO: the variant location might need to be adjusted. For this, we'd need 
+    // TODO: to check the ref genome vs the replacement, to adjust indel coords.
+    
     // ok, now we have intronic variants, so we check for splice variants first
     int delta = std::min(std::abs(start_coord.offset), std::abs(end_coord.offset));
     if ((delta < 3) & (start_coord.offset < 0)) {
