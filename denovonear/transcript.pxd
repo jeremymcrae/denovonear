@@ -26,7 +26,7 @@ from libcpp cimport bool
 
 cdef extern from "tx.h":
     cdef cppclass Tx:
-        Tx(string, string, int, int, char) except +
+        Tx(string, string, int, int, char, string) except +
         Tx() except +
         
         void set_exons(vector[vector[int]], vector[vector[int]]) except +
@@ -40,6 +40,7 @@ cdef extern from "tx.h":
         int get_start()
         int get_end()
         char get_strand()
+        string get_type()
         int get_cds_start()
         int get_cds_end()
         

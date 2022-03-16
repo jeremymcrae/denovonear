@@ -35,6 +35,7 @@ class Tx {
     int cds_min;
     int cds_max;
     int cds_length;
+    std::string transcript_type;
     std::vector<Region> exons;
     std::vector<Region> cds;
     std::string cds_sequence = "";
@@ -54,7 +55,7 @@ class Tx {
 
  public:
     Tx(std::string transcript_id, std::string chromosome, int start_pos,
-        int end_pos, char strand);
+        int end_pos, char strand, std::string _transcript_type);
     Tx() {};
     void set_exons(std::vector<std::vector<int>> exon_ranges,
         std::vector<std::vector<int>> cds_ranges);
@@ -65,6 +66,7 @@ class Tx {
     std::vector<Region> get_cds() { return cds; }
     std::string get_name() { return name; }
     std::string get_chrom() { return chrom; }
+    std::string get_type() { return transcript_type; }
     int get_start() { return tx_start; }
     int get_end() { return tx_end; }
     char get_strand() { return tx_strand; }

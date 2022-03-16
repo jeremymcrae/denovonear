@@ -72,7 +72,8 @@ cpdef _open_gencode(gtf_path, coding_only=True):
         cds = _convert_exons(tx.get_cds())
         strand = chr(tx.get_strand())
         tx_id = tx.get_name().decode('utf8')
-        transcript = Transcript(tx_id, chrom, start, end, strand, exons, cds, offset=0)
+        transcript_type = tx.get_type().decode('utf8')
+        transcript = Transcript(tx_id, chrom, start, end, strand, transcript_type, exons, cds, offset=0)
         transcripts.append((x.symbol.decode('utf8'), transcript, x.is_canonical))
     return transcripts
 
@@ -112,6 +113,7 @@ cdef class Gene:
         cdef int start = _tx.get_start()
         cdef int end = _tx.get_end()
         cdef char strand = ord(_tx.get_strand())
+        cdef string tx_type = _tx.get_type().encode('utf8')
         cdef vector[vector[int]] exons
         cdef vector[vector[int]] cds
         cdef vector[int] exon
@@ -122,7 +124,7 @@ cdef class Gene:
             exon = [x['start'], x['end']]
             cds.push_back(exon)
         
-        cdef Tx tx = Tx(tx_id, chrom, start, end, strand)
+        cdef Tx tx = Tx(tx_id, chrom, start, end, strand, tx_type)
         tx.set_exons(exons, cds)
         tx.set_cds(cds)
         
@@ -196,7 +198,8 @@ cdef class Gene:
         if strand == '-' and seq is not None:
             seq = tx.reverse_complement(seq.encode('utf8')).decode('utf8')
         tx_id = tx.get_name().decode('utf8')
-        return Transcript(tx_id, chrom, start, end, strand, exons, cds, seq, offset=offset)
+        tx_type = tx.get_type().decode('utf8')
+        return Transcript(tx_id, chrom, start, end, strand, tx_type, exons, cds, seq, offset=offset)
     
     @property
     def transcripts(self):

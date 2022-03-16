@@ -19,6 +19,7 @@ struct TxInfo {
     int start;
     int end;
     std::string strand;
+    std::string transcript_type;
     std::vector<std::vector<int> > exons;
     std::vector<std::vector<int> > cds;
     int offset = 0;

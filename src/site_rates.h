@@ -45,7 +45,7 @@ class SitesChecks {
     void check_consequence(std::string & cq, char & initial_aa, char & mutated_aa, int & offset);
     
  private:
-    Tx masked = Tx("zz", "z", -100, -100, '+');
+    Tx masked = Tx("zz", "z", -100, -100, '+', "protein_coding");
     void init(std::vector<std::vector<std::string>> mut);
     bool has_mask = false;
     bool use_cds_coords = true;

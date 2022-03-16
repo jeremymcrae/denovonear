@@ -23,8 +23,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 from itertools import combinations
 
 cdef class Transcript:
-    def __cinit__(self, name, chrom, start, end, strand, exons=None,
-            cds=None, sequence=None, offset=0):
+    def __cinit__(self, name, chrom, start, end, strand, 
+            transcript_type='protein_coding', exons=None, cds=None, sequence=None, 
+            offset=0):
         ''' construct a Transcript object
         
         Args:
@@ -39,7 +40,8 @@ cdef class Transcript:
         
         name = name.encode('utf8')
         chrom = chrom.encode('utf8')
-        self.thisptr = new Tx(name, chrom, start, end, ord(strand))
+        transcript_type = transcript_type.encode('utf8')
+        self.thisptr = new Tx(name, chrom, start, end, ord(strand), transcript_type)
         
         if exons is not None and cds is not None:
             self.set_exons(exons, cds)
@@ -71,10 +73,10 @@ cdef class Transcript:
         else:
             seq = '"' + seq + '"'
         
-        return 'Transcript(name="{}", chrom="{}", start={}, end={}, strand="{}", ' \
-            'exons={}, cds={}, sequence={}, offset={})'.format(self.get_name(),
-                self.get_chrom(), self.get_start(), self.get_end(),
-                self.get_strand(), exons, cds, seq, self.get_genomic_offset())
+        return f'Transcript(name="{self.get_name()}", chrom="{self.get_chrom()}", ' \
+            f'start={self.get_start()}, end={self.get_end()}, strand="{self.get_end()}", ' \
+            f'transcript_type="{self.get_type()}", exons={exons}, cds={cds}, ' \
+            f'sequence={seq}, offset={self.get_genomic_offset()})'
     
     def __str__(self):
         return self.__repr__()
@@ -247,7 +249,7 @@ cdef class Transcript:
         
         altered = Transcript('{}:{}'.format(self.get_name(), other.get_name()),
             self.get_chrom(), min(self.get_start(), other.get_start()),
-            max(self.get_end(), other.get_end()), self.get_strand())
+            max(self.get_end(), other.get_end()), self.get_strand(), self.get_type())
         
         exons = self.merge_coordinates(self.get_exons(), other.get_exons())
         cds = self.merge_coordinates(self.get_cds(), other.get_cds())
@@ -279,6 +281,8 @@ cdef class Transcript:
         return self.thisptr.get_name().decode('utf8')
     def get_chrom(self):
         return self.thisptr.get_chrom().decode('utf8')
+    def get_type(self):
+        return self.thisptr.get_type().decode('utf8')
     def get_start(self):
         return self.thisptr.get_start()
     def get_end(self):
