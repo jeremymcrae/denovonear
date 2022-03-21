@@ -2,6 +2,7 @@
 
 import bisect
 import logging
+from pathlib import Path
 
 from libcpp.algorithm cimport lower_bound, upper_bound
 from libcpp.vector cimport vector
@@ -311,6 +312,10 @@ cdef class Gencode:
             fasta: path to fasta for genome matching annotations build
             coding: restrict to protein_coding only by default
         '''
+        if gencode is not None and not Path(gencode).exists():
+            raise ValueError(f'cannot find gencode at: {gencode}')
+        if fasta is not None and not Path(fasta).exists():
+            raise ValueError(f'cannot find fasta at: {fasta}')
         self.genes = {}
         if fasta:
             logging.info(f'opening genome fasta: {fasta}')
