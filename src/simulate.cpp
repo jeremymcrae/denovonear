@@ -56,7 +56,7 @@ bool _has_zero(std::vector<int> distances) {
 //
 // @param sites vector of distances
 // @return geometric mean
-double _geomean(int distances[], int & len) {
+double _geomean_small(int distances[], int & len) {
     bool zero_val = _has_zero(distances, len);
     double total = 0;
     // if some values are zero, adjust the values upwards, then add the log10
@@ -75,6 +75,62 @@ double _geomean(int distances[], int & len) {
     // adjust mean back to where it should be if we had a zero value
     if (zero_val) { mean -= 1; }
     return mean;
+}
+
+// gets the geometric mean of a vector of distances
+//
+// This is optimized for large arrays, it is faster than the log-transform
+// based method if there are >300 items in the array. This occurs with >17
+// de novo mutations for checking pairwise distances.
+//
+// @param distances array of distances
+// @param len number of items in array
+// @return geometric mean
+double _geomean_large(int distances[], int & len) {
+    // adapted from:
+    // https://stackoverflow.com/questions/19980319/efficient-way-to-compute-geometric-mean-of-many-numbers
+    bool zero_val = _has_zero(distances, len);
+    if (zero_val) {
+        for (int i=0; i<len; i++) {
+            distances[i] += 1;
+        }
+    }
+    long long ex = 0;
+    auto do_bucket = [&distances, &ex](int first, int last) -> double
+    {
+        double ans = 1.0;
+        for ( ;first != last; ++first) {
+            int i;
+            ans *= std::frexp(static_cast<double>(distances[first]), &i);
+            ex += i;
+        }
+        return ans;
+    };
+
+    const int bucket_size = -std::log2(std::numeric_limits<double>::min());
+    std::size_t buckets = len / bucket_size;
+
+    double invN = 1.0 / len;
+    double m = 1.0;
+
+    for (std::size_t i = 0;i < buckets; ++i) {
+        m *= std::pow(do_bucket(i * bucket_size, (i+1) * bucket_size), invN);
+    }
+
+    m *= std::pow(do_bucket( buckets * bucket_size, len), invN);
+    double mean = std::pow( std::numeric_limits<double>::radix, ex * invN ) * m;
+    if (zero_val) { mean -= 1; }
+    return mean;
+}
+
+// get the geometric mean of an array of values
+//
+double _geomean(int distances[], int & len) {
+    if (len < 300) {
+        return _geomean_small(distances, len);
+    } else {
+        return _geomean_large(distances, len);
+    }
 }
 
 double _geomean(std::vector<int> distances) {
