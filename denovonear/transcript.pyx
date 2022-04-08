@@ -74,7 +74,7 @@ cdef class Transcript:
             seq = '"' + seq + '"'
         
         return f'Transcript(name="{self.get_name()}", chrom="{self.get_chrom()}", ' \
-            f'start={self.get_start()}, end={self.get_end()}, strand="{self.get_end()}", ' \
+            f'start={self.get_start()}, end={self.get_end()}, strand="{self.get_strand()}", ' \
             f'transcript_type="{self.get_type()}", exons={exons}, cds={cds}, ' \
             f'sequence={seq}, offset={self.get_genomic_offset()})'
     
