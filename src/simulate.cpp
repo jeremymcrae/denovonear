@@ -167,11 +167,6 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
         
         mean_distances[n] = _geomean(distances, distance_len);
     }
-    
-    // make sure the mean distances are sorted, so we can quickly merge with
-    // previous distances
-    std::sort(mean_distances.begin(), mean_distances.end());
-    
     return mean_distances;
 }
 
@@ -210,29 +205,23 @@ double _analyse_de_novos(Chooser & choices, int iterations, int de_novo_count,
     double minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
     double sim_prob = minimum_prob;
     std::vector<double> dist;
-    
+
+    std::uint32_t n_smaller = 0;
     while (iterations < 100000000 && sim_prob == minimum_prob) {
         int iters_to_run = iterations - dist.size();
         
         minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
         
         // simulate mean distances between de novos
-        std::vector<double> new_dist = _simulate_distribution(choices,
-            iters_to_run, de_novo_count);
+        dist = _simulate_distribution(choices, iters_to_run, de_novo_count);
         
-        // merge the two sorted lists into a sorted vector
-        std::vector<double> v(iterations);
-        std::merge(dist.begin(), dist.end(), new_dist.begin(), new_dist.end(),
-            v.begin());
-        dist = v;
+        for (auto &x : dist) {
+            n_smaller += (x <= observed_value);
+        }
         
-        // figure out where in the list a random probability would fall
-        std::vector<double>::iterator pos;
-        pos = std::upper_bound(dist.begin(), dist.end(), observed_value);
-        double position = pos - dist.begin();
-        
-        // estimate the probability from the position
-        sim_prob = (1.0 + position)/(1.0 + dist.size());
+        // estimate the probability from the number of times a random distance
+        // is equal to or smaller than the observed value
+        sim_prob = (1.0 + (double)n_smaller) / (1.0 + (double)iterations);
         
         // halt permutations if the P value could never be significant
         double z = 10.0;
