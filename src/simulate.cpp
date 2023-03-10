@@ -25,17 +25,19 @@ void _get_distances(int sites[], int & len, int distances[]) {
 void _get_distances(std::vector<int> sites, std::vector<int> & distances) {
     int size = sites.size();
     int len = ((size - 1) * size) / 2;
-    int sites_array[size];
+    int * sites_array = new int[size];
     for (int i=0; i<size; i++) {
         sites_array[i] = sites[i];
     }
-    int dist_array[len];
+    int * dist_array = new int[len];
     _get_distances(sites_array, size, dist_array);
     distances.resize(len);
     
     for (int i=0; i<len; i++) {
         distances[i] = dist_array[i];
     }
+    delete[] sites_array;
+    delete[] dist_array;
 }
 
 // check if any value in an vector is zero
@@ -107,7 +109,7 @@ double _geomean_large(int distances[], int & len) {
         return ans;
     };
 
-    const int bucket_size = -std::log2(std::numeric_limits<double>::min());
+    const int bucket_size = (int)-std::log2(std::numeric_limits<double>::min());
     std::size_t buckets = len / bucket_size;
 
     double invN = 1.0 / len;
@@ -152,8 +154,8 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
     std::vector<double> mean_distances(iterations);
     
     int distance_len = (de_novo_count - 1) * (de_novo_count) / 2;
-    int distances[distance_len];
-    int positions[de_novo_count];
+    int * distances = new int[distance_len];
+    int * positions = new int[de_novo_count];
     // run through the required iterations
     for (int n=0; n < iterations; n++) {
         // randomly select de novo sites for the iteration
@@ -167,6 +169,8 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
         
         mean_distances[n] = _geomean(distances, distance_len);
     }
+    delete[] distances;
+    delete[] positions;
     return mean_distances;
 }
 
