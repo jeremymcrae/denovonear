@@ -219,7 +219,7 @@ int Tx::closest_exon_num(int pos, std::vector<Region> group) {
     int size = group.size();
     if (idx == 0) {
         return idx;
-    } else if (idx == size and pos > group[idx - 1].end) {
+    } else if ((idx == size) && (pos > group[idx - 1].end)) {
         return idx - 1;
     }
     
