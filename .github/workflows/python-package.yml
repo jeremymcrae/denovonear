@@ -67,7 +67,7 @@ jobs:
           denovonear rates --genes data/example_gene_ids.txt --out output.txt
 
       - name: Build sdist
-        run: |
+        run:
           python setup.py sdist
 
       - uses: actions/upload-artifact@v3
