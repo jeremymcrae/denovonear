@@ -103,7 +103,7 @@ weights = cythonize([
             "src/gencode.cpp",
             "src/gtf.cpp",
             "src/tx.cpp",
-            "src/gzstream/gzstream.C",
+            get_gzstream_path(),
         ],
         include_dirs=["src/"],
         libraries=["z"],
