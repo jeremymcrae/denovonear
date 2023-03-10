@@ -385,7 +385,7 @@ int Tx::get_position_on_chrom(int cds_position, int offset) {
 
 // figure out the codon position for a position
 int Tx::get_codon_number_for_cds_position(int cds_position) {
-    return floor((float)cds_position / 3);
+    return (int)floor((float)cds_position / 3);
 }
 
 // get the position within a codon (in 0 based format eg 0, 1, 2)
