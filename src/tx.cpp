@@ -117,7 +117,7 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
         Region region = fix_cds_boundary(cds_max);
         int delta = std::abs(region.end - region.start);
         
-        int idx = cds.size() - 1;
+        std::uint32_t idx = cds.size() - 1;
         cds[idx] = Region {cds[idx].start, cds[idx].end - delta};
         cds_max = region.end;
         cds.push_back(region);
@@ -216,8 +216,8 @@ int Tx::closest_exon_num(int pos) {
 // @param position chromosomal nucleotide position
 // @returns number of exon containing the position
 int Tx::closest_exon_num(int pos, std::vector<Region> group) {
-    int idx = std::lower_bound(group.begin(), group.end(), pos, compareRegion) - group.begin();
-    int size = group.size();
+    std::uint32_t idx = std::lower_bound(group.begin(), group.end(), pos, compareRegion) - group.begin();
+    std::uint32_t size = group.size();
     if (idx == 0) {
         return idx;
     } else if ((idx == size) && (pos > group[idx - 1].end)) {
@@ -462,7 +462,7 @@ void Tx::_fix_cds_length() {
     int diff = cds_sequence.size() % 3;
     int end = get_cds_end();
     
-    int last = cds.size() - 1;
+    std::uint32_t last = cds.size() - 1;
     
     if (diff != 0) {
         diff = 3 - diff;
@@ -759,8 +759,8 @@ std::string Tx::indel_cq(int start, int end, std::string ref, std::string alt) {
         alt = "";
     }
     
-    int ref_len = ref.size();
-    int alt_len = alt.size();
+    std::uint32_t ref_len = ref.size();
+    std::uint32_t alt_len = alt.size();
     bool inframe = ((ref_len - alt_len) % 3) == 0;
     if (overlaps_intron & inframe & deletion) {
         // deletions which overlap the exon boundary, but only excise an inframe
@@ -808,7 +808,7 @@ std::string Tx::coding_cq(int start, int end, std::string alt) {
 }
 
 int min_len(std::string a, std::string b) {
-    return std::min(a.size(), b.size());
+    return (int)std::min(a.size(), b.size());
 }
 
 // realign alt against ref sequence, and strip down to alternate bases
@@ -830,7 +830,7 @@ void Tx::trim_alleles(int& start, int&end, std::string& ref, std::string& alt) {
 
 std::string Tx::consequence(int pos, std::string ref, std::string alt) {
     int start = pos;
-    int end = pos + ref.size() - 1;
+    int end = pos + (int)ref.size() - 1;
     if (start > end) {
         throw std::invalid_argument("start position is less than end position");
     }
