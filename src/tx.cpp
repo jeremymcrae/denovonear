@@ -530,7 +530,7 @@ std::string Tx::get_centered_sequence(int pos, int length) {
         throw std::invalid_argument( "length is not an odd number") ;
     }
     
-    int start = pos - floor(length/2);
+    int start = pos - (int)floor(length/2);
     int end = start + length;
     return get_seq_in_region(start, end);
 }
