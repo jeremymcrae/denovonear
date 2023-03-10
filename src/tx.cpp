@@ -2,6 +2,7 @@
 #include <vector>
 #include <cmath>
 #include <cstdlib>
+#include <cstdint>
 #include <algorithm>
 #include <stdexcept>
 #include <iostream>
@@ -582,7 +583,7 @@ std::string Tx::translate(std::string seq) {
     std::string protein;
     protein.resize(seq.size() / 3);
     
-    for (uint i=0, j=0; i<seq.size(); i=i+3, j++) {
+    for (std::uint32_t i=0, j=0; i<seq.size(); i=i+3, j++) {
         protein[j] = translate_codon(seq.substr(i, 3));
     }
 
