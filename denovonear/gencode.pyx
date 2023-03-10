@@ -396,8 +396,8 @@ cdef class Gencode:
         
         # no overlaps observed, look for the nearest upstream or downstream gene
         cdef GenePoint site = GenePoint(pos, b'A');
-        cdef int i = lower_bound(self.starts[_chrom].begin(), self.starts[_chrom].end(), site, CompFunc) - self.starts[_chrom].begin()
-        cdef int j = upper_bound(self.ends[_chrom].begin(), self.ends[_chrom].begin(), site, CompFunc) - self.ends[_chrom].begin()
+        cdef int i = lower_bound(self.starts[_chrom].begin(), self.starts[_chrom].end(), site, &CompFunc) - self.starts[_chrom].begin()
+        cdef int j = upper_bound(self.ends[_chrom].begin(), self.ends[_chrom].begin(), site, &CompFunc) - self.ends[_chrom].begin()
         
         i = min(i, self.starts[_chrom].size() - 1)
         j = min(j, self.starts[_chrom].size() - 1)
