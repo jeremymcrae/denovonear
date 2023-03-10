@@ -80,7 +80,7 @@ weights = cythonize([
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,
-        sources=["denovonear/weights.pyx",
+        sources=["src/denovonear/weights.pyx",
             "src/weighted_choice.cpp",
             "src/simulate.cpp"],
         include_dirs=["src/"],
@@ -89,7 +89,7 @@ weights = cythonize([
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,
         sources=[
-            "denovonear/transcript.pyx",
+            "src/denovonear/transcript.pyx",
             "src/tx.cpp"],
         include_dirs=["src/"],
         language="c++"),
@@ -97,7 +97,7 @@ weights = cythonize([
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,
         sources=[
-            "denovonear/gencode.pyx",
+            "src/denovonear/gencode.pyx",
             "src/gencode.cpp",
             "src/gtf.cpp",
             "src/tx.cpp",
@@ -110,7 +110,7 @@ weights = cythonize([
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,
         sources=[
-            "denovonear/site_specific_rates.pyx",
+            "src/denovonear/site_specific_rates.pyx",
             "src/weighted_choice.cpp",
             "src/tx.cpp",
             "src/site_rates.cpp"],
@@ -134,6 +134,7 @@ setup(name="denovonear",
         'cython >= 0.19.0',
         'pyfaidx >= 0.5.8',
     ],
+    package_dir={'': 'src'},
     package_data={"denovonear": ['data/rates.txt', 'weights.pxd']},
     entry_points={'console_scripts': ['denovonear = denovonear.__main__:main']},
     classifiers=[
