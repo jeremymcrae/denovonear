@@ -141,6 +141,6 @@ setup(name="denovonear",
         "Topic :: Scientific/Engineering :: Bio-Informatics",
         "License :: OSI Approved :: MIT License",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.8',
     ext_modules=weights,
     test_suite="tests")
