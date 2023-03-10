@@ -106,7 +106,7 @@ weights = cythonize([
             get_gzstream_path(),
         ],
         extra_objects=zlib,
-        include_dirs=["src/"],
+        include_dirs=["src/", "src/zlib"],
         libraries=libs,
         language="c++"),
     Extension("denovonear.site_specific_rates",
