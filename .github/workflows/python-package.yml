@@ -69,6 +69,7 @@ jobs:
       - name: Build sdist
         run: |
           python setup.py sdist
+
       - uses: actions/upload-artifact@v3
         with:
           path: dist/*.tar.gz
@@ -77,7 +78,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.github_token }}
         run: |
-           python -m coverage run --source=./denovonear -m unittest discover
+          python -m coverage run --source=./denovonear -m unittest discover
           coveralls --service=github
 
   upload_pypi:
