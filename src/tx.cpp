@@ -117,7 +117,7 @@ void Tx::set_cds(std::vector<std::vector<int>> cds_ranges) {
         Region region = fix_cds_boundary(cds_max);
         int delta = std::abs(region.end - region.start);
         
-        std::uint32_t idx = cds.size() - 1;
+        size_t idx = cds.size() - 1;
         cds[idx] = Region {cds[idx].start, cds[idx].end - delta};
         cds_max = region.end;
         cds.push_back(region);
@@ -216,8 +216,8 @@ int Tx::closest_exon_num(int pos) {
 // @param position chromosomal nucleotide position
 // @returns number of exon containing the position
 int Tx::closest_exon_num(int pos, std::vector<Region> group) {
-    std::uint32_t idx = std::lower_bound(group.begin(), group.end(), pos, compareRegion) - group.begin();
-    std::uint32_t size = group.size();
+    size_t idx = std::lower_bound(group.begin(), group.end(), pos, compareRegion) - group.begin();
+    size_t size = group.size();
     if (idx == 0) {
         return idx;
     } else if ((idx == size) && (pos > group[idx - 1].end)) {
@@ -461,9 +461,9 @@ void Tx::add_genomic_sequence(std::string gdna, int offset=0) {
 void Tx::_fix_cds_length() {
     int diff = cds_sequence.size() % 3;
     int end = get_cds_end();
-    
-    std::uint32_t last = cds.size() - 1;
-    
+
+    size_t last = cds.size() - 1;
+
     if (diff != 0) {
         diff = 3 - diff;
         
@@ -758,9 +758,9 @@ std::string Tx::indel_cq(int start, int end, std::string ref, std::string alt) {
         ref = ref.substr(offset, length);
         alt = "";
     }
-    
-    std::uint32_t ref_len = ref.size();
-    std::uint32_t alt_len = alt.size();
+
+    size_t ref_len = ref.size();
+    size_t alt_len = alt.size();
     bool inframe = ((ref_len - alt_len) % 3) == 0;
     if (overlaps_intron & inframe & deletion) {
         // deletions which overlap the exon boundary, but only excise an inframe
