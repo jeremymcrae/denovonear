@@ -85,7 +85,6 @@ class TestGencode(unittest.TestCase):
         write_gtf(self.temp_gtf_path, lines)
         make_fasta(self.temp_fasta_path, ['chr1', 'chr2'])
         gencode = Gencode(self.temp_gtf_path, self.temp_fasta_path)
-        del gencode
         
         genes = gencode.in_region('chr1', 5, 6)  # shouldn't get anything
         self.assertEqual(genes, [])
@@ -175,11 +174,11 @@ class TestGencode(unittest.TestCase):
         write_gtf(self.temp_gtf_path, lines)
         make_fasta(self.temp_fasta_path, ['chr1', 'chr2'])
         gencode = Gencode(self.temp_gtf_path, self.temp_fasta_path)
-        del gencode
         
         gene = gencode['TEST1']
         canonical = gene.canonical 
         self.assertEqual(canonical.get_name(), 'ENST_A')
+        del gencode
         
         # give the second transcript the appris_principal tag as well, which
         # given that it has the longer CDS, would make it the canonical now
