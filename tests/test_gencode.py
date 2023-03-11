@@ -71,6 +71,11 @@ class TestGencode(unittest.TestCase):
             ensembl_tx = _run(construct_gene_object, tx_id)
             self.assertEqual(gencode_tx.get_exons(), ensembl_tx.get_exons())
             self.assertEqual(gencode_tx.get_cds(), ensembl_tx.get_cds())
+            print(gencode_tx.get_exons())
+            print(gencode_tx.get_cds())
+            print()
+            print(gencode_tx.get_genomic_sequence())
+            print(ensembl_tx.get_genomic_sequence())
             self.assertEqual(gencode_tx.get_cds_sequence(), ensembl_tx.get_cds_sequence())
     
     def test_gencode_in_region(self):
