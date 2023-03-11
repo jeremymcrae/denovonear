@@ -43,6 +43,7 @@ class TestGencode(unittest.TestCase):
         self.temp_fasta_path = temp_fasta.name
         temp_gtf.close()
         temp_fasta.close()
+        self.maxDiff = None
     
     def tearDown(self):
         try:
