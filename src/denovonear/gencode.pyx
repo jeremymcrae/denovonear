@@ -195,6 +195,7 @@ cdef class Gene:
             seq = None
         if seq is None and __genome_ is not None:
             seq = __genome_[chrom][start-1-offset:end-1+offset].seq.upper()
+            print(f'getting fasta seq on {chrom}:{start}-{end}, (offset: {offset}), which is {start-1-offset} to {end-1+offset}: {__genome_[chrom][start-1-offset:end-1+offset]}')
             print(f'constructing tx (offset={offset}), genomic seq from fasta: {seq}')
             ####################################################
             # NOTE: this might be where it goes wrong
