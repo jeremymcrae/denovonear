@@ -34,7 +34,7 @@ class EnsemblCache(object):
             try:
                 with sqlite3.connect(str(path)) as conn:
                     with conn as cursor:
-                        conn.execute('pragma journal_mode=wal')
+                        cursor.execute('pragma journal_mode=wal')
                         cursor.execute("CREATE TABLE ensembl " \
                             "(key text PRIMARY KEY, genome_build text, " \
                             "cache_date text, api_version text, data blob)")
