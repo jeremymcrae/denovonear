@@ -188,6 +188,7 @@ cdef class Gene:
         chrom = tx.get_chrom().decode('utf8')
         start = tx.get_start()
         end = tx.get_end()
+        print(f'tx range: {chrom}:{start}-{end}')
         exons = self._convert_exons(tx.get_exons())
         cds = self._convert_exons(tx.get_cds())
         seq = tx.get_genomic_sequence().decode('utf8')
