@@ -97,7 +97,7 @@ void load_transcripts(std::vector<NamedTx> & transcripts, GTF &gtf_file, bool co
 
         if (permit.count(gtf.feature) == 0) {
             continue;
-        } else if (coding and (gtf.transcript_type != "protein_coding")) {
+        } else if (coding && (gtf.transcript_type != "protein_coding")) {
             continue;
         }
 
