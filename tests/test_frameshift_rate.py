@@ -33,18 +33,17 @@ class TestIncludeFrameshiftRatesPy(unittest.TestCase):
         """ test include_frameshift_rates() works correctly
         """
         
-        temp = tempfile.NamedTemporaryFile(mode='wt')
-        temp.write('transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate'
-            '\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n')
-        temp.write('A\tchr1\t100\t-1\t-1\t-1\t-1\t-1\n')
-        temp.write('B\tchr1\t1000\t-1\t-1\t-1\t-1\t-1\n')
-        temp.write('C\tchr1\t1000\t-1\t-4\t-1\t-1\t-1\n')
-        temp.flush()
+        temp_path = tempfile.NamedTemporaryFile(mode='wt', delete=False).name
+        with open(temp_path, 'wt') as temp:
+            temp.write('transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate'
+                '\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n')
+            temp.write('A\tchr1\t100\t-1\t-1\t-1\t-1\t-1\n')
+            temp.write('B\tchr1\t1000\t-1\t-1\t-1\t-1\t-1\n')
+            temp.write('C\tchr1\t1000\t-1\t-4\t-1\t-1\t-1\n')
         
-        include_frameshift_rates(temp.name)
-        temp.flush()
+        include_frameshift_rates(temp_path)
         
-        with open(temp.name) as handle:
+        with open(temp_path) as handle:
             values = [ line.strip().split('\t')[-1] for line in handle ]
         
         header, a, b, c = values
