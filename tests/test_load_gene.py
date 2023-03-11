@@ -37,7 +37,7 @@ async def call(func, *args, **kwargs):
         return await func(ensembl, *args, **kwargs)
 
 def _run(func, *args, **kwargs):
-    return asyncio.get_event_loop().run_until_complete(call(func, *args, **kwargs))
+    return asyncio.run(call(func, *args, **kwargs))
 
 class TestLoadGenePy(unittest.TestCase):
     """ unit test functions to load genes

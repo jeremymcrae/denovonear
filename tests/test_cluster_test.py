@@ -16,7 +16,7 @@ async def call(func, *args, **kwargs):
         return await func(*args, ensembl=ensembl, **kwargs)
 
 def _run(func, *args, **kwargs):
-    return asyncio.get_event_loop().run_until_complete(call(func, *args, **kwargs))
+    return asyncio.run(call(func, *args, **kwargs))
 
 class TestClusterTestPy(unittest.TestCase):
     """ unit test the genic test
