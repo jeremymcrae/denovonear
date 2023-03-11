@@ -120,6 +120,7 @@ class TestGencode(unittest.TestCase):
         # we find matches if even a single base of the gene is in the region
         in_region = gencode.in_region('chr1', 0, 11)
         self.assertEqual(len(in_region), 1)
+        del gencode
     
     def test_gencode_nearest(self):
         ''' test that we can find the nearest gene from Gencode
@@ -156,6 +157,8 @@ class TestGencode(unittest.TestCase):
         
         with self.assertRaises(ValueError):
             gencode.nearest('chrZZZ', 2000)
+        
+        del gencode
     
     def test_gencode_canonical(self):
         ''' test we find the correct canonical transcript
@@ -190,6 +193,7 @@ class TestGencode(unittest.TestCase):
         gene = gencode['TEST1']
         canonical = gene.canonical
         self.assertEqual(canonical.get_name(), 'ENST_B')
+        del gencode
     
     def test_parse_gtf_gene_line(self):
         ''' test we can parse a GTF line for a gene feature
