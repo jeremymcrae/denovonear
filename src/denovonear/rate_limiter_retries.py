@@ -13,6 +13,9 @@ def ensembl_cache(folder=None):
     '''
     if folder is None:
         folder = Path.home() / '.cache' / 'ensembl'
+    folder = Path(folder)
+    if not folder.exists():
+        folder.mkdir(parents=True, exist_ok=False)
     cache = EnsemblCache(str(folder))
     def decorator(func):
         @functools.wraps(func)
