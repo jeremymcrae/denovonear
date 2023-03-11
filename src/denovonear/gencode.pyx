@@ -188,7 +188,6 @@ cdef class Gene:
         chrom = tx.get_chrom().decode('utf8')
         start = tx.get_start()
         end = tx.get_end()
-        print(f'tx range: {chrom}:{start}-{end}')
         exons = self._convert_exons(tx.get_exons())
         cds = self._convert_exons(tx.get_cds())
         seq = tx.get_genomic_sequence().decode('utf8')
@@ -196,7 +195,7 @@ cdef class Gene:
             seq = None
         if seq is None and __genome_ is not None:
             seq = __genome_[chrom][start-1-offset:end-1+offset].seq.upper()
-            print(f'constructing tx, genomic seq from fasta: {seq}')
+            print(f'constructing tx (offset={offset}), genomic seq from fasta: {seq}')
             ####################################################
             # NOTE: this might be where it goes wrong
             ####################################################
