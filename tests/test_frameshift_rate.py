@@ -33,7 +33,9 @@ class TestIncludeFrameshiftRatesPy(unittest.TestCase):
         """ test include_frameshift_rates() works correctly
         """
         
-        temp_path = tempfile.NamedTemporaryFile(mode='wt', delete=False).name
+        temp = tempfile.NamedTemporaryFile(mode='wt', delete=False)
+        temp.close()
+        temp_path = temp.name
         with open(temp_path, 'wt') as temp:
             temp.write('transcript_id\tchrom\tlength\tmissense_rate\tnonsense_rate'
                 '\tsplice_lof_rate\tsplice_region_rate\tsynonymous_rate\n')
