@@ -37,7 +37,13 @@ class TestGencode(unittest.TestCase):
         self.folder = Path(__file__).parent.parent /  "data"
         self.gtf_path = self.folder / 'example.grch38.gtf'
         self.fasta_path = self.folder / 'example.grch38.fa'
+        self.temp_gtf_path = tempfile.NamedTemporaryFile(delete=False).name
+        self.temp_fasta_path = tempfile.NamedTemporaryFile(delete=False).name
     
+    def tearDown(self):
+        Path(self.temp_gtf_path).unlink()
+        Path(self.temp_fasta_path).unlink()
+
     def test_gencode_opens(self):
         ''' test we can open a gencode object
         '''
@@ -76,10 +82,9 @@ class TestGencode(unittest.TestCase):
                 'chr2\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n' \
                 'chr2\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n'
         
-        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
-            write_gtf(temp.name, lines)
-            make_fasta(fasta.name, ['chr1', 'chr2'])
-            gencode = Gencode(temp.name, fasta.name)
+        write_gtf(self.temp_gtf_path, lines)
+        make_fasta(self.temp_fasta_path, ['chr1', 'chr2'])
+        gencode = Gencode(self.temp_gtf_path, self.temp_fasta_path)
         
         genes = gencode.in_region('chr1', 5, 6)  # shouldn't get anything
         self.assertEqual(genes, [])
@@ -132,25 +137,25 @@ class TestGencode(unittest.TestCase):
                 'chr2\tHAVANA\ttranscript\t100\t110\t.\t-\t.\ttranscript_id "ENST_C"; gene_name "TEST3"; transcript_type "protein_coding"; tag "appris_principal_1";\n',
                 'chr2\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n',
                 'chr2\tHAVANA\tCDS\t105\t110\t.\t-\t.\ttranscript_id "ENST_C" gene_name "TEST3"; transcript_type "protein_coding"\n']
-        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
-            write_gtf(temp.name, lines)
-            make_fasta(fasta.name, ['chr1', 'chr2'])
-            gencode = Gencode(temp.name, fasta.name)
-            
-            self.assertEqual(gencode.nearest('chr1', 5).symbol, 'TEST1')
-            self.assertEqual(gencode.nearest('chr1', 10).symbol, 'TEST1')
-            self.assertEqual(gencode.nearest('chr1', 11).symbol, 'TEST1')
-            self.assertEqual(gencode.nearest('chr1', 21).symbol, 'TEST1')
-            self.assertEqual(gencode.nearest('chr1', 80).symbol, 'TEST2')
-            self.assertEqual(gencode.nearest('chr1', 105).symbol, 'TEST2')
-            self.assertEqual(gencode.nearest('chr1', 2000).symbol, 'TEST2')
         
-            # and look for genes on the final chrom, both before and after the final gene
-            self.assertEqual(gencode.nearest('chr2', 0).symbol, 'TEST3')
-            self.assertEqual(gencode.nearest('chr2', 2000).symbol, 'TEST3')
-            
-            with self.assertRaises(ValueError):
-                gencode.nearest('chrZZZ', 2000)
+        write_gtf(self.temp_gtf_path, lines)
+        make_fasta(self.temp_fasta_path, ['chr1', 'chr2'])
+        gencode = Gencode(self.temp_gtf_path, self.temp_fasta_path)
+        
+        self.assertEqual(gencode.nearest('chr1', 5).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 10).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 11).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 21).symbol, 'TEST1')
+        self.assertEqual(gencode.nearest('chr1', 80).symbol, 'TEST2')
+        self.assertEqual(gencode.nearest('chr1', 105).symbol, 'TEST2')
+        self.assertEqual(gencode.nearest('chr1', 2000).symbol, 'TEST2')
+    
+        # and look for genes on the final chrom, both before and after the final gene
+        self.assertEqual(gencode.nearest('chr2', 0).symbol, 'TEST3')
+        self.assertEqual(gencode.nearest('chr2', 2000).symbol, 'TEST3')
+        
+        with self.assertRaises(ValueError):
+            gencode.nearest('chrZZZ', 2000)
     
     def test_gencode_canonical(self):
         ''' test we find the correct canonical transcript
@@ -165,10 +170,10 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t100\t110\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST1"; transcript_type "protein_coding"\n',
                 'chr1\tHAVANA\tCDS\t110\t100\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST1"; transcript_type "protein_coding"\n',
         ]
-        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
-            write_gtf(temp.name, lines)
-            make_fasta(fasta.name, ['chr1', 'chr2'])
-            gencode = Gencode(temp.name, fasta.name)
+        
+        write_gtf(self.temp_gtf_path, lines)
+        make_fasta(self.temp_fasta_path, ['chr1', 'chr2'])
+        gencode = Gencode(self.temp_gtf_path, self.temp_fasta_path)
         
         gene = gencode['TEST1']
         canonical = gene.canonical 
@@ -177,10 +182,9 @@ class TestGencode(unittest.TestCase):
         # give the second transcript the appris_principal tag as well, which
         # given that it has the longer CDS, would make it the canonical now
         lines[-3] = lines[-3].strip() + ' tag "appris_principal_1";\n'
-        with tempfile.NamedTemporaryFile() as temp, tempfile.NamedTemporaryFile() as fasta:
-            write_gtf(temp.name, lines)
-            make_fasta(fasta.name, ['chr1', 'chr2'])
-            gencode = Gencode(temp.name, fasta.name)
+        write_gtf(self.temp_gtf_path, lines)
+        make_fasta(self.temp_fasta_path, ['chr1', 'chr2'])
+        gencode = Gencode(self.temp_gtf_path, self.temp_fasta_path)
         
         gene = gencode['TEST1']
         canonical = gene.canonical
@@ -375,9 +379,8 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t10\t30\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n' \
                 'chr1\tHAVANA\tCDS\t15\t30\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST2"; transcript_type "protein_coding"\n'
         
-        with tempfile.NamedTemporaryFile() as temp:
-            write_gtf(temp.name, lines)
-            data = _open_gencode(temp.name)
+        write_gtf(self.temp_gtf_path, lines)
+        data = _open_gencode(self.temp_gtf_path)
         
         self.assertEqual(len(data), 2)
         symbol1, tx1, is_principal = data[0]
@@ -393,16 +396,14 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t10\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST"; transcript_type "processed_transcript"\n' \
                 'chr1\tHAVANA\tCDS\t15\t20\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST"; transcript_type "processed_transcript"\n' \
                         
-        with tempfile.NamedTemporaryFile() as temp:
-            write_gtf(temp.name, lines)
-            data = _open_gencode(temp.name)
+        write_gtf(self.temp_gtf_path, lines)
+        data = _open_gencode(self.temp_gtf_path)
         
         self.assertEqual(len(data), 0)
         
         # but if we allow all transcript types (not just protein_coding, we)
-        with tempfile.NamedTemporaryFile() as temp:
-            write_gtf(temp.name, lines)
-            data = _open_gencode(temp.name, coding_only=False)
+        write_gtf(self.temp_gtf_path, lines)
+        data = _open_gencode(self.temp_gtf_path, coding_only=False)
         
         self.assertEqual(len(data), 1)
         
@@ -419,9 +420,8 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t10\t30\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST"; transcript_type "protein_coding"\n' \
                 'chr1\tHAVANA\tCDS\t15\t30\t.\t-\t.\ttranscript_id "ENST_B" gene_name "TEST"; transcript_type "protein_coding"\n'
         
-        with tempfile.NamedTemporaryFile() as temp:
-            write_gtf(temp.name, lines)
-            data = _open_gencode(temp.name)
+        write_gtf(self.temp_gtf_path, lines)
+        data = _open_gencode(self.temp_gtf_path)
         
         self.assertEqual(len(data), 2)
         symbol1, tx1, is_principal = data[0]
@@ -446,9 +446,8 @@ class TestGencode(unittest.TestCase):
                 'chr1\tHAVANA\texon\t90\t100\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST"; transcript_type "protein_coding"\n' \
                 'chr1\tHAVANA\tUTR\t90\t100\t.\t-\t.\ttranscript_id "ENST_A" gene_name "TEST"; transcript_type "protein_coding"\n'
         
-        with tempfile.NamedTemporaryFile() as temp:
-            write_gtf(temp.name, lines)
-            data = _open_gencode(temp.name)
+        write_gtf(self.temp_gtf_path, lines)
+        data = _open_gencode(self.temp_gtf_path)
         
         self.assertEqual(len(data), 1)
         symbol, tx, is_principal = data[0]
