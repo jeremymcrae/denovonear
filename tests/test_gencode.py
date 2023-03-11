@@ -45,8 +45,11 @@ class TestGencode(unittest.TestCase):
         temp_fasta.close()
     
     def tearDown(self):
-        Path(self.temp_gtf_path).unlink()
-        Path(self.temp_fasta_path).unlink()
+        try:
+            Path(self.temp_gtf_path).unlink()
+            Path(self.temp_fasta_path).unlink()
+        except:
+            pass
 
     def test_gencode_opens(self):
         ''' test we can open a gencode object

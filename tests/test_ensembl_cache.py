@@ -51,7 +51,10 @@ class TestEnsemblCachePy(unittest.TestCase):
     
     @classmethod
     def tearDownClass(self):
-        shutil.rmtree(self.temp_dir)
+        try:
+            shutil.rmtree(self.temp_dir)
+        except:
+            pass
     
     def test_get_key_from_url(self):
         """ test that get_key_from_url() works correctly
