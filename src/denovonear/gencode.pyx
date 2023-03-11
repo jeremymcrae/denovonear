@@ -195,6 +195,10 @@ cdef class Gene:
             seq = None
         if seq is None and __genome_ is not None:
             seq = __genome_[chrom][start-1-offset:end-1+offset].seq.upper()
+            print(f'constructing tx, genomic seq from fasta: {seq}')
+            ####################################################
+            # NOTE: this might be where it goes wrong
+            ####################################################
         strand = chr(tx.get_strand())
         if strand == '-' and seq is not None:
             seq = tx.reverse_complement(seq.encode('utf8')).decode('utf8')
