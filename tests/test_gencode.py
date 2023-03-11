@@ -37,8 +37,12 @@ class TestGencode(unittest.TestCase):
         self.folder = Path(__file__).parent.parent /  "data"
         self.gtf_path = self.folder / 'example.grch38.gtf'
         self.fasta_path = self.folder / 'example.grch38.fa'
-        self.temp_gtf_path = tempfile.NamedTemporaryFile(delete=False).name
-        self.temp_fasta_path = tempfile.NamedTemporaryFile(delete=False).name
+        temp_gtf = tempfile.NamedTemporaryFile(delete=False)
+        temp_fasta = tempfile.NamedTemporaryFile(delete=False)
+        self.temp_gtf_path = temp_gtf.name
+        self.temp_fasta_path = temp_fasta.name
+        temp_gtf.close()
+        temp_fasta.close()
     
     def tearDown(self):
         Path(self.temp_gtf_path).unlink()
