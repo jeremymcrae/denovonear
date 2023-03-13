@@ -508,7 +508,7 @@ std::string Tx::reverse_complement(std::string seq) {
     
     int i = 0;
     for (auto &base : seq) {
-        complement[i] = transdict[base];
+        complement[i] = transdict[(uint8_t)base];
         i += 1;
     }
     
