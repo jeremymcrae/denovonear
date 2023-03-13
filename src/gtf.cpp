@@ -21,7 +21,7 @@ void get_attributes_fields(GTFLine &info, std::string &line, int offset) {
     int tx_start = line.find("transcript_id", offset) + 15;
     int tx_end = line.find("\"", tx_start);
 
-    if (tx_start - 15 == std::string::npos) {
+    if (tx_start - 15 == (int)std::string::npos) {
         // handle if the string was not found
         tx_start = offset;
         tx_end = offset;
@@ -30,7 +30,7 @@ void get_attributes_fields(GTFLine &info, std::string &line, int offset) {
     int gene_start = line.find("gene_name", tx_end) + 11;
     int gene_end = line.find("\"", gene_start);
 
-    if (gene_start - 11 == std::string::npos) {
+    if (gene_start - 11 == (int)std::string::npos) {
         // handle if the string was not found
         gene_start = tx_end;
         gene_end = tx_end;
@@ -39,7 +39,7 @@ void get_attributes_fields(GTFLine &info, std::string &line, int offset) {
     int type_start = line.find("transcript_type", gene_end) + 17;
     int type_end = line.find("\"", type_start);
 
-    if (type_start - 17 == std::string::npos) {
+    if (type_start - 17 == (int)std::string::npos) {
         // handle if the string was not found
         type_start = gene_end;
         type_end = gene_end;
