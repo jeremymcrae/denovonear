@@ -2,11 +2,11 @@
 include MANIFEST.in
 include pyproject.toml
 include scripts/*.py
-include denovonear/*.cpp
-include denovonear/*.py
-include denovonear/*.pyx
-include denovonear/*.pxd
-include denovonear/data/rates.txt
+include src/denovonear/*.cpp
+include src/denovonear/*.py
+include src/denovonear/*.pyx
+include src/denovonear/*.pxd
+include src/denovonear/data/rates.txt
 include src/*.h
 include src/*.cpp
 include src/gzstream/gzstream.C
