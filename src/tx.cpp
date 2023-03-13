@@ -741,6 +741,8 @@ std::string Tx::indel_cq(int start, int end, std::string ref, std::string alt) {
         exon = exons[prev];
     } else if (overlap(start, end, exons[post].start, exons[post].end)) {
         exon = exons[post];
+    } else {
+        throw (std::invalid_argument("cannot find matching exon for indel"));
     }
     
     bool deletion = ref.size() > alt.size();
