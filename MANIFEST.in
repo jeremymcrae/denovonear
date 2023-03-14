@@ -9,8 +9,6 @@ include src/denovonear/*.pxd
 include src/denovonear/data/rates.txt
 include src/*.h
 include src/*.cpp
-include src/gzstream/gzstream.C
-include src/gzstream/gzstream.h
 include data/*.txt
 
 # denovonear tests
