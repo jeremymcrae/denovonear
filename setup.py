@@ -3,11 +3,13 @@ import sys
 import os
 import io
 import glob
+from pathlib import Path
 
 from distutils.ccompiler import new_compiler
 from setuptools import setup
 from distutils.core import Extension
 from Cython.Build import cythonize
+import gencodegenes
 
 EXTRA_COMPILE_ARGS = ['-std=c++11', '-I/usr/include']
 EXTRA_LINK_ARGS = []
@@ -22,6 +24,10 @@ if sys.platform == "darwin":
         ]
 elif sys.platform == "win32":
     EXTRA_COMPILE_ARGS += ['/std:c++14']
+
+# Find the path to a gencodegenes code file required for site_rates.cpp
+# Or we could put the file directly in this package (or via a git submodule).
+tx_cpp = Path(gencodegenes.__file__).parent / 'tx.cpp'
 
 weights = cythonize([
     Extension("denovonear.weights",
@@ -38,8 +44,9 @@ weights = cythonize([
         sources=[
             "src/denovonear/site_specific_rates.pyx",
             "src/weighted_choice.cpp",
-            "src/tx.cpp",
-            "src/site_rates.cpp"],
+            "src/site_rates.cpp",
+            str(tx_cpp),
+            ],
         include_dirs=["src/"],
         language="c++"),
     ])
