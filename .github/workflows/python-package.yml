@@ -56,7 +56,7 @@ jobs:
 
       - name: Run tests
         run: |
-          pip install gencodegenes
+          pip install gencodegenes scipy aiohttp
           python setup.py install
           python setup.py test
           denovonear cluster --in data/example_de_novos.txt --out output.txt
