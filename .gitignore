@@ -6,6 +6,7 @@ cache/
 build/
 dist/
 results/
+data/*.fai
 src/denovonear/*.cpp
 *.egg-info/
 *.so
