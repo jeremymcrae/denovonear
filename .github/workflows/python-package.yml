@@ -75,12 +75,12 @@ jobs:
         with:
           path: dist/*.tar.gz
 
-      - name: Coveralls
-        env:
-          GITHUB_TOKEN: ${{ secrets.github_token }}
-        run: |
-          python -m coverage run --source=./denovonear -m unittest discover
-          coveralls --service=github
+      # - name: Coveralls
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.github_token }}
+      #   run: |
+      #     python -m coverage run --source=./denovonear -m unittest discover
+      #     coveralls --service=github
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
