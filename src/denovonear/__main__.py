@@ -18,7 +18,7 @@ from denovonear.load_gene import (load_gene, construct_gene_object,
 from denovonear.site_specific_rates import SiteRates
 from denovonear.frameshift_rate import include_frameshift_rates
 from denovonear.log_transform_rates import log_transform
-from denovonear.gencode import Gencode
+from gencodegenes.gencode import Gencode
 
 async def _load_gencode(symbols):
     ''' load gene coords and sequence via ensembl

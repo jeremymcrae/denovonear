@@ -6,7 +6,7 @@ import tempfile
 
 from denovonear.rate_limiter import RateLimiter
 from denovonear.load_gene import construct_gene_object
-from denovonear.gencode import Gencode, _parse_gtfline, _open_gencode
+from gencodegenes.gencode import Gencode, _parse_gtfline, _open_gencode
 
 async def call(func, *args, **kwargs):
     ''' call ensembl rest API function

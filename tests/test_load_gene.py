@@ -27,7 +27,7 @@ from pathlib import Path
 from denovonear.load_gene import cds_length, construct_gene_object, \
     get_de_novos_in_transcript, get_transcript_ids, load_gene, \
     count_de_novos_per_transcript, minimise_transcripts
-from denovonear.transcript import Transcript
+from gencodegenes.transcript import Transcript
 from denovonear.rate_limiter import RateLimiter
 
 async def call(func, *args, **kwargs):

@@ -7,7 +7,7 @@ import unittest
 import math
 
 from denovonear.weights import WeightedChoice
-from denovonear.transcript import Transcript
+from gencodegenes.transcript import Transcript
 from denovonear.site_specific_rates import SiteRates
 from denovonear.load_mutation_rates import load_mutation_rates
 from denovonear.simulate import get_p_value

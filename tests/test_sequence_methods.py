@@ -4,7 +4,7 @@
 from __future__ import division
 import unittest
 
-from denovonear.transcript import Transcript
+from gencodegenes.transcript import Transcript
 
 class TestSequenceMethodsPy(unittest.TestCase):
     """ unit test the SequenceMethods class

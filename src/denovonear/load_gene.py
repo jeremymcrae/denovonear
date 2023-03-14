@@ -4,8 +4,7 @@
 import asyncio
 import logging
 
-from denovonear.transcript import Transcript
-from denovonear.gencode import Gencode, Gene
+from gencodegenes import Gene, Transcript
 
 from denovonear.ensembl_requester import (get_protein_seq_for_transcript,
     get_genomic_seq_for_transcript, get_cds_seq_for_transcript,

@@ -8,7 +8,7 @@ from libcpp cimport bool
 from cython.operator cimport dereference as deref
 
 from denovonear.weights cimport Chooser, WeightedChoice
-from denovonear.transcript cimport Tx, Transcript, Region, Codon
+from gencodegenes.transcript cimport Tx, Transcript, Region, Codon
 
 cdef extern from "site_rates.h":
     cdef cppclass SitesChecks:
