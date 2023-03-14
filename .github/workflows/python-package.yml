@@ -56,8 +56,9 @@ jobs:
 
       - name: Run tests
         run: |
-          pip install -e .
-          python -m unittest discover
+          pip install gencodegenes
+          python setup.py install
+          python setup.py test
           denovonear cluster --in data/example_de_novos.txt --out output.txt
           denovonear cluster \
             --in data/example.grch38.dnms.txt  \
