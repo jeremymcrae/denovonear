@@ -65,11 +65,13 @@ OR4F5 | chr1 | 69450 | missense_variant | DENOVO-SNP
 ```py
 from denovonear.gencode import Gencode
 from denovonear.cluster_test import cluster_de_novos
+from denovonear.mutation_rates import load_mutation_rates
 
 gencode = Gencode('./data/example.grch38.gtf', './data/example.grch38.fa')
 symbol = 'OR4F5'
 de_novos = {'missense': [69500, 69450, 69400], 'nonsense': []}
-p_values = cluster_de_novos(symbol, de_novos, gencode[symbol], iterations=1000000)
+rates = load_mutation_rates()
+p_values = cluster_de_novos(de_novos, gencode[symbol], rates, iterations=1000000)
 ```
 
 Pull out site-specific rates by creating Transcript objects, then get the

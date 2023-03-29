@@ -52,6 +52,24 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
     }
 }
 
+void SitesChecks::init() {
+    context_based = false;  // flag for not using sequence-context based rates
+    kmer_length = 3; // default value to avoid bug
+    mid_pos = 1;     // default value to avoid bug
+
+    initialise_choices();
+    // check the consequence alternates for each base in the coding sequence
+    Region region = _get_gene_range(_tx);
+    for (int i=region.start; i < region.end + 1; i++ ) {
+        check_position(i);
+    }
+}
+
+void SitesChecks::add_mask(Tx mask) {
+    masked = mask;
+    has_mask = true;
+}
+
 // initialise a WeightedChoice object for each consequence category
 void SitesChecks::initialise_choices() {
     for (auto category : categories) {
@@ -146,8 +164,7 @@ void SitesChecks::check_position(int bp) {
         category = "synonymous";
         mutated_aa = initial_aa;
         alt_seq[mid_pos] = alt;
-        
-        double rate = mut_dict[seq][alt_seq];
+
         if ( initial_aa != '0' ) {
             mutated_aa = _get_mutated_aa(_tx, alt, codon.codon_seq, codon.intra_codon);
         }
@@ -158,6 +175,13 @@ void SitesChecks::check_position(int bp) {
         // the + strand.
         if (_tx.get_strand() != fwd) {
             alt = transdict[alt];
+        }
+
+        double rate;
+        if (context_based) {
+            rate = mut_dict[seq][alt_seq];
+        } else {
+            rate = per_pos_rates[bp][alt];
         }
         
         if (use_cds_coords) {

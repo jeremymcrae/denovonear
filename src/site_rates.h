@@ -1,6 +1,7 @@
 #ifndef DENOVONEAR_SITESCHECKS_H_
 #define DENOVONEAR_SITESCHECKS_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 #include <map>
@@ -19,10 +20,13 @@ class SitesChecks {
     */
     
     std::unordered_map<std::string, std::unordered_map<std::string, double>> mut_dict;
+    std::unordered_map<std::uint64_t, std::unordered_map<char, double>> per_pos_rates;
     std::unordered_map<std::string, Chooser> rates;
     int boundary_dist;
     int kmer_length;
     int mid_pos;
+    bool context_based=true;  // flag for whether the rates are based on per site 
+                              // context, or from per-genome sites
     
     std::unordered_map<char, char> transdict = {
         {'A', 'T'}, {'T', 'A'}, {'G', 'C'}, {'C', 'G'}};
@@ -32,14 +36,17 @@ class SitesChecks {
         "splice_lof", "splice_region", "loss_of_function", "intronic"};
 
  public:
+    // this version uses sequence-context based rates
     SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords) :
          _tx { tx }, use_cds_coords { cds_coords } { init(mut); };
-    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords, Tx mask) :
-         _tx { tx }, masked { mask }, use_cds_coords { cds_coords } { has_mask = true; init(mut); };
+    // this version uses rates fixed to each genome position
+    SitesChecks(Tx tx, std::unordered_map<std::uint64_t, std::unordered_map<char, double>> mut, bool cds_coords) :
+          per_pos_rates { mut }, _tx { tx }, use_cds_coords { cds_coords } { init(); };
     Chooser * __getitem__(std::string category) { return &rates[category]; };
     void initialise_choices();
     
     Tx _tx;
+    void add_mask(Tx mask);
     void check_position(int bp);
     int get_offset(int bp);
     void check_consequence(std::string & cq, char & initial_aa, char & mutated_aa, int & offset);
@@ -47,6 +54,7 @@ class SitesChecks {
  private:
     Tx masked = Tx("zz", "z", -100, -100, '+', "protein_coding");
     void init(std::vector<std::vector<std::string>> mut);
+    void init();
     bool has_mask = false;
     bool use_cds_coords = true;
 };

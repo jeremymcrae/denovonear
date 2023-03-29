@@ -3,10 +3,7 @@ from math import log, isnan
 
 from scipy.stats import chi2
 
-from denovonear.load_gene import load_gene, get_de_novos_in_transcript, \
-    minimise_transcripts
-from denovonear.load_mutation_rates import load_mutation_rates
-from denovonear.load_de_novos import load_de_novos
+from denovonear.load_gene import get_de_novos_in_transcript, minimise_transcripts
 from denovonear.site_specific_rates import SiteRates
 from denovonear.simulate import get_p_value
 
@@ -29,25 +26,20 @@ def fishers_method(values):
     # P-values. The chi square statistic is -2*sum(ln(P-values))
     return chi2.sf(-2 * sum(map(log, values)), 2 * len(values))
 
-def cluster_de_novos(symbol, de_novos, gene, iterations=1000000, 
-        mut_dict=None):
+def cluster_de_novos(de_novos, gene, mut_dict, iterations=1000000):
     """ analysis proximity cluster of de novos in a single gene
     
     Args:
-        symbol: HGNC symbol for a gene
         de_novos: dictionary of de novo positions for the HGNC gene,
-        indexed by functional type
-        gene: denovnonear.gencode.Gene object
+            indexed by functional type
+        gene: gencodegenes.Gene object
+        mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence, 
         iterations: number of simulations to run
-        mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence
     
     Returns:
         a dictionary containing P values, and distances for missense, nonsense,
         and synonymous de novos events. Missing data is represented by "NA".
     """
-    
-    if mut_dict is None:
-        mut_dict = load_mutation_rates()
     
     missense = de_novos["missense"]
     nonsense = de_novos["nonsense"]
@@ -75,7 +67,16 @@ def cluster_de_novos(symbol, de_novos, gene, iterations=1000000,
         missense_events = get_de_novos_in_transcript(transcript, missense)
         nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
         
-        rates = SiteRates(transcript, mut_dict)
+        # The rates either are passed in as lists of lists of sequence-context 
+        # based rates which can be applied to a given sequence, or as 
+        # dictionaries of rates per position/allele from genome based reference 
+        # sources. If the latter, then we have to load the rates within the 
+        # transcript region
+        _rates = mut_dict
+        if isinstance(mut_dict, dict):
+            _rates = mut_dict(transcript.get_chrom(), transcript.get_start(), transcript.get_end())
+        
+        rates = SiteRates(transcript, _rates)
         
         (miss_dist, miss_prob) = get_p_value(transcript, rates, iterations, "missense", missense_events)
         (nons_dist, nons_prob) = get_p_value(transcript, rates, iterations, "lof", nonsense_events)

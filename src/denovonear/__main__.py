@@ -9,7 +9,8 @@ import argparse
 import logging
 
 from denovonear.rate_limiter import RateLimiter
-from denovonear.load_mutation_rates import load_mutation_rates
+from denovonear.load_mutation_rates import (load_mutation_rates,
+                                            load_mutation_rates_in_region)
 from denovonear.load_de_novos import load_de_novos
 from denovonear.cluster_test import cluster_de_novos
 
@@ -43,7 +44,11 @@ def load_gencode(symbols, gencode=None, fasta=None):
 
 def clustering(args, output):
     
-    mut_dict = load_mutation_rates(args.rates)
+    if args.rates_format == 'context':
+        rates = load_mutation_rates(args.rates)
+    else:
+        rates = load_mutation_rates_in_region(args.rates)
+
     de_novos = load_de_novos(args.input)
     gencode = load_gencode(de_novos, args.gencode, args.fasta)
     
@@ -59,7 +64,7 @@ def clustering(args, output):
             logging.info(f'cannot find {symbol} in gencode')
             continue
         
-        probs = cluster_de_novos(symbol, de_novos[symbol], gencode[symbol], iterations, mut_dict)
+        probs = cluster_de_novos(de_novos[symbol], gencode[symbol], rates, iterations)
         
         if probs is None:
             continue
@@ -199,8 +204,14 @@ def get_options():
     # CLI options in common
     parent = argparse.ArgumentParser(add_help=False)
     parent.add_argument("--out", default=sys.stdout, help="output filename")
-    parent.add_argument("--rates",
+    parent.add_argument("--rates", nargs='*',
         help="optional path to file containing sequence context-based mutation rates.")
+    parent.add_argument("--rates-format", default='context', choices=['context', 'genome'],
+        help="what mutation rate format are you using i.e. sequence-context based " \
+             "(e.g. trinucleotide) or based on genome-position. Currently the " \
+            "only genome-position based rates that are supported are ones from " \
+            "Roulette (https://www.biorxiv.org/content/10.1101/2022.08.20.504670v1), " \
+            "found at http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/")
     parent.add_argument("--gencode",
         help="optional path to gencode annotations file. If not provided, gene " \
             "coordinates will be obtained via the Ensembl REST API.")
