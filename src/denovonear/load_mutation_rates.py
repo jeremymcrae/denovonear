@@ -1,6 +1,8 @@
 """ load trincleotide mutation rates
 """
 
+from __future__ import annotations
+
 import warnings
 from pkg_resources import resource_filename
 
