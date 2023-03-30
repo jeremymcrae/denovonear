@@ -73,7 +73,7 @@ def cluster_de_novos(de_novos, gene, mut_dict, iterations=1000000):
         # sources. If the latter, then we have to load the rates within the 
         # transcript region
         _rates = mut_dict
-        if isinstance(mut_dict, dict):
+        if not isinstance(mut_dict, list):
             _rates = mut_dict(transcript.get_chrom(), transcript.get_start(), transcript.get_end())
         
         rates = SiteRates(transcript, _rates)

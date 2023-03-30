@@ -1,9 +1,10 @@
 """ load trincleotide mutation rates
 """
 
+import warnings
 from pkg_resources import resource_filename
 
-from pysam import VariantFile
+from cyvcf2 import VCF
 
 def load_mutation_rates(path=None):
     """ load sequence context-based mutation rates
@@ -37,17 +38,31 @@ class load_mutation_rates_in_region:
     This only permits loading data from files from Roulette e.g.
       http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/
     '''
+    CHROMS = list(map(str, range(1, 23)))
     def __init__(self, paths: list[str]):
         ''' start with list of paths to all Roulette VCFs
         '''
         self.vcfs = {}
         for path in paths:
-            tbx = VariantFile(path)
+            tbx = VCF(path)
             # tag the tabixfile against all contigs (chromosomes) it contains
-            for contig in tbx.index.keys():
+            for contig in self._check_chroms(tbx):
                 if contig not in self.vcfs:
                     self.vcfs[contig] = []
                 self.vcfs[contig].append(tbx)
+    def _check_chroms(self, vcf):
+        ''' find all the chromosomes actually present in a VCF
+        '''
+        contigs = []
+        for chrom in self.CHROMS:
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    next(vcf(f'{chrom}'))
+                contigs.append(chrom)
+            except StopIteration:
+                pass
+        return contigs
     def __call__(self, chrom: str, start: int, end: int, tag='MR') -> dict[int, dict[str, float]]:
         ''' get mutation rates within a genome region
 
@@ -69,8 +84,8 @@ class load_mutation_rates_in_region:
         # Storing the data in a dict should deduplicate sites, if necessary.
         data = {}
         for tbx in self.vcfs[chrom]:
-            for row in tbx.fetch(chrom, start, end+1):
-                if row.pos not in data:
-                    data[row.pos] = {}
-                data[row.pos][row.alts[0]] = row.info[tag]
+            for row in tbx(f'{chrom}:{start}-{end+1}'):
+                if row.POS not in data:
+                    data[row.POS] = {}
+                data[row.POS][row.ALT[0]] = row.INFO[tag]
         return data
