@@ -6,7 +6,11 @@ from __future__ import annotations
 import warnings
 from pkg_resources import resource_filename
 
-from cyvcf2 import VCF
+__CYVCF2_ERROR = False
+try:
+    from cyvcf2 import VCF
+except ImportError:
+    __CYVCF2_ERROR = True
 
 def load_mutation_rates(path=None):
     """ load sequence context-based mutation rates
@@ -44,6 +48,9 @@ class load_mutation_rates_in_region:
     def __init__(self, paths: list[str]):
         ''' start with list of paths to all Roulette VCFs
         '''
+        if __CYVCF2_ERROR:
+            raise ValueError("this does not work due to problems installing cyvcf2")
+
         self.vcfs = {}
         for path in paths:
             tbx = VCF(path)
