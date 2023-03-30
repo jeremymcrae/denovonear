@@ -39,15 +39,24 @@ INFILE --out OUTFILE`), gene annotations will be retrieved via an ensembl web
 service. For that, you might need to specify `--genome-build grch38` to ensure
 the gene coordinates match your de novo mutation coordinates.
 
-* `--rates PATH_TO_RATES`
+* `--rates PATHS_TO_RATES_FILES`
+* `--rates-format context OR genome`
 * `--cache-folder PATH_TO_CACHE_DIR`
 * `--genome-build "grch37" or "grch38" (default=grch37)`
 
-The optional rates file is a table separated file with three columns: 'from',
-'to', and 'mu_snp'. The 'from' column contains DNA sequence (where the length
-is an odd number) with the base to change at the central nucleotide. The 'to'
-column contains the sequence with the central base modified. The 'mu_snp' column
-contains the probability of the change (as per site per generation).
+The rates option operates in two ways. The first (which requires --rates-format 
+to be "context") is to pass in one path to a tab separated file with three columns: 
+'from', 'to', and 'mu_snp'. The 'from' column contains DNA sequence (where the
+length is an odd number) with the base to change at the central nucleotide. The
+'to' column contains the sequence with the central base modified. The 'mu_snp'
+column contains the probability of the change (as per site per generation).
+
+The second way to use the rates option is to pass in multiple paths to VCFs
+containing mutation rates for every genome position. This requires the --rates-format
+to be "genome". Currently the only supported rates files are ones from Roulette
+(https://www.biorxiv.org/content/10.1101/2022.08.20.504670v1), which can be found
+here: http://genetics.bwh.harvard.edu/downloads/Vova/Roulette/. This needs both
+the VCFs and their index files.
 
 The cache folder defaults to making a folder named "cache" within the working
 directory. The genome build indicates which genome build the coordinates of the
