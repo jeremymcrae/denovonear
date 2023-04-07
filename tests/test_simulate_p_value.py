@@ -31,13 +31,13 @@ class TestGetPValuePy(unittest.TestCase):
         exons = [(5, 58)]
         cds = [(5, 58)]
         transcript = Transcript(name, chrom, start, end, strand)
-        transcript.set_exons(exons, cds)
-        transcript.set_cds(cds)
+        transcript.exons = exons
+        transcript.cds = cds
         
         cds = "ATGTGGGCTCCACCAGCAGCAATCATGGGATGGGCCCACCAAGAAGGTGGGTAA"
         gdna = "GGGGGATGTGGGCTCCACCAGCAGCAATCATGGGATGGGCCCACCAAGAAGGTGGGTAACCAGGCCCC"
-        transcript.add_cds_sequence(cds)
-        transcript.add_genomic_sequence(gdna)
+        transcript.cds_sequence = cds
+        transcript.genomic_sequence = gdna
         
         return transcript
     

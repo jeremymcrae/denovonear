@@ -52,8 +52,8 @@ class TestLoadGenePy(unittest.TestCase):
         cds_ranges=[(120934225, 120934356), (120935876, 120936013)]
         
         expected = Transcript("ENST00000242577", '12', 120933859, 120936296, "+")
-        expected.set_exons(exon_ranges, cds_ranges)
-        expected.set_cds(cds_ranges)
+        expected.exons = exon_ranges
+        expected.cds = cds_ranges
         
         cds = "ATGTGCGACCGAAAGGCCGTGATCAAAAATGCGGACATGTCGGAAGAGATGCAACAGGACTC" \
             "GGTGGAGTGCGCTACTCAGGCGCTGGAGAAATACAACATAGAGAAGGACATTGCGGCTCATATC" \
@@ -100,8 +100,9 @@ class TestLoadGenePy(unittest.TestCase):
             "TTTTCTATTCCATACTTCTGCCCACGTTGTTTTCTCTCAAAATCCATTCCTTTAAAAAATAAATCT" \
             "GATGCAGATGTGTATGTGTGTG"
         
-        expected.add_cds_sequence(cds)
-        expected.add_genomic_sequence(genomic, offset=10)
+        expected.cds_sequence = cds
+        expected.genomic_offset = 10
+        expected.genomic_sequence = genomic
         
         return expected
     
@@ -135,8 +136,8 @@ class TestLoadGenePy(unittest.TestCase):
         expected = self.set_transcript()
         
         self.assertEqual(transcript, expected)
-        self.assertEqual(transcript.get_genomic_sequence(), expected.get_genomic_sequence())
-        self.assertEqual(transcript.get_cds_sequence(), expected.get_cds_sequence())
+        self.assertEqual(transcript.genomic_sequence, expected.genomic_sequence)
+        self.assertEqual(transcript.cds_sequence, expected.cds_sequence)
     
     def test_get_de_novos_in_transcript(self):
         """ test that we can identify de novos within the CDS of a transcript
@@ -147,8 +148,8 @@ class TestLoadGenePy(unittest.TestCase):
         
         # define a simple transcript
         tx = Transcript("test1", '1', 10, 100, "+")
-        tx.set_exons(exon_ranges, cds_ranges)
-        tx.set_cds(cds_ranges)
+        tx.exons = exon_ranges
+        tx.cds = cds_ranges
         
         # check that only the site in the CDS is returned
         sites = [15, 35, 100]
@@ -190,7 +191,7 @@ class TestLoadGenePy(unittest.TestCase):
         # of suitable transcripts. There can be multiple transcripts return if
         # more than one transcript of the maximal length includes all de novos.
         expected = self.set_transcript()
-        self.assertIn(expected.get_name(), counts)
+        self.assertIn(expected.name, counts)
         
         # and make sure if none of the de novos fall in a suitable transcript,
         # then we get an empty dict.

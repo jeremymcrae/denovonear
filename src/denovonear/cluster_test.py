@@ -53,7 +53,7 @@ def cluster_de_novos(de_novos, gene, mut_dict, iterations=1000000):
     # transcripts that contain the de novos.
     transcripts = gene.transcripts
     minimized = minimise_transcripts(transcripts, missense + nonsense)
-    transcripts = [x for x in transcripts if x.get_name() in minimized]
+    transcripts = [x for x in transcripts if x.name in minimized]
     
     if len(transcripts) == 0:
         nan = float('nan')
@@ -74,7 +74,7 @@ def cluster_de_novos(de_novos, gene, mut_dict, iterations=1000000):
         # transcript region
         _rates = mut_dict
         if not isinstance(mut_dict, list):
-            _rates = mut_dict(transcript.get_chrom(), transcript.get_start(), transcript.get_end())
+            _rates = mut_dict(transcript.chrom, transcript.start, transcript.end)
         
         rates = SiteRates(transcript, _rates)
         

@@ -15,7 +15,7 @@ from denovonear.ensembl_requester import (get_protein_seq_for_transcript,
 def cds_length(transcript):
     '''get length of CDS
     '''
-    return transcript.get_coding_distance(transcript.get_cds_end())['pos'] + 1
+    return transcript.get_coding_distance(transcript.cds_end)['pos'] + 1
 
 async def construct_gene_object(ensembl, transcript_id):
     """ creates an Transcript object for a gene from ensembl databases
@@ -40,10 +40,11 @@ async def construct_gene_object(ensembl, transcript_id):
     
     # start a Transcript object with the locations and sequence
     transcript = Transcript(transcript_id, chrom, start, end, strand)
-    transcript.set_exons(exons, cds)
-    transcript.set_cds(cds)
-    transcript.add_cds_sequence(cds_seq)
-    transcript.add_genomic_sequence(genomic, offset=10)
+    transcript.exons = exons
+    transcript.cds = cds
+    transcript.cds_sequence = cds_seq
+    transcript.genomic_offset = 10
+    transcript.genomic_sequence = genomic
     
     return transcript
 
@@ -150,7 +151,7 @@ def count_de_novos_per_transcript(transcripts, de_novos=[]):
     # count the de novos observed in all transcripts
     counts = {}
     for tx in transcripts:
-        tx_id = tx.get_name()
+        tx_id = tx.name
         total = len(get_de_novos_in_transcript(tx, de_novos))
         counts[tx_id] = {'n': total, 'len': cds_length(tx)}
     
@@ -190,7 +191,7 @@ def minimise_transcripts(transcripts, de_novos):
     max_transcripts = {x: counts[x] for x in counts if x in max_ids and counts[x]['len'] == max_length}
     
     # find which de novos occur in the transcript with the most de novos
-    best = [x for x in transcripts if x.get_name() == next(iter(max_transcripts))][0]
+    best = [x for x in transcripts if x.name == next(iter(max_transcripts))][0]
     denovos_in_gene = get_de_novos_in_transcript(best, de_novos)
     
     # trim the de novos to the ones not in the current transcript

@@ -69,8 +69,9 @@ class TestSiteRatesPy(unittest.TestCase):
         genomic = "CCTCCAGATTCACGGGAAGCATGTCCATAAGTAGGGAGATATTTGGTGCTCTCATTTG" \
             "TGGAGACTCTAGCCAAAGCCTGAGTCATGCGTACCATAGATAG"
         
-        self.transcript.add_cds_sequence(cds)
-        self.transcript.add_genomic_sequence(genomic, offset=10)
+        self.transcript.cds_sequence = cds
+        self.transcript.genomic_offset = 10
+        self.transcript.genomic_sequence = genomic
         
         self.weights = SiteRates(self.transcript, self.rates)
     
@@ -79,8 +80,8 @@ class TestSiteRatesPy(unittest.TestCase):
             cds=[(110, 119), (160, 170)]):
         
         tx = Transcript(name, chrom, start, end, strand)
-        tx.set_exons(exons, cds)
-        tx.set_cds(cds)
+        tx.exons = exons
+        tx.cds = cds
         
         return tx
     
@@ -99,8 +100,9 @@ class TestSiteRatesPy(unittest.TestCase):
         genomic = "CCTCCAGATTCACGGGAAGCATGTCCATAAGTAGGGAGATATTTGGTGCTCTCATTTG" \
             "TGGAGACTCTAGCCAAAGCCTGAGTCATGCGTACCATAGATAG"
         
-        transcript.add_cds_sequence(cds)
-        transcript.add_genomic_sequence(genomic, offset=10)
+        transcript.cds_sequence = cds
+        transcript.genomic_offset = 10
+        transcript.genomic_sequence = genomic
         
         weights = SiteRates(transcript, five_mers)
         weights = SiteRates(transcript, seven_mers)
@@ -403,12 +405,12 @@ class TestSiteRatesPy(unittest.TestCase):
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # an upstream site won't alter the summed rates
-        self.weights.check_position(self.transcript.get_start() - 1)
+        self.weights.check_position(self.transcript.start - 1)
         for x in categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         
         # a downstream site won't alter the summed rates
-        self.weights.check_position(self.transcript.get_end() + 1)
+        self.weights.check_position(self.transcript.end + 1)
         for x in categories:
             self.assertEqual(self.weights[x].get_summed_rate(), 0)
         

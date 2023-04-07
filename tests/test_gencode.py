@@ -58,8 +58,8 @@ class TestGencode(unittest.TestCase):
         gencode = Gencode(self.gtf_path, self.fasta_path)
         for gencode_tx in gencode['OR4F5'].transcripts:
             # get the transcript ID (but trim the version number)
-            tx_id = gencode_tx.get_name().split('.')[0]
+            tx_id = gencode_tx.name.split('.')[0]
             ensembl_tx = _run(construct_gene_object, tx_id)
-            self.assertEqual(gencode_tx.get_exons(), ensembl_tx.get_exons())
-            self.assertEqual(gencode_tx.get_cds(), ensembl_tx.get_cds())
-            self.assertEqual(gencode_tx.get_cds_sequence(), ensembl_tx.get_cds_sequence())
+            self.assertEqual(gencode_tx.exons, ensembl_tx.exons)
+            self.assertEqual(gencode_tx.cds, ensembl_tx.cds)
+            self.assertEqual(gencode_tx.cds_sequence, ensembl_tx.cds_sequence)
