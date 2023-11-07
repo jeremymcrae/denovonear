@@ -146,11 +146,11 @@ def get_mutation_rates(transcripts, mut_dict):
     
     for tx in transcripts:
         
-        if len(tx.get_cds_sequence()) % 3 != 0:
+        if len(tx.cds_sequence) % 3 != 0:
             raise ValueError("anomalous_coding_sequence")
         
         # ignore mitochondrial genes
-        if tx.get_chrom() == "MT":
+        if tx.chrom == "MT":
             continue
         
         sites = SiteRates(tx, mut_dict, masked_sites=combined)
@@ -162,7 +162,7 @@ def get_mutation_rates(transcripts, mut_dict):
     if combined is None:
         raise ValueError('no tx found')
     
-    length = combined.get_coding_distance(combined.get_cds_end())['pos']
+    length = combined.get_coding_distance(combined.cds_end)['pos']
     
     return rates, combined, length
 
@@ -180,14 +180,14 @@ def gene_rates(args, output):
     for symbol in sorted(transcripts):
         tx_ids = set(transcripts[symbol])
         gene = gencode[symbol]
-        txs = [x for x in gene.transcripts if x.get_name().split('.')[0] in tx_ids]
+        txs = [x for x in gene.transcripts if x.name.split('.')[0] in tx_ids]
         try:
             rates, tx, length = get_mutation_rates(txs, mut_dict)
             # log transform rates, for consistency with Samocha et al.
-            line = "{}\t{}\t{}\t{}".format(symbol, tx.get_chrom(), length, log_transform(rates))
+            line = "{}\t{}\t{}\t{}".format(symbol, tx.chrom, length, log_transform(rates))
         except (ValueError, KeyError) as error:
             logging.error(f"{symbol}\t{error}\n")
-            line = "{}\t{}\tNA\tNA\tNA\tNA\tNA\tNA".format(symbol, tx.get_chrom())
+            line = "{}\t{}\tNA\tNA\tNA\tNA\tNA\tNA".format(symbol, tx.chrom)
         
         output.write(line + '\n')
     
