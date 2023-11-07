@@ -6,11 +6,11 @@ from __future__ import annotations
 import warnings
 from pkg_resources import resource_filename
 
-__CYVCF2_ERROR = False
+__PYSAM_ERROR = False
 try:
-    from cyvcf2 import VCF
+    from pysam import VariantFile
 except ImportError:
-    __CYVCF2_ERROR = True
+    __PYSAM_ERROR = True
 
 def load_mutation_rates(path=None):
     """ load sequence context-based mutation rates
@@ -48,12 +48,12 @@ class load_mutation_rates_in_region:
     def __init__(self, paths: list[str]):
         ''' start with list of paths to all Roulette VCFs
         '''
-        if __CYVCF2_ERROR:
-            raise ValueError("this does not work due to problems installing cyvcf2")
+        if __PYSAM_ERROR:
+            raise ValueError("this does not work due to problems installing pysam")
 
         self.vcfs = {}
         for path in paths:
-            tbx = VCF(path)
+            tbx = VariantFile(path)
             # tag the tabixfile against all contigs (chromosomes) it contains
             for contig in self._check_chroms(tbx):
                 if contig not in self.vcfs:
@@ -65,9 +65,7 @@ class load_mutation_rates_in_region:
         contigs = []
         for chrom in self.CHROMS:
             try:
-                with warnings.catch_warnings():
-                    warnings.simplefilter("ignore")
-                    next(vcf(f'{chrom}'))
+                next(vcf.fetch(chrom))
                 contigs.append(chrom)
             except StopIteration:
                 pass
@@ -93,8 +91,8 @@ class load_mutation_rates_in_region:
         # Storing the data in a dict should deduplicate sites, if necessary.
         data = {}
         for tbx in self.vcfs[chrom]:
-            for row in tbx(f'{chrom}:{start}-{end+1}'):
-                if row.POS not in data:
-                    data[row.POS] = {}
-                data[row.POS][row.ALT[0]] = row.INFO[tag]
+            for row in tbx.fetch(chrom, start, end):
+                if row.pos not in data:
+                    data[row.pos] = {}
+                data[row.pos][row.alts[0]] = row.info[tag]
         return data
