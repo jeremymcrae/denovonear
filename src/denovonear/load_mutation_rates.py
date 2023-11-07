@@ -49,7 +49,7 @@ class load_mutation_rates_in_region:
         ''' start with list of paths to all Roulette VCFs
         '''
         if __PYSAM_ERROR:
-            raise ValueError("this does not work due to problems installing pysam")
+            raise ValueError("pysam unavailable! try pip install denovonear[pysam] or pip install pysam")
 
         self.vcfs = {}
         for path in paths:
