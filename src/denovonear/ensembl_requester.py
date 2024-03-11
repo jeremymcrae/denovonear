@@ -70,8 +70,6 @@ async def get_previous_symbol(ensembl, hgnc_symbol):
     data = json.loads(resp)
     
     docs = data["response"]["docs"]
-    # strip out any gene entries that have been invalidated
-    docs = [ x for x in docs if x["status"] != "Entry Withdrawn"]
     
     if len(docs) == 0:
         return []
