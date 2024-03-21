@@ -64,7 +64,6 @@ setup(name="denovonear",
     install_requires=[
         'aiohttp >= 3.9.0b0',
         'scipy >= 0.9.0',
-        'cython >= 0.19.0',
         'gencodegenes >= 1.0.7',
     ],
     extras_requires={
