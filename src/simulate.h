@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "weighted_choice.h"
+
 void _get_distances(int sites[], int & len, int distances[]);
 void _get_distances(std::vector<int> sites, std::vector<int> & distances);
 bool _has_zero(int distances[], int & len);
