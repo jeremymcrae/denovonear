@@ -7,14 +7,14 @@
 #include "site_rates.h"
 
 // get the lowest and highest positions of a transcripts coding sequence
-Region _get_gene_range(Tx & tx) {
+gencode::Region _get_gene_range(gencode::Tx & tx) {
     int boundary_1 = tx.get_cds_start();
     int boundary_2 = tx.get_cds_end();
     
     int start = std::min(boundary_1, boundary_2);
     int end = std::max(boundary_1, boundary_2);
     
-    return Region {start, end};
+    return gencode::Region {start, end};
 }
 
 // find the amino acid resulting from a base change to a codon
@@ -25,7 +25,7 @@ Region _get_gene_range(Tx & tx) {
 // @param intra_codon position within the codon to be altered (0-based)
 // @returns single character amino acid code translated from the altered
 //     codon.
-char _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon) {
+char _get_mutated_aa(gencode::Tx & tx, char base, std::string codon, int intra_codon) {
     // figure out what the mutated codon is
     codon[intra_codon] = base;
     return tx.translate_codon(codon);
@@ -46,7 +46,7 @@ void SitesChecks::init(std::vector<std::vector<std::string>> mut) {
     
     initialise_choices();
     // check the consequence alternates for each base in the coding sequence
-    Region region = _get_gene_range(_tx);
+    gencode::Region region = _get_gene_range(_tx);
     for (int i=region.start; i < region.end + 1; i++ ) {
         check_position(i);
     }
@@ -59,13 +59,13 @@ void SitesChecks::init() {
 
     initialise_choices();
     // check the consequence alternates for each base in the coding sequence
-    Region region = _get_gene_range(_tx);
+    gencode::Region region = _get_gene_range(_tx);
     for (int i=region.start; i < region.end + 1; i++ ) {
         check_position(i);
     }
 }
 
-void SitesChecks::add_mask(Tx mask) {
+void SitesChecks::add_mask(gencode::Tx mask) {
     masked = mask;
     has_mask = true;
 }
@@ -134,7 +134,7 @@ void SitesChecks::check_position(int bp) {
         seq = _tx.reverse_complement(seq);
     }
 
-    Codon codon;
+    gencode::Codon codon;
     try {
         codon = _tx.get_codon_info(bp);
     } catch ( const std::invalid_argument& e ) {

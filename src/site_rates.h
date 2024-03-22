@@ -37,29 +37,29 @@ class SitesChecks {
 
  public:
     // this version uses sequence-context based rates
-    SitesChecks(Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords) :
+    SitesChecks(gencode::Tx tx, std::vector<std::vector<std::string>> mut, bool cds_coords) :
          _tx { tx }, use_cds_coords { cds_coords } { init(mut); };
     // this version uses rates fixed to each genome position
-    SitesChecks(Tx tx, std::unordered_map<std::uint64_t, std::unordered_map<char, double>> mut, bool cds_coords) :
+    SitesChecks(gencode::Tx tx, std::unordered_map<std::uint64_t, std::unordered_map<char, double>> mut, bool cds_coords) :
           per_pos_rates { mut }, _tx { tx }, use_cds_coords { cds_coords } { init(); };
     Chooser * __getitem__(std::string category) { return &rates[category]; };
     void initialise_choices();
-    
-    Tx _tx;
-    void add_mask(Tx mask);
+
+    gencode::Tx _tx;
+    void add_mask(gencode::Tx mask);
     void check_position(int bp);
     int get_offset(int bp);
     void check_consequence(std::string & cq, char & initial_aa, char & mutated_aa, int & offset);
     
  private:
-    Tx masked = Tx("zz", "z", -100, -100, '+', "protein_coding");
+    gencode::Tx masked = gencode::Tx("zz", "z", -100, -100, '+', "protein_coding");
     void init(std::vector<std::vector<std::string>> mut);
     void init();
     bool has_mask = false;
     bool use_cds_coords = true;
 };
 
-Region _get_gene_range(Tx & tx);
-char _get_mutated_aa(Tx & tx, char base, std::string codon, int intra_codon);
+gencode::Region _get_gene_range(gencode::Tx & tx);
+char _get_mutated_aa(gencode::Tx & tx, char base, std::string codon, int intra_codon);
 
 #endif  // DENOVONEAR_SITESCHECKS_H_
