@@ -4,12 +4,15 @@
 #include <vector>
 
 #include "weighted_choice.h"
+#include "simulate.h"
 
 // gets the distances between all the pairs of elements from a list
 //
 // @param sites array of positions
-// @return vector of paired positions
-void _get_distances(int sites[], int & len, int distances[]) {
+// @param distances array of pairwise distances to fill in
+void _get_distances(std::vector<int> & sites, std::vector<int> & distances) {
+    int len = ((sites.size() - 1) * sites.size()) / 2;
+    distances.resize(len);
     // get all non-repeating combinations of the sites
     int idx = 0;
     for (int i=0; i < len; i++) {
@@ -22,22 +25,33 @@ void _get_distances(int sites[], int & len, int distances[]) {
     }
 }
 
-void _get_distances(std::vector<int> sites, std::vector<int> & distances) {
-    int size = sites.size();
-    int len = ((size - 1) * size) / 2;
-    int * sites_array = new int[size];
-    for (int i=0; i<size; i++) {
-        sites_array[i] = sites[i];
-    }
-    int * dist_array = new int[len];
-    _get_distances(sites_array, size, dist_array);
+// gets the distances between all the pairs of elements from a list
+//
+// @param sites array of coors
+// @return vector of paired positions
+void _get_structure_distances(std::vector<Coord> & sites, std::vector<int> & distances) {
+    int len = ((sites.size() - 1) * sites.size()) / 2;
     distances.resize(len);
     
-    for (int i=0; i<len; i++) {
-        distances[i] = dist_array[i];
+     // get all non-repeating combinations of the sites
+    double x_delta, y_delta, z_delta;
+    int idx = 0;
+    for (int i=0; i < len; i++) {
+        for (int j=i+1; j < len; j++) {
+            // only include if the array positions differ, so we avoid finding
+            // the distance to itself
+            x_delta = (sites[i].x - sites[j].x);
+            y_delta = (sites[i].y - sites[j].y);
+            z_delta = (sites[i].z - sites[j].z);
+            
+            x_delta = x_delta * x_delta;
+            y_delta = y_delta * y_delta;
+            y_delta = y_delta * y_delta;
+            
+            distances[idx] = std::sqrt(x_delta + y_delta + z_delta);
+            idx += 1;
+        }
     }
-    delete[] sites_array;
-    delete[] dist_array;
 }
 
 // check if any value in an vector is zero
@@ -46,12 +60,6 @@ void _get_distances(std::vector<int> sites, std::vector<int> & distances) {
 // @return true/false for containing zero
 bool _has_zero(int distances[], int & len) {
     return std::find(distances, distances + len, 0) != distances + len;
-}
-
-bool _has_zero(std::vector<int> distances) {
-    int * dist = distances.data();
-    int len = distances.size();
-    return _has_zero(dist, len);
 }
 
 // gets the geometric mean of a vector of distances
@@ -135,7 +143,7 @@ double _geomean(int distances[], int & len) {
     }
 }
 
-double _geomean(std::vector<int> distances) {
+double _geomean(std::vector<int> & distances) {
     int * dist = distances.data();
     int len = distances.size();
     return _geomean(dist, len);
@@ -154,8 +162,8 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
     std::vector<double> mean_distances(iterations);
     
     int distance_len = (de_novo_count - 1) * (de_novo_count) / 2;
-    int * distances = new int[distance_len];
-    int * positions = new int[de_novo_count];
+    std::vector<int> distances(distance_len);
+    std::vector<int> positions(de_novo_count);
     // run through the required iterations
     for (int n=0; n < iterations; n++) {
         // randomly select de novo sites for the iteration
@@ -165,12 +173,45 @@ std::vector<double> _simulate_distribution(Chooser & choices, int iterations,
         
         // convert the positions into distances between all pairs, and get the
         // geometric mean distance of all the distances
-        _get_distances(positions, de_novo_count, distances);
+        _get_distances(positions, distances);
         
-        mean_distances[n] = _geomean(distances, distance_len);
+        mean_distances[n] = _geomean(distances);
     }
-    delete[] distances;
-    delete[] positions;
+    return mean_distances;
+}
+
+// simulates distances between aminod acids for de novo mutations
+//
+// @param choices Chooser object, to sample sites
+// @param coords vector of 3D coords
+// @param iteration number of iterations to run
+// @param de_novo_count number of de novos to simulate per iteration
+// @return a list of mean distances for each iteration
+std::vector<double> _simulate_structure_distribution(Chooser & choices, 
+                                                     std::vector<Coord> & coords, 
+                                                     int iterations,
+                                                     int de_novo_count) {
+    
+    // use a vector to return the mean distances, easier to call from python
+    std::vector<double> mean_distances(iterations);
+    
+    int distance_len = (de_novo_count - 1) * (de_novo_count) / 2;
+    std::vector<int> distances(distance_len);
+    std::vector<Coord> positions(de_novo_count);
+    // run through the required iterations
+    for (int n=0; n < iterations; n++) {
+        // randomly select de novo sites for the iteration
+        
+        for (int i=0; i < de_novo_count; i++) {
+            positions[i] = coords[choices.choice_pos_only() / 3];
+        }
+        
+        // convert the positions into distances between all pairs, and get the
+        // geometric mean distance of all the distances
+        _get_structure_distances(positions, distances);
+        
+        mean_distances[n] = _geomean(distances);
+    }
     return mean_distances;
 }
 
@@ -218,6 +259,52 @@ double _analyse_de_novos(Chooser & choices, int iterations, int de_novo_count,
         
         // simulate mean distances between de novos
         dist = _simulate_distribution(choices, iters_to_run, de_novo_count);
+        
+        for (auto &x : dist) {
+            n_smaller += (x <= observed_value);
+        }
+        
+        // estimate the probability from the number of times a random distance
+        // is equal to or smaller than the observed value
+        sim_prob = (1.0 + (double)n_smaller) / (1.0 + (double)iterations);
+        
+        // halt permutations if the P value could never be significant
+        double z = 10.0;
+        double alpha = 0.1;
+        if (_halt_permutation(sim_prob, iterations, z, alpha)) { break; }
+        
+        iterations += 1000000;  // for if we need to run more iterations
+    }
+    
+    return sim_prob;
+}
+
+// simulates de novos weighted by mutation rate
+//
+// @param choices Chooser object, to sample sites
+// @param coords vector of 3D coords
+// @param iteration number of iterations to run
+// @param de_novo_count number of de novos to simulate per iteration
+// @param observed_value mean distance observed in the real de novo events
+// @return a list of mean distances for each iteration
+double _analyse_structure_de_novos(Chooser & choices, 
+                                   std::vector<Coord> & coords,
+                                   int iterations,
+                                   int de_novo_count,
+                                   double observed_value) {
+    
+    double minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
+    double sim_prob = minimum_prob;
+    std::vector<double> dist;
+
+    std::uint32_t n_smaller = 0;
+    while (iterations < 100000000 && sim_prob == minimum_prob) {
+        int iters_to_run = iterations - dist.size();
+        
+        minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
+        
+        // simulate mean distances between de novos
+        dist = _simulate_structure_distribution(choices, coords, iters_to_run, de_novo_count);
         
         for (auto &x : dist) {
             n_smaller += (x <= observed_value);

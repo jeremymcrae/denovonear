@@ -24,6 +24,8 @@ from libcpp.vector cimport vector
 from libcpp cimport bool
 from cython.operator cimport dereference as deref
 
+from typing import Dict
+
 cdef class WeightedChoice:
     def __cinit__(self):
         self.thisptr = new Chooser()
@@ -102,14 +104,6 @@ cdef class WeightedChoice:
         """
         return self.thisptr.get_summed_rate()
 
-cdef extern from "simulate.h":
-    void _get_distances(vector[int], vector[int] &)
-    bool _has_zero(vector[int])
-    double _geomean(vector[int])
-    bool _halt_permutation(double, int, double, double)
-    vector[double] _simulate_distribution(Chooser, int, int)
-    double _analyse_de_novos(Chooser, int, int, double)
-
 def get_distances(vector[int] positions):
     """ gets the distances between two or more CDS positions
     
@@ -123,11 +117,24 @@ def get_distances(vector[int] positions):
     _get_distances(positions, distances)
     return distances
 
-def has_zero(vector[int] distances):
-    """ figure out whether any of the pairwise distances is zero
-    """
+def get_structure_distances(coords: Dict[str, float]):
+    """ gets the distances between two or more CDS positions
     
-    return _has_zero(distances)
+    Args:
+        positions: list of CDS positions as ints
+    
+    Returns:
+        list of pairwise distances between sites
+    """
+    cdef vector[Coord] _coords
+    _coords.resize(len(coords))
+    
+    for i, coord in enumerate(coords):
+        _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
+    
+    cdef vector[int] distances
+    _get_structure_distances(_coords, distances)
+    return distances
 
 def geomean(vector[int] distances):
     """ gets the geometric mean distance between two or more CDS positions
@@ -147,8 +154,25 @@ def simulate_distribution(WeightedChoice choices, int iterations, int de_novos_c
     
     return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
 
+def simulate_structure_distribution(WeightedChoice choices, int iterations, int de_novos_count):
+    """
+    """
+    
+    return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
+
 def analyse_de_novos(WeightedChoice choices, int iterations, int de_novos_count, double observed_value):
     """
     """
     
     return _analyse_de_novos(deref(choices.thisptr), iterations, de_novos_count, observed_value)
+
+def analyse_structure_de_novos(WeightedChoice choices, coords, int iterations, int de_novos_count, double observed_value):
+    """
+    """
+    cdef vector[Coord] _coords
+    coords.resize(len(coords))
+    
+    for i, coord in enumerate(coords):
+        coords[i] = Coord(coord['x'], coord['y'], coord['z'])
+    
+    return _analyse_structure_de_novos(deref(choices.thisptr), _coords, iterations, de_novos_count, observed_value)

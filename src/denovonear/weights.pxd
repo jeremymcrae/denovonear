@@ -20,7 +20,9 @@ IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
+from libcpp cimport bool
 from libcpp.string cimport string
+from libcpp.vector cimport vector
 
 cdef extern from "weighted_choice.h":
     cdef cppclass Chooser:
@@ -39,6 +41,21 @@ cdef extern from "weighted_choice.h":
         char alt
         double prob
         int offset
+
+cdef extern from "simulate.h":
+    cdef struct Coord:
+        double x
+        double y
+        double z
+    
+    void _get_distances(vector[int] &, vector[int] &)
+    void _get_structure_distances(vector[Coord] &, vector[int] &)
+    double _geomean(vector[int] &)
+    bool _halt_permutation(double, int, double, double)
+    vector[double] _simulate_distribution(Chooser, int, int)
+    vector[double] _simulate_structure_distribution(Chooser, vector[Coord], int, int)
+    double _analyse_de_novos(Chooser, int, int, double)
+    double _analyse_structure_de_novos(Chooser, vector[Coord], int, int, double)
 
 cdef class WeightedChoice:
     cdef int pos
