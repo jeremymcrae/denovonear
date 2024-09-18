@@ -3,8 +3,6 @@
 #include <cmath>
 #include <vector>
 
-#include <iostream>
-
 #include "weighted_choice.h"
 #include "simulate.h"
 
@@ -13,12 +11,13 @@
 // @param sites array of positions
 // @param distances array of pairwise distances to fill in
 void _get_distances(std::vector<int> & sites, std::vector<int> & distances) {
-    int len = ((sites.size() - 1) * sites.size()) / 2;
+    int size = sites.size();
+    int len = ((size - 1) * size) / 2;
     distances.resize(len);
     // get all non-repeating combinations of the sites
     int idx = 0;
-    for (int i=0; i < len; i++) {
-        for (int j=i+1; j < len; j++) {
+    for (int i=0; i < size; i++) {
+        for (int j=i+1; j < size; j++) {
             // only include if the array positions differ, so we avoid finding
             // the distance to itself
             distances[idx] = abs(sites[i] - sites[j]);
@@ -32,19 +31,15 @@ void _get_distances(std::vector<int> & sites, std::vector<int> & distances) {
 // @param sites array of coords
 // @return vector of paired positions
 void _get_structure_distances(std::vector<Coord> & sites, std::vector<int> & distances) {
-    int len = ((sites.size() - 1) * sites.size()) / 2;
+    int size = sites.size();
+    int len = ((size - 1) * size) / 2;
     distances.resize(len);
     
-    for (auto & x: sites) {
-        std::cout << x.x << x.y << x.z << std::endl;
-    }
-    
-    std::cout << "computing distances with: " << sites.size() << " values, len=" << len << std::endl;
      // get all non-repeating combinations of the sites
     double x_delta, y_delta, z_delta;
     int idx = 0;
-    for (int i=0; i <= len; i++) {
-        for (int j=i+1; j <= len; j++) {
+    for (int i=0; i < size; i++) {
+        for (int j=i+1; j < size; j++) {
             // only include if the array positions differ, so we avoid finding
             // the distance to itself
             x_delta = (sites[i].x - sites[j].x);
@@ -54,8 +49,6 @@ void _get_structure_distances(std::vector<Coord> & sites, std::vector<int> & dis
             x_delta = x_delta * x_delta;
             y_delta = y_delta * y_delta;
             y_delta = y_delta * y_delta;
-            
-            std::cout << "x_delta: " << x_delta<< ", y_delta: " << y_delta << ", z_delta: " << z_delta << std::endl;
             
             distances[idx] = std::sqrt(x_delta + y_delta + z_delta);
             idx += 1;

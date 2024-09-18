@@ -129,7 +129,6 @@ def get_structure_distances(coords: List[Dict[str, float]]):
     cdef vector[Coord] _coords
     _coords.resize(len(coords))
     
-    print(coords)
     for i, coord in enumerate(coords):
         _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
     

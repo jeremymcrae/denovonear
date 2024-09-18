@@ -77,8 +77,6 @@ def get_structure_p_value(transcript, rates, structure_coords, iterations, conse
         null distribution.
     """
     
-    print('checking for structure clustering')
-    
     if len(de_novos) < 2:
         return (float('nan'), float('nan'))
     
@@ -111,9 +109,7 @@ def get_structure_p_value(transcript, rates, structure_coords, iterations, conse
     cds_coords = [coords[x] for x in cds_coords]
     
     distances = get_structure_distances(cds_coords)
-    print(distances)
     observed = geomean(distances)
-    print(observed)
     
     coords = list(coords.values())
     # call a cython wrapped C++ library to handle the simulations

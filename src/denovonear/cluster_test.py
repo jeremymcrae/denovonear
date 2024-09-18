@@ -131,8 +131,6 @@ def structure_cluster_de_novos(de_novos, structure, gene, mut_dict, iterations=1
     missense_events = get_de_novos_in_transcript(transcript, missense)
     nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
     
-    print(f'de novos in canonical tx: {missense_events}')
-    
     # The rates either are passed in as lists of lists of sequence-context 
     # based rates which can be applied to a given sequence, or as 
     # dictionaries of rates per position/allele from genome based reference 
