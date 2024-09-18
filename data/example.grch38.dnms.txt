@@ -2,3 +2,9 @@ gene_name	chr	pos	consequence	snp_or_indel
 OR4F5	chr1	69500	missense_variant	DENOVO-SNP
 OR4F5	chr1	69450	missense_variant	DENOVO-SNP
 OR4F5	chr1	69400	missense_variant	DENOVO-SNP
+CTC1	17	8235872	missense_variant	DENOVO-SNP
+CTC1	17	8238140	missense_variant	DENOVO-SNP
+PPP2R5D	6	43007265	missense_variant	DENOVO-SNP
+PPP2R5D	6	43007265	missense_variant	DENOVO-SNP
+PPP2R5D	6	43007265	missense_variant	DENOVO-SNP
+PPP2R5D	6	43007265	missense_variant	DENOVO-SNP

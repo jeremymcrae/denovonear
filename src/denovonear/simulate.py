@@ -77,6 +77,8 @@ def get_structure_p_value(transcript, rates, structure_coords, iterations, conse
         null distribution.
     """
     
+    print('checking for structure clustering')
+    
     if len(de_novos) < 2:
         return (float('nan'), float('nan'))
     
@@ -96,20 +98,24 @@ def get_structure_p_value(transcript, rates, structure_coords, iterations, conse
     # coords extend to the end of the transcript range
     residues = [x[1] for x in sorted(structure_coords)]
     if residues != list(range(1, len(structure_coords) + 1)):
-        logging.warning(f'cannot get distances from structure missing residues')
+        logging.warning(f'cannot get distances from structure - missing residues')
         return float('nan'), float('nan')
     
-    last_residue = transcript.get_coding_distance(transcript.get_cds_end())['pos'] // 3
+    last_residue = transcript.get_coding_distance(transcript.cds_end)['pos'] // 3
     if abs(last_residue - residues[-1]) > 2:
         logging.warning(f"transcript length doesn't match structure length")
         return float('nan'), float('nan')
     
-    coords = [v for k, v in sorted(structure_coords.items())]
-    cds_coords = [ coords[transcript.get_coding_distance(x)['pos'] // 3] for x in de_novos ]
+    coords = {k[1]: v for k, v in sorted(structure_coords.items())}
+    cds_coords = [transcript.get_coding_distance(x)['pos'] // 3 for x in de_novos]
+    cds_coords = [coords[x] for x in cds_coords]
     
     distances = get_structure_distances(cds_coords)
+    print(distances)
     observed = geomean(distances)
+    print(observed)
     
+    coords = list(coords.values())
     # call a cython wrapped C++ library to handle the simulations
     sim_prob = analyse_structure_de_novos(weights, coords, iterations, len(de_novos), observed)
     

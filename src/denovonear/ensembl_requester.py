@@ -141,3 +141,28 @@ async def get_cds_ranges_for_transcript(ensembl, transcript_id, build='grch37'):
     """ obtain the sequence for a transcript from ensembl
     """
     return await get_ranges_for_tx(ensembl, transcript_id, 'cds', build)
+
+async def _get_uniprot_ids_for_transcript(ensembl, transcript_id, build='grch37'):
+    """ obtain the sequence for a transcript from ensembl
+    """
+    headers = {"content-type": "application/json"}
+    ext = f"lookup/id/{transcript_id.split('.')[0]}"
+    url = f'{get_base_url(build)}/{ext}?content-type=application/json'
+    resp = await ensembl.get(url, headers=headers)
+    
+    gene_id = json.loads(resp)['Parent']
+    
+    # can't get valid uniprot IDs from the grch37 server - set to grch38
+    build = 'grch38'
+    
+    headers = {"content-type": "application/json"}
+    ext = f"xrefs/id/{gene_id}"
+    url = f'{get_base_url(build)}/{ext}'
+    resp = await ensembl.get(url, headers)
+    
+    ids = []
+    for id_type in json.loads(resp):
+        if id_type["dbname"] == "Uniprot_gn":
+            ids.append(id_type["primary_id"])
+    
+    return ids

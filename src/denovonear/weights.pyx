@@ -117,7 +117,7 @@ def get_distances(vector[int] positions):
     _get_distances(positions, distances)
     return distances
 
-def get_structure_distances(coords: Dict[str, float]):
+def get_structure_distances(coords: List[Dict[str, float]]):
     """ gets the distances between two or more CDS positions
     
     Args:
@@ -129,6 +129,7 @@ def get_structure_distances(coords: Dict[str, float]):
     cdef vector[Coord] _coords
     _coords.resize(len(coords))
     
+    print(coords)
     for i, coord in enumerate(coords):
         _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
     
@@ -170,9 +171,9 @@ def analyse_structure_de_novos(WeightedChoice choices, coords, int iterations, i
     """
     """
     cdef vector[Coord] _coords
-    coords.resize(len(coords))
+    _coords.resize(len(coords))
     
     for i, coord in enumerate(coords):
-        coords[i] = Coord(coord['x'], coord['y'], coord['z'])
+        _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
     
     return _analyse_structure_de_novos(deref(choices.thisptr), _coords, iterations, de_novos_count, observed_value)

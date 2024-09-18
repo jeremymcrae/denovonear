@@ -7,17 +7,22 @@ import logging
 from gencodegenes import Gene, Transcript
 
 from denovonear.ensembl_requester import (get_protein_seq_for_transcript,
-    get_genomic_seq_for_transcript, get_cds_seq_for_transcript,
-    get_cds_ranges_for_transcript, get_exon_ranges_for_transcript,
-    get_genes_for_hgnc_id, get_transcript_ids_for_ensembl_gene_id,
-    get_previous_symbol)
+                                          get_genomic_seq_for_transcript,
+                                          get_cds_seq_for_transcript,
+                                          get_cds_ranges_for_transcript,
+                                          get_exon_ranges_for_transcript,
+                                          get_genes_for_hgnc_id,
+                                          get_transcript_ids_for_ensembl_gene_id,
+                                          get_previous_symbol,
+                                          _get_uniprot_ids_for_transcript,
+                                          )
 
 def cds_length(transcript):
     '''get length of CDS
     '''
     return transcript.get_coding_distance(transcript.cds_end)['pos'] + 1
 
-async def construct_gene_object(ensembl, transcript_id):
+async def construct_gene_object(ensembl, transcript_id, build='grch37'):
     """ creates an Transcript object for a gene from ensembl databases
     
     Args:
@@ -32,10 +37,10 @@ async def construct_gene_object(ensembl, transcript_id):
         ValueError if CDS from genomic sequence given gene coordinates and CDS
         retrieved from Ensembl do not match.
     """
-    tasks = [get_genomic_seq_for_transcript(ensembl, transcript_id, expand=10),
-        get_cds_seq_for_transcript(ensembl, transcript_id),
-        get_cds_ranges_for_transcript(ensembl, transcript_id),
-        get_exon_ranges_for_transcript(ensembl, transcript_id)]
+    tasks = [get_genomic_seq_for_transcript(ensembl, transcript_id, expand=10, build=build),
+        get_cds_seq_for_transcript(ensembl, transcript_id, build),
+        get_cds_ranges_for_transcript(ensembl, transcript_id, build),
+        get_exon_ranges_for_transcript(ensembl, transcript_id, build)]
     (chrom, start, end, strand, genomic), cds_seq, cds, exons = await asyncio.gather(*tasks)
     
     # start a Transcript object with the locations and sequence
@@ -76,7 +81,7 @@ def get_de_novos_in_transcript(transcript, de_novos):
 def flatten(values):
     return [x for sub in values for x in sub]
 
-async def get_transcript_ids(ensembl, symbol):
+async def get_transcript_ids(ensembl, symbol, build='grch37'):
     """ gets transcript IDs for a gene.
     
     Args:
@@ -87,8 +92,8 @@ async def get_transcript_ids(ensembl, symbol):
        list of transcript IDs for a given HGNC symbol.
     """
     
-    genes = await get_genes_for_hgnc_id(ensembl, symbol)
-    tasks = [get_transcript_ids_for_ensembl_gene_id(ensembl, x, symbol) for x in genes]
+    genes = await get_genes_for_hgnc_id(ensembl, symbol, build)
+    tasks = [get_transcript_ids_for_ensembl_gene_id(ensembl, x, symbol, build) for x in genes]
     transcript_ids = flatten(await asyncio.gather(*tasks))
     
     # sometimes we get HGNC symbols that do not match the ensembl rest version
@@ -97,16 +102,16 @@ async def get_transcript_ids(ensembl, symbol):
     symbols = []
     if len(transcript_ids) == 0:
         symbols = await get_previous_symbol(ensembl, symbol)
-        tasks = [get_genes_for_hgnc_id(ensembl, s) for s in symbols]
+        tasks = [get_genes_for_hgnc_id(ensembl, s, build) for s in symbols]
         genes += flatten(await asyncio.gather(*tasks))
         symbols = [symbol] + symbols
         
-        tasks = [get_transcript_ids_for_ensembl_gene_id(ensembl, x, symbols) for x in genes]
+        tasks = [get_transcript_ids_for_ensembl_gene_id(ensembl, x, symbols, build) for x in genes]
         transcript_ids = flatten(await asyncio.gather(*tasks))
     
     return transcript_ids
 
-async def load_gene(ensembl, gene_id):
+async def load_gene(ensembl, gene_id, build='grch37'):
     """ sort out all the necessary sequences and positions for a gene
     
     Args:
@@ -116,15 +121,15 @@ async def load_gene(ensembl, gene_id):
     Returns:
         Gene object, containing info for each transcript
     """
-    
-    tx_ids = await get_transcript_ids(ensembl, gene_id)
+    print(build)
+    tx_ids = await get_transcript_ids(ensembl, gene_id, build)
     logging.info(f'found tx IDs for {gene_id}: {tx_ids}')
     
     gene = Gene(gene_id)
     for tx_id in tx_ids:
         logging.info(f'constructing: {tx_id}')
         try:
-            tx = await construct_gene_object(ensembl, tx_id)
+            tx = await construct_gene_object(ensembl, tx_id, build)
         except ValueError as e:
             logging.info(f'failed: {tx_id}')
             logging.info(e)
@@ -203,3 +208,14 @@ def minimise_transcripts(transcripts, de_novos):
     max_transcripts.update(update)
     
     return max_transcripts
+
+async def uniprot_wrapper(transcript_id, build='grch37'):
+    from denovonear.rate_limiter import RateLimiter
+    async with RateLimiter(per_second=15) as ensembl:
+        tasks = [_get_uniprot_ids_for_transcript(ensembl, transcript_id, build)]
+        ids = await asyncio.gather(*tasks)
+        return ids
+
+def get_uniprot_ids_for_transcript(transcript_id, build='grch37'):
+    return asyncio.get_event_loop().run_until_complete(uniprot_wrapper(transcript_id, build))[0]
+

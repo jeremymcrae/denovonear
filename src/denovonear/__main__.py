@@ -10,29 +10,38 @@ import logging
 
 from denovonear.rate_limiter import RateLimiter
 from denovonear.load_mutation_rates import (load_mutation_rates,
-                                            load_mutation_rates_in_region)
+                                            load_mutation_rates_in_region,
+                                            )
 from denovonear.load_de_novos import load_de_novos
-from denovonear.cluster_test import cluster_de_novos
+from denovonear.structures import load_structure
+from denovonear.cluster_test import (cluster_de_novos,
+                                     structure_cluster_de_novos,
+                                     )
 
-from denovonear.load_gene import (load_gene, construct_gene_object,
-    count_de_novos_per_transcript, minimise_transcripts)
+from denovonear.load_gene import (load_gene,
+                                  construct_gene_object,
+                                  count_de_novos_per_transcript, 
+                                  minimise_transcripts,
+                                  get_uniprot_ids_for_transcript,
+                                  )
 from denovonear.site_specific_rates import SiteRates
 from denovonear.frameshift_rate import include_frameshift_rates
 from denovonear.log_transform_rates import log_transform
 from gencodegenes.gencode import Gencode
 
-async def _load_gencode(symbols):
+async def _load_gencode(symbols, build='grch37'):
     ''' load gene coords and sequence via ensembl
     '''
+    print(build)
     gencode = Gencode()
     async with RateLimiter(per_second=15) as ensembl:
-        tasks = [load_gene(ensembl, symbol) for symbol in symbols]
+        tasks = [load_gene(ensembl, symbol, build) for symbol in symbols]
         genes = await asyncio.gather(*tasks)
         for gene in genes:
             gencode.add_gene(gene)
         return gencode
 
-def load_gencode(symbols, gencode=None, fasta=None):
+def load_gencode(symbols, gencode=None, fasta=None, build='grch37'):
     ''' load genes from gencode annotations file, with ensembl as backup
     '''
     if gencode and fasta:
@@ -40,7 +49,7 @@ def load_gencode(symbols, gencode=None, fasta=None):
     
     # use ensembl as backup if gencode file not available. This restricts the
     # asynchronous calls to within one section, and ensures they are called together
-    return asyncio.get_event_loop().run_until_complete(_load_gencode(symbols))
+    return asyncio.get_event_loop().run_until_complete(_load_gencode(symbols, build))
 
 def clustering(args, output):
     
@@ -50,7 +59,7 @@ def clustering(args, output):
         rates = load_mutation_rates_in_region(args.rates)
 
     de_novos = load_de_novos(args.input)
-    gencode = load_gencode(de_novos, args.gencode, args.fasta)
+    gencode = load_gencode(de_novos, args.gencode, args.fasta, args.genome_build)
     
     output.write("gene_id\tmutation_category\tevents_n\tdist\tprobability\n")
     
@@ -73,6 +82,44 @@ def clustering(args, output):
             len(de_novos[symbol]["missense"]), probs["miss_dist"], probs["miss_prob"]))
         output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "nonsense",
             len(de_novos[symbol]["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
+
+def structure_clustering(args, output):
+    
+    if args.rates_format == 'context':
+        rates = load_mutation_rates(args.rates)
+    else:
+        rates = load_mutation_rates_in_region(args.rates)
+
+    de_novos = load_de_novos(args.input)
+    gencode = load_gencode(de_novos, args.gencode, args.fasta, args.genome_build)
+    
+    output.write("gene_id\tmutation_category\tevents_n\tdist\tprobability\n")
+    
+    iterations = 1000000
+    for symbol in sorted(de_novos):
+        logging.info(f'checking {symbol}')
+        if len(de_novos[symbol]["missense"] + de_novos[symbol]["nonsense"]) < 2:
+            continue
+        
+        if symbol not in gencode:
+            logging.info(f'cannot find {symbol} in gencode')
+            continue
+        
+        uniprot_ids = get_uniprot_ids_for_transcript(gencode[symbol].canonical.name, args.genome_build)
+        structure = load_structure(args.structures, uniprot_ids)
+        if structure is None:
+            continue
+        
+        probs = structure_cluster_de_novos(de_novos[symbol], structure, gencode[symbol], rates, iterations)
+        
+        if probs is None:
+            continue
+        
+        output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "missense",
+            len(de_novos[symbol]["missense"]), probs["miss_dist"], probs["miss_prob"]))
+        output.write("{}\t{}\t{}\t{}\t{}\n".format(symbol, "nonsense",
+            len(de_novos[symbol]["nonsense"]), probs["nons_dist"], probs["nons_prob"]))
+
 
 def find_transcripts(args, output):
     
@@ -236,6 +283,19 @@ def get_options():
     cluster.set_defaults(func=clustering)
     
     ############################################################################
+    # CLI options for clustering
+    cluster = subparsers.add_parser('cluster-structure', parents=[parent],
+        description="Tests the proximity of de novo mutations in proteins.")
+    cluster.add_argument("--in", dest="input", required=True, help="Path to "
+        "file listing known mutations in genes. See example file in data folder "
+        "for format.")
+    cluster.add_argument("--structures", required=True, help="Path to "
+        "tar file containing predicted syrctures for all proteings in the human "
+        "genome. e.g. https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000005640_9606_HUMAN_v4.tar")
+    
+    cluster.set_defaults(func=structure_clustering)
+    
+    ############################################################################
     # CLI options for identifing transcripts to use
     transcripts = subparsers.add_parser('transcripts', parents=[parent],
         description="Identify transcripts for a gene containing de novo events.")
@@ -262,7 +322,7 @@ def get_options():
     
     args = parser.parse_args()
     if 'func' not in args:
-        print('Use one of the subcommands: cluster, rates, or transcripts\n')
+        print('Use one of the subcommands: cluster, cluster-structure, rates, or transcripts\n')
         parser.print_help()
         sys.exit()
     
