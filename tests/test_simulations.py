@@ -25,6 +25,7 @@ import unittest
 from denovonear.weights import (get_distances,
                                 get_structure_distances,
                                 geomean,
+                                geomean_double,
                                 WeightedChoice,
                                 simulate_distances,
                                 simulate_structure_distances,
@@ -101,35 +102,34 @@ class TestSimulationsPy(unittest.TestCase):
         """
         
         # spread sites throughout a 1000 bp transcript
-        coords = [{'x': 30.0, 'y': 30.0, 'z': 30.0},
-                  {'x': 100.0, 'y': 100.0, 'z': 100.0},
-                  {'x': 200.0, 'y': 200.0, 'z': 200.0},
-                  ]
-        distances = get_structure_distances(coords)
-        observed = geomean(distances)
-        print("\n\nobserved_distance =", observed, "\n\n")
+        dnms = [{'x': 30.0, 'y': 30.0, 'z': 30.0},
+                {'x': 100.0, 'y': 100.0, 'z': 100.0},
+                {'x': 200.0, 'y': 200.0, 'z': 200.0},
+                ]
+        distances = get_structure_distances(dnms)
+        observed = geomean_double(distances)
         
-        # coords = [{'x': float(i), 'y': float(i), 'z': float(i)} for i in range(len(self.choices) // 3)]
-        p_val = simulate_structure_clustering(self.choices, coords, self.iterations, len(coords), observed)
+        coords = [{'x': float(i), 'y': float(i), 'z': float(i)} for i in range(len(self.choices) // 3)]
+        p_val = simulate_structure_clustering(
+            self.choices, coords, self.iterations, len(dnms), observed)
         
-        self.assertAlmostEqual(p_val, 0.635, places=2)
+        self.assertAlmostEqual(p_val, 0.649, places=2)
     
     def test_simulate_structure_clustering_clustered(self):
         """ test simulate_structure_clustering() works correctly for clustered de novos
         """
         
         # cluster sites within 20 bp in a 1000 bp transcript
-        coords = [{'x': 100.0, 'y': 100.0, 'z': 100.0},
-                  {'x': 110.0, 'y': 110.0, 'z': 110.0},
-                  {'x': 120.0, 'y': 120.0, 'z': 120.0},
-                  ]
-        distances = get_structure_distances(coords)
-        print("\ndistances=", distances)
-        observed = geomean(distances)
-        print("\n\nobserved_distance =", observed, "\n\n")
+        dnms = [{'x': 101.0, 'y': 101.0, 'z': 101.0},
+                {'x': 110.0, 'y': 110.0, 'z': 110.0},
+                {'x': 111.0, 'y': 111.0, 'z': 111.0},
+                ]
+        distances = get_structure_distances(dnms)
+        observed = geomean_double(distances)
         
-        # coords = [{'x': i, 'y': i, 'z': i} for i in range(len(self.choices) // 3)]
-        p_val = simulate_structure_clustering(self.choices, coords, self.iterations, len(coords), observed)
+        coords = [{'x': i, 'y': i, 'z': i} for i in range(len(self.choices) // 3)]
+        p_val = simulate_structure_clustering(
+            self.choices, coords, self.iterations, len(dnms), observed)
         
         self.assertAlmostEqual(p_val, 0.002, places=3)
     

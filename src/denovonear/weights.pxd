@@ -56,7 +56,7 @@ cdef extern from "simulate.h":
     vector[double] _simulate_distances(Chooser &, int, int)
     vector[double] _simulate_structure_distances(Chooser, vector[Coord] &, int, int)
     double _simulate_clustering(Chooser &, int, int, double)
-    double _simulate_structure_clustering(Chooser &, vector[Coord] &, int, int, double)
+    double _simulate_structure_clustering(Chooser &, vector[Coord] &, int, int, double) except+
 
 cdef class WeightedChoice:
     cdef int pos

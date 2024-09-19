@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
+#include <exception>
 
 #include "weighted_choice.h"
 #include "simulate.h"
@@ -257,9 +258,13 @@ std::vector<double> _simulate_distances(Chooser & choices, int iterations,
 // @param de_novo_count number of de novos to simulate per iteration
 // @return a list of mean distances for each iteration
 std::vector<double> _simulate_structure_distances(Chooser & choices, 
-                                                     std::vector<Coord> & coords, 
-                                                     int iterations,
-                                                     int de_novo_count) {
+                                                  std::vector<Coord> & coords, 
+                                                  int iterations,
+                                                  int de_novo_count) {
+    
+    if (((int) coords.size() * 3) + 6 < choices.len()) {
+        throw std::invalid_argument("number of coords is too low for the transcript site sampler");
+    }
     
     // use a vector to return the mean distances, easier to call from python
     std::vector<double> mean_distances(iterations);
@@ -271,8 +276,14 @@ std::vector<double> _simulate_structure_distances(Chooser & choices,
     for (int n=0; n < iterations; n++) {
         // randomly select de novo sites for the iteration
         
+        int idx;
         for (int i=0; i < de_novo_count; i++) {
-            positions[i] = coords[choices.choice_pos_only() / 3];
+            idx = choices.choice_pos_only() / 3;
+            while (idx >= coords.size()) {
+                // ensure we don't use the terminator codon
+                idx = choices.choice_pos_only() / 3;
+            }
+            positions[i] = coords[idx];
         }
         
         // convert the positions into distances between all pairs, and get the
@@ -357,10 +368,10 @@ double _simulate_clustering(Chooser & choices, int iterations, int de_novo_count
 // @param observed_value mean distance observed in the real de novo events
 // @return a list of mean distances for each iteration
 double _simulate_structure_clustering(Chooser & choices, 
-                                   std::vector<Coord> & coords,
-                                   int iterations,
-                                   int de_novo_count,
-                                   double observed_value) {
+                                      std::vector<Coord> & coords,
+                                      int iterations,
+                                      int de_novo_count,
+                                      double observed_value) {
     
     double minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
     double sim_prob = minimum_prob;
