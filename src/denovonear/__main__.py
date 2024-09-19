@@ -32,7 +32,6 @@ from gencodegenes.gencode import Gencode
 async def _load_gencode(symbols, build='grch37'):
     ''' load gene coords and sequence via ensembl
     '''
-    print(build)
     gencode = Gencode()
     async with RateLimiter(per_second=15) as ensembl:
         tasks = [load_gene(ensembl, symbol, build) for symbol in symbols]

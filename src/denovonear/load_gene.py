@@ -3,6 +3,7 @@
 
 import asyncio
 import logging
+from typing import List
 
 from gencodegenes import Gene, Transcript
 
@@ -121,7 +122,6 @@ async def load_gene(ensembl, gene_id, build='grch37'):
     Returns:
         Gene object, containing info for each transcript
     """
-    print(build)
     tx_ids = await get_transcript_ids(ensembl, gene_id, build)
     logging.info(f'found tx IDs for {gene_id}: {tx_ids}')
     
@@ -209,13 +209,17 @@ def minimise_transcripts(transcripts, de_novos):
     
     return max_transcripts
 
-async def uniprot_wrapper(transcript_id, build='grch37'):
+async def uniprot_wrapper(transcript_id: str, build='grch37') -> List[str]:
+    ''' this wraps an asynchronous function, so we can call it synchronous
+    '''
     from denovonear.rate_limiter import RateLimiter
     async with RateLimiter(per_second=15) as ensembl:
         tasks = [_get_uniprot_ids_for_transcript(ensembl, transcript_id, build)]
         ids = await asyncio.gather(*tasks)
         return ids
 
-def get_uniprot_ids_for_transcript(transcript_id, build='grch37'):
+def get_uniprot_ids_for_transcript(transcript_id: str, build='grch37') -> List[str]:
+    ''' find the uniprot IDs for a transcript, in order to look for a structure
+    '''
     return asyncio.get_event_loop().run_until_complete(uniprot_wrapper(transcript_id, build))[0]
 
