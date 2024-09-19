@@ -3,8 +3,8 @@
 ### Denovonear
 
 This code assesses whether de novo single-nucleotide variants are closer
-together within the coding sequence of a gene than expected by chance, or the 
-amino acids for those SNVs are closer together in the protein structure than 
+together within the coding sequence of a gene than expected by chance, or whether 
+the amino acids for those SNVs are closer together in the protein structure than 
 expected by chance. We use local-sequence based mutation rates to account for
 differential mutability of regions. The default rates are per-trinucleotide 
 based see [Nature Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html), 
