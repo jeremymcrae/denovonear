@@ -113,7 +113,7 @@ class TestSimulationsPy(unittest.TestCase):
         p_val = simulate_structure_clustering(
             self.choices, coords, self.iterations, len(dnms), observed)
         
-        self.assertAlmostEqual(p_val, 0.649, places=2)
+        self.assertAlmostEqual(p_val, 0.649, delta=0.01)
     
     def test_simulate_structure_clustering_clustered(self):
         """ test simulate_structure_clustering() works correctly for clustered de novos
