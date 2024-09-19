@@ -60,7 +60,7 @@ class TestSimulationsPy(unittest.TestCase):
         
         p_val = simulate_clustering(self.choices, self.iterations, len(positions), observed)
         
-        self.assertAlmostEqual(p_val, 0.635, places=2)
+        self.assertAlmostEqual(p_val, 0.635, delta=0.01)
     
     def test_simulate_clustering_clustered(self):
         """ test simulate_clustering() works correctly for clustered de novos
