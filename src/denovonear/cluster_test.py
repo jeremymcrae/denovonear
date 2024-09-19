@@ -106,7 +106,7 @@ def cluster_de_novos(de_novos, gene, mut_dict, iterations=1000000):
 def structure_cluster_de_novos(de_novos: Dict[str, List[int]],
                                structure: Dict[Tuple[str, int], Dict[str, float]],
                                gene: Gene,
-                               mut_dict: List[List[str]] | Dict[int, Dict[str, float]],
+                               mut_dict: Union[List[List[str]], Dict[int, Dict[str, float]]],
                                iterations=1000000,
                                ) -> Dict[str, float]:
     """ analysis proximity cluster of de novos in a single gene
