@@ -276,7 +276,7 @@ std::vector<double> _simulate_structure_distances(Chooser & choices,
     for (int n=0; n < iterations; n++) {
         // randomly select de novo sites for the iteration
         
-        int idx;
+        std::size_t idx;
         for (int i=0; i < de_novo_count; i++) {
             idx = choices.choice_pos_only() / 3;
             while (idx >= coords.size()) {
