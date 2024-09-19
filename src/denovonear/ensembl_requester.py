@@ -143,7 +143,7 @@ async def get_cds_ranges_for_transcript(ensembl, transcript_id, build='grch37'):
     return await get_ranges_for_tx(ensembl, transcript_id, 'cds', build)
 
 async def _get_uniprot_ids_for_transcript(ensembl, transcript_id, build='grch37'):
-    """ obtain the sequence for a transcript from ensembl
+    """ obtain the uniprot IDs for a transcript from ensembl
     """
     headers = {"content-type": "application/json"}
     ext = f"lookup/id/{transcript_id.split('.')[0]}"

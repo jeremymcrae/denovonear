@@ -22,8 +22,15 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import math
 import unittest
 
-from denovonear.weights import get_distances, geomean, WeightedChoice, \
-    analyse_de_novos, simulate_distribution
+from denovonear.weights import (get_distances,
+                                get_structure_distances,
+                                geomean,
+                                WeightedChoice,
+                                simulate_distances,
+                                simulate_structure_distances,
+                                simulate_clustering,
+                                simulate_structure_clustering,
+                                )
 
 class TestSimulationsPy(unittest.TestCase):
     """ unit test the simulation functions
@@ -41,8 +48,8 @@ class TestSimulationsPy(unittest.TestCase):
         
         self.iterations = 100000
     
-    def test_analyse_de_novos_dispersed(self):
-        """ test analyse_de_novos() works correctly for dispersed de novos
+    def test_simulate_clustering_dispersed(self):
+        """ test simulate_clustering() works correctly for dispersed de novos
         """
         
         # spread sites throughout a 1000 bp transcript
@@ -50,12 +57,12 @@ class TestSimulationsPy(unittest.TestCase):
         distances = get_distances(positions)
         observed = geomean(distances)
         
-        p_val = analyse_de_novos(self.choices, self.iterations, len(positions), observed)
+        p_val = simulate_clustering(self.choices, self.iterations, len(positions), observed)
         
         self.assertAlmostEqual(p_val, 0.635, places=2)
     
-    def test_analyse_de_novos_clustered(self):
-        """ test analyse_de_novos() works correctly for clustered de novos
+    def test_simulate_clustering_clustered(self):
+        """ test simulate_clustering() works correctly for clustered de novos
         """
         
         # cluster sites within 20 bp in a 1000 bp transcript
@@ -63,17 +70,66 @@ class TestSimulationsPy(unittest.TestCase):
         distances = get_distances(positions)
         observed = geomean(distances)
         
-        p_val = analyse_de_novos(self.choices, 1000000, len(positions), observed)
+        p_val = simulate_clustering(self.choices, 1000000, len(positions), observed)
         
         self.assertAlmostEqual(p_val, 0.002, places=3)
     
-    def test_simulate_distribution(self):
-        ''' check that simulate_distribution works correctly
+    def test_simulate_distances(self):
+        ''' check that simulate_distances works correctly
         '''
         
         # repeated function calls should give different samples
-        first = simulate_distribution(self.choices, iterations=5, de_novos_count=3)
-        second = simulate_distribution(self.choices, iterations=5, de_novos_count=3)
+        first = simulate_distances(self.choices, iterations=5, de_novos_count=3)
+        second = simulate_distances(self.choices, iterations=5, de_novos_count=3)
         
         self.assertNotEqual(first, second)
         
+    def test_simulate_structure_distances(self):
+        ''' check that simulate_structure_distances works correctly
+        '''
+        
+        coords = [{'x': float(i), 'y': float(i), 'z': float(i)} for i in range(len(self.choices) // 3)]
+        
+        # repeated function calls should give different samples
+        first = simulate_structure_distances(self.choices, coords, iterations=5, de_novos_count=3)
+        second = simulate_structure_distances(self.choices, coords, iterations=5, de_novos_count=3)
+        
+        self.assertNotEqual(first, second)
+    
+    def test_simulate_structure_clustering_dispersed(self):
+        """ test simulate_structure_clustering() works correctly for dispersed de novos
+        """
+        
+        # spread sites throughout a 1000 bp transcript
+        coords = [{'x': 30.0, 'y': 30.0, 'z': 30.0},
+                  {'x': 100.0, 'y': 100.0, 'z': 100.0},
+                  {'x': 200.0, 'y': 200.0, 'z': 200.0},
+                  ]
+        distances = get_structure_distances(coords)
+        observed = geomean(distances)
+        print("\n\nobserved_distance =", observed, "\n\n")
+        
+        # coords = [{'x': float(i), 'y': float(i), 'z': float(i)} for i in range(len(self.choices) // 3)]
+        p_val = simulate_structure_clustering(self.choices, coords, self.iterations, len(coords), observed)
+        
+        self.assertAlmostEqual(p_val, 0.635, places=2)
+    
+    def test_simulate_structure_clustering_clustered(self):
+        """ test simulate_structure_clustering() works correctly for clustered de novos
+        """
+        
+        # cluster sites within 20 bp in a 1000 bp transcript
+        coords = [{'x': 100.0, 'y': 100.0, 'z': 100.0},
+                  {'x': 110.0, 'y': 110.0, 'z': 110.0},
+                  {'x': 120.0, 'y': 120.0, 'z': 120.0},
+                  ]
+        distances = get_structure_distances(coords)
+        print("\ndistances=", distances)
+        observed = geomean(distances)
+        print("\n\nobserved_distance =", observed, "\n\n")
+        
+        # coords = [{'x': i, 'y': i, 'z': i} for i in range(len(self.choices) // 3)]
+        p_val = simulate_structure_clustering(self.choices, coords, self.iterations, len(coords), observed)
+        
+        self.assertAlmostEqual(p_val, 0.002, places=3)
+    

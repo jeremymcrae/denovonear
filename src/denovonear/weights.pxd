@@ -49,13 +49,14 @@ cdef extern from "simulate.h":
         double z
     
     void _get_distances(vector[int] &, vector[int] &)
-    void _get_structure_distances(vector[Coord] &, vector[int] &)
+    void _get_structure_distances(vector[Coord] &, vector[double] &)
     double _geomean(vector[int] &)
+    double _geomean_double(vector[double] &)
     bool _halt_permutation(double, int, double, double)
-    vector[double] _simulate_distribution(Chooser, int, int)
-    vector[double] _simulate_structure_distribution(Chooser, vector[Coord], int, int)
-    double _analyse_de_novos(Chooser, int, int, double)
-    double _analyse_structure_de_novos(Chooser, vector[Coord], int, int, double)
+    vector[double] _simulate_distances(Chooser &, int, int)
+    vector[double] _simulate_structure_distances(Chooser, vector[Coord] &, int, int)
+    double _simulate_clustering(Chooser &, int, int, double)
+    double _simulate_structure_clustering(Chooser &, vector[Coord] &, int, int, double)
 
 cdef class WeightedChoice:
     cdef int pos

@@ -1,8 +1,10 @@
 
 from math import log, isnan
+from typing import Dict, List, Tuple
 
 from scipy.stats import chi2
 
+from gencodegenes import Gene
 from denovonear.load_gene import get_de_novos_in_transcript, minimise_transcripts
 from denovonear.site_specific_rates import SiteRates
 from denovonear.simulate import get_p_value, get_structure_p_value
@@ -101,23 +103,27 @@ def cluster_de_novos(de_novos, gene, mut_dict, iterations=1000000):
     
     return probs
 
-def structure_cluster_de_novos(de_novos, structure, gene, mut_dict, iterations=1000000):
+def structure_cluster_de_novos(de_novos: Dict[str, List[int]],
+                               structure: Dict[Tuple[str, int], Dict[str, float]],
+                               gene: Gene,
+                               mut_dict: List[List[str]] | Dict[int, Dict[str, float]],
+                               iterations=1000000,
+                               ) -> Dict[str, float]:
     """ analysis proximity cluster of de novos in a single gene
     
     Args:
         de_novos: dictionary of de novo positions for the HGNC gene,
             indexed by functional type
+        structure: 3D coordinates for carbon atoms in amino acids along protein 
+            sequence, indexed by (chain, residue number)
         gene: gencodegenes.Gene object
         mut_dict: dictionary of mutation rates, indexed by trinuclotide sequence, 
         iterations: number of simulations to run
     
     Returns:
-        a dictionary containing P values, and distances for missense, nonsense,
-        and synonymous de novos events. Missing data is represented by "NA".
+        a dictionary containing P values, and distances for missense and nonsense,
+        de novos. Missing data is represented by "NA".
     """
-    
-    missense = de_novos["missense"]
-    nonsense = de_novos["nonsense"]
     
     if len(gene.transcripts) == 0:
         nan = float('nan')
@@ -125,11 +131,8 @@ def structure_cluster_de_novos(de_novos, structure, gene, mut_dict, iterations=1
     
     transcript = gene.canonical
     
-    probs = {"miss_prob": [], "nons_prob": []}
-    dists = {"miss_dist": [], "nons_dist": []}
-    
-    missense_events = get_de_novos_in_transcript(transcript, missense)
-    nonsense_events = get_de_novos_in_transcript(transcript, nonsense)
+    missense_events = get_de_novos_in_transcript(transcript, de_novos["missense"])
+    nonsense_events = get_de_novos_in_transcript(transcript, de_novos["nonsense"])
     
     # The rates either are passed in as lists of lists of sequence-context 
     # based rates which can be applied to a given sequence, or as 
@@ -145,22 +148,9 @@ def structure_cluster_de_novos(de_novos, structure, gene, mut_dict, iterations=1
     (miss_dist, miss_prob) = get_structure_p_value(transcript, rates, structure, iterations, "missense", missense_events)
     (nons_dist, nons_prob) = get_structure_p_value(transcript, rates, structure, iterations, "lof", nonsense_events)
     
-    dists["miss_dist"].append(miss_dist)
-    dists["nons_dist"].append(nons_dist)
-    probs["miss_prob"].append(miss_prob)
-    probs["nons_prob"].append(nons_prob)
+    return {"miss_dist": miss_dist,
+            "nons_dist": nons_dist,
+            "miss_prob": miss_prob,
+            "nons_prob": nons_prob,
+    }
     
-    # remove the de novos analysed in the current transcript, so that
-    # analysis of subsequent transcripts uses independent events. NOTE THAT
-    # THIS MIGHT MISS SOME CLUSTERING ACROSS MUTUALLY EXCLUSIVE TRANSCRIPTS
-    # IF THE DE NOVO EVENTS ARE NEAR THE TRANSCRIPT DIVERGENCE.
-    missense = [x for x in missense if x not in missense_events]
-    nonsense = [x for x in nonsense if x not in  nonsense_events]
-        
-    for key in dists:
-        dists[key] = ",".join([ str(x) for x in dists[key] ])
-    
-    probs = {k: fishers_method(probs[k]) for k in probs}
-    probs.update(dists)
-    
-    return probs

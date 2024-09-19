@@ -118,10 +118,11 @@ def get_distances(vector[int] positions):
     return distances
 
 def get_structure_distances(coords: List[Dict[str, float]]):
-    """ gets the distances between two or more CDS positions
+    """ gets the distances between two or more protein 3D-coordinates
     
     Args:
-        positions: list of CDS positions as ints
+        coords: amino acid coordinates as list of dicts e.g. 
+            [{x: 1, y: 2, z: 0}, {x: 3, y: 3, z: 3}]
     
     Returns:
         list of pairwise distances between sites
@@ -132,7 +133,7 @@ def get_structure_distances(coords: List[Dict[str, float]]):
     for i, coord in enumerate(coords):
         _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
     
-    cdef vector[int] distances
+    cdef vector[double] distances
     _get_structure_distances(_coords, distances)
     return distances
 
@@ -148,25 +149,25 @@ def geomean(vector[int] distances):
     
     return _geomean(distances)
 
-def simulate_distribution(WeightedChoice choices, int iterations, int de_novos_count):
+def geomean_double(vector[double] distances):
+    """ gets the geometric mean distance between two or more CDS positions
+    
+    Args:
+        distances: list of distances between CDS positions
+    
+    Returns:
+        provides the mean distance of the pairwise distances
+    """
+    
+    return _geomean_double(distances)
+
+def simulate_distances(WeightedChoice choices, int iterations, int de_novos_count):
     """
     """
     
-    return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
+    return _simulate_distances(deref(choices.thisptr), iterations, de_novos_count)
 
-def simulate_structure_distribution(WeightedChoice choices, int iterations, int de_novos_count):
-    """
-    """
-    
-    return _simulate_distribution(deref(choices.thisptr), iterations, de_novos_count)
-
-def analyse_de_novos(WeightedChoice choices, int iterations, int de_novos_count, double observed_value):
-    """
-    """
-    
-    return _analyse_de_novos(deref(choices.thisptr), iterations, de_novos_count, observed_value)
-
-def analyse_structure_de_novos(WeightedChoice choices, coords, int iterations, int de_novos_count, double observed_value):
+def simulate_structure_distances(WeightedChoice choices, coords, int iterations, int de_novos_count):
     """
     """
     cdef vector[Coord] _coords
@@ -175,4 +176,21 @@ def analyse_structure_de_novos(WeightedChoice choices, coords, int iterations, i
     for i, coord in enumerate(coords):
         _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
     
-    return _analyse_structure_de_novos(deref(choices.thisptr), _coords, iterations, de_novos_count, observed_value)
+    return _simulate_structure_distances(deref(choices.thisptr), coords, iterations, de_novos_count)
+
+def simulate_clustering(WeightedChoice choices, int iterations, int de_novos_count, double observed_value):
+    """
+    """
+    
+    return _simulate_clustering(deref(choices.thisptr), iterations, de_novos_count, observed_value)
+
+def simulate_structure_clustering(WeightedChoice choices, coords, int iterations, int de_novos_count, double observed_value):
+    """
+    """
+    cdef vector[Coord] _coords
+    _coords.resize(len(coords))
+    
+    for i, coord in enumerate(coords):
+        _coords[i] = Coord(coord['x'], coord['y'], coord['z'])
+    
+    return _simulate_structure_clustering(deref(choices.thisptr), _coords, iterations, de_novos_count, observed_value)
