@@ -1,6 +1,6 @@
 
 from math import log, isnan
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 from scipy.stats import chi2
 
