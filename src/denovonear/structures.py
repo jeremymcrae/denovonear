@@ -21,7 +21,7 @@ def find_uniprot_matches(path: Path, uniprot_ids: List[str]) -> Iterable[GzipFil
                     logging.info(f'found structure for {uniprot_id}')
                     yield gzip.open(tarred.extractfile(x.name), 'rt')
 
-def load_structure(path: Path, uniprot_ids: List[str]) -> Dict[Tuple[str, int], dict[str, float]]:
+def load_structure(path: Path, uniprot_ids: List[str]) -> Dict[Tuple[str, int], Dict[str, float]]:
     ''' a very basic PDB parser, to get positions of carbon atoms at the amino acids
     '''
     coords = None
