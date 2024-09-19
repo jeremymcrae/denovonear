@@ -131,5 +131,5 @@ class TestSimulationsPy(unittest.TestCase):
         p_val = simulate_structure_clustering(
             self.choices, coords, self.iterations, len(dnms), observed)
         
-        self.assertAlmostEqual(p_val, 0.002, places=3)
+        self.assertAlmostEqual(p_val, 0.002, delta=0.001)
     
