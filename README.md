@@ -3,12 +3,13 @@
 ### Denovonear
 
 This code assesses whether de novo single-nucleotide variants are closer
-together within the coding sequence of a gene than expected by chance. We use
-local-sequence based mutation rates to account for differential mutability of
-regions. The default rates are per-trinucleotide based see [Nature Genetics
-46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html), but
-you can use your own rates, or even longer sequence contexts, such as 5-mers or
-7-mers.
+together within the coding sequence of a gene than expected by chance, or the 
+amino acids for those SNVs are closer together in the protein structure than 
+expected by chance. We use local-sequence based mutation rates to account for
+differential mutability of regions. The default rates are per-trinucleotide 
+based see [Nature Genetics 46:944–950](http://www.nature.com/ng/journal/v46/n9/full/ng.3050.html), 
+but you can use your own rates, or even longer sequence contexts, such as 5-mers 
+or 7-mers.
 
 ### Install
 ```sh
@@ -16,7 +17,7 @@ pip install denovonear
 ```
 
 ### Usage
-Analyse *de novo* mutations with the CLI tool:
+Analyse *de novo* mutation clustering in the coding sequence with the CLI tool:
 
 ```sh
 denovonear cluster \
@@ -26,6 +27,16 @@ denovonear cluster \
    --out output.txt
 ```
 
+Or test clustering within protein structures:
+```sh
+denovonear cluster-structure \
+   --in data/example.grch38.dnms.txt \
+   --structures PATH_TO_STRUCTURES.tar \
+   --gencode data/example.grch38.gtf \
+   --fasta data/example.grch38.fa \
+   --out output.structure.txt
+```
+
 explanation of options:
  - `--in`: path to tab-separated table of de novo mutations. See example table below for columns, or `example.grch38.dnms.txt` in data folder.
  - `--gencode`: path to GENCODE annotations in 
@@ -33,6 +44,18 @@ explanation of options:
    transcripts and exons e.g. 
    [example release](https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_38/gencode.v38.annotation.gtf.gz). Can be gzipped, or uncompressed.
  - `--fasta`: path to genome fasta, matching genome build of gencode file
+ - `--structures`: path to tar file containing PDB structures for all protein coding
+   genes. This has only been tested with AlphaFold human proteome tar files
+   e.g. https://ftp.ebi.ac.uk/pub/databases/alphafold/latest/UP000005640_9606_HUMAN_v4.tar
+   The code identifies the approriate structure pdb by first searching for uniprot
+   IDs via ensembl (starting with the transcript ID). This only permits variants
+   in the canonical transcript, and returns nan if a) no structure PDB is found,
+   b) multiple structures exists for the uniprot IDs, c) multiple chains are
+   in the structure file, d) the structure has missing residues or e) the 
+   number of residues in the structure file does not match what is expected from
+   the CDS length. This uses the carbon atom coordinates for each residue to
+   place the amino acid position, and computes Euclidean distances between
+   these coordinates.
 
 If the --gencode or --fasta options are skipped (e.g. `denovonear cluster --in 
 INFILE --out OUTFILE`), gene annotations will be retrieved via an ensembl web 
