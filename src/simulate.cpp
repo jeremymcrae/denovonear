@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <vector>
-#include <exception>
+#include <stdexcept>
 
 #include "weighted_choice.h"
 #include "simulate.h"
