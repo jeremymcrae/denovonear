@@ -1,4 +1,4 @@
-![travis](https://travis-ci.org/jeremymcrae/denovonear.svg?branch=master)
+![github](https://github.com/jeremymcrae/denovonear/actions/workflows/python-package.yml/badge.svg)
 
 ### Denovonear
 
