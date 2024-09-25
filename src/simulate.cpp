@@ -201,7 +201,7 @@ std::vector<double> _simulate_structure_distances(Chooser & choices,
                                                   int iterations,
                                                   int de_novo_count) {
     
-    if (((int) coords.size() * 3) + 6 < choices.len()) {
+    if (((int) coords.size() * 9) + 6 < choices.len()) {
         throw std::invalid_argument("number of coords is too low for the transcript site sampler");
     }
     
