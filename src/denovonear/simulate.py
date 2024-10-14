@@ -103,7 +103,7 @@ def get_structure_p_value(transcript: Transcript,
         return float('nan'), float('nan')
     
     coords = {k[1]: v for k, v in sorted(structure_coords.items())}
-    cds_coords = [transcript.get_coding_distance(x)['pos'] // 3 for x in de_novos]
+    cds_coords = [(transcript.get_coding_distance(x)['pos'] // 3) + 1 for x in de_novos]
     cds_coords = [coords[x] for x in cds_coords]
     
     distances = get_structure_distances(cds_coords)
