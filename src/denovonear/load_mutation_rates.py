@@ -4,13 +4,15 @@
 from __future__ import annotations
 
 import warnings
-from pkg_resources import resource_filename
+from importlib import resources
 
 __PYSAM_ERROR = False
 try:
     from pysam import VariantFile
 except ImportError:
     __PYSAM_ERROR = True
+
+warnings.filterwarnings("ignore", category=DeprecationWarning)
 
 def load_mutation_rates(path=None):
     """ load sequence context-based mutation rates
@@ -25,16 +27,19 @@ def load_mutation_rates(path=None):
     """
     
     if path is None:
-        path = resource_filename(__name__, "data/rates.txt")
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=DeprecationWarning)
+            handle = resources.open_text('denovonear.data', 'rates.txt')
+    else:
+        handle = open(path)
     
     rates = []
-    with open(path) as handle:
-        for line in handle:
-            if line.startswith("from"): # ignore the header line
-                continue
-            
-            line = [ x.encode('utf8') for x in line.strip().split() ]
-            rates.append(line)
+    for line in handle:
+        if line.startswith("from"): # ignore the header line
+            continue
+        
+        line = [ x.encode('utf8') for x in line.strip().split() ]
+        rates.append(line)
     
     return rates
 
