@@ -29,6 +29,14 @@ def load_mutation_rates(path=None):
     if path is None:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=DeprecationWarning)
+            paths = resources.files('denovonear')
+            for path in paths.iterdir():
+                print(f'PATH: {path}')
+                
+            paths = resources.files('denovonear.data')
+            for path in paths.iterdir():
+                print(f'PATH: {path}')
+            
             handle = resources.open_text('denovonear.data', 'rates.txt')
     else:
         handle = open(path)
@@ -40,6 +48,8 @@ def load_mutation_rates(path=None):
         
         line = [ x.encode('utf8') for x in line.strip().split() ]
         rates.append(line)
+    
+    handle.close()
     
     return rates
 
