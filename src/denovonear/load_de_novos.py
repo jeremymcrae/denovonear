@@ -37,7 +37,7 @@ def load_de_novos(path, exclude_indels=True):
             
             line = line.rstrip().split("\t")
             gene = line[0]
-            position = int(line[2]) - 1
+            position = int(line[2])
             consequence = line[3]
             var_type = line[4]
             
