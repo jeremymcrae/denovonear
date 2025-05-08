@@ -58,7 +58,7 @@ jobs:
       - name: Build sdist
         run: |
           pip install setuptools build
-          python -m build
+          python -m build --sdist
       
       - name: Run tests
         run: |
