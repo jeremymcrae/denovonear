@@ -54,11 +54,16 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-
+      
+      - name: Build sdist
+        run: |
+          pip install setuptools build
+          python -m build
+      
       - name: Run tests
         run: |
           pip install -e .
-          # python -m unittest discover
+          python -m unittest discover
           # denovonear cluster --in data/example_de_novos.txt --out output.txt
           # denovonear cluster \
           #   --in data/example.grch38.dnms.txt  \
@@ -67,12 +72,7 @@ jobs:
           #   --out output.txt
           # denovonear transcripts --de-novos data/example_de_novos.txt --out output.txt --all-transcripts
           # denovonear rates --genes data/example_gene_ids.txt --out output.txt
-
-      - name: Build sdist
-        run: |
-          pip install setuptools cython
-          python setup.py sdist
-
+      
       - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
