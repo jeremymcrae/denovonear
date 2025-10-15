@@ -29,7 +29,7 @@ elif sys.platform == "win32":
 # Or we could put the file directly in this package (or via a git submodule).
 tx_cpp = Path(gencodegenes.__file__).parent / 'tx.cpp'
 
-weights = cythonize([
+extensions = [
     Extension("denovonear.weights",
         extra_compile_args=EXTRA_COMPILE_ARGS,
         extra_link_args=EXTRA_LINK_ARGS,
@@ -49,34 +49,10 @@ weights = cythonize([
             ],
         include_dirs=["src/"],
         language="c++"),
-    ])
+    ]
 
-setup(name="denovonear",
-    description='Package to examine de novo clustering',
-    long_description=io.open('README.md', encoding='utf-8').read(),
-    long_description_content_type='text/markdown',
-    version="0.11.2",
-    author="Jeremy McRae",
-    author_email="jeremy.mcrae@gmail.com",
-    license="MIT",
-    url='https://github.com/jeremymcrae/denovonear',
-    packages=["denovonear", "denovonear.data"],
-    install_requires=[
-        'aiohttp >= 3.9.0b0',
-        'scipy >= 0.9.0',
-        'gencodegenes >= 1.0.10',
-    ],
-    extras_requires={
-        'pysam': ['pysam'],
-    },
+setup(
     package_dir={'': 'src'},
     package_data={"denovonear": ['data/rates.txt', 'weights.pxd']},
-    entry_points={'console_scripts': ['denovonear = denovonear.__main__:main']},
-    classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Topic :: Scientific/Engineering :: Bio-Informatics",
-        "License :: OSI Approved :: MIT License",
-    ],
-    python_requires='>=3.9',
-    ext_modules=weights,
+    ext_modules=cythonize(extensions),
     test_suite="tests")
