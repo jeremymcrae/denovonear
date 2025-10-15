@@ -6,24 +6,51 @@ on:
     - cron: "34 3 3 * *"
 
 jobs:
-  build_wheels:
+  default_tests:
+    name: test package
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python: ["cp39", "cp310", "cp311", "cp312"]
+        os: ['ubuntu-24.04-arm', 'ubuntu-latest']
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+    
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: true
+      
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      
+      - name: Build
+        run: |
+          python -m pip install --upgrade pip
+          pip install setuptools build
+          pip install .
+          python -m unittest discover
+  
+  build_wheels:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ['ubuntu-24.04-arm', 'ubuntu-latest', 'macos-latest', 'windows-latest']
+        python: ["cp39", "cp310", "cp311", "cp312", "cp312", "cp314"]
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true
       
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.16.5
+        uses: pypa/cibuildwheel@v3.2.1
         env:
           CIBW_BUILD: ${{ matrix.python }}-*
           CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux*"
           CIBW_TEST_COMMAND: "python -m unittest discover -s {project}"
+          CIBW_MANYLINUX_X86_64_IMAGE: quay.io/pypa/manylinux2014_x86_64:latest
 
       - uses: actions/upload-artifact@v4
         with:
@@ -31,10 +58,11 @@ jobs:
           name: artifact-${{ matrix.os }}-${{ matrix.python }}
 
   build_sdist:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           submodules: true
 
@@ -43,47 +71,15 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install flake8 coverage coveralls
-    
-      - name: Lint with flake8
-        run: |
-          # stop the build if there are Python syntax errors or undefined names
-          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-          # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-          flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-      
       - name: Build sdist
         run: |
           pip install setuptools build
           python -m build --sdist
       
-      - name: Run tests
-        run: |
-          pip install -e .
-          # python -m unittest discover
-          # denovonear cluster --in data/example_de_novos.txt --out output.txt
-          # denovonear cluster \
-          #   --in data/example.grch38.dnms.txt  \
-          #   --gencode data/example.grch38.gtf \
-          #   --fasta data/example.grch38.fa \
-          #   --out output.txt
-          # denovonear transcripts --de-novos data/example_de_novos.txt --out output.txt --all-transcripts
-          # denovonear rates --genes data/example_gene_ids.txt --out output.txt
-      
       - uses: actions/upload-artifact@v4
         with:
           path: dist/*.tar.gz
           name: artifact-source
-
-      # - name: Coveralls
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.github_token }}
-      #   run: |
-      #     python -m coverage run --source=./denovonear -m unittest discover
-      #     coveralls --service=github
 
   upload_pypi:
     needs: [build_wheels, build_sdist]
