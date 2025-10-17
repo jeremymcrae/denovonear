@@ -121,7 +121,9 @@ cdef str check_consequence(char initial_aa,
     return "synonymous"
 
 cdef class SiteRates:
-    '''
+    ''' class to run through all mutations for a transcript CDS, and figure out
+    mutation rate and type. Allocates to a random sampler for the correct
+    consequence type.
     '''
     cdef Region gene_range
     cdef unordered_map[char, char] transdict
@@ -179,15 +181,15 @@ cdef class SiteRates:
         self.process_cds()
     
     def clear(self):
-        self._choices = {}
-        for cq in ["missense", "nonsense", "synonymous", "splice_lof",
         ''' construct empty WeightedChoice objects for each consequence type
         '''
+        self._choices = {}
+        for cq in ["missense", "nonsense", "synonymous", "splice_lof",
                    "splice_region", "loss_of_function", "intronic"]:
             self._choices[cq] = WeightedChoice()
     
     def process_cds(self):
-        '''
+        ''' run through all positions in the CDS and add SNVs to appropriate rates
         '''
         self.kmer_length = 3
         self.mid_pos = 1
@@ -293,7 +295,10 @@ cdef class SiteRates:
                 self._choices["loss_of_function"].add_choice(cds_pos, rate, chr(ref), chr(alt), codon_offset)
     
     cpdef check_consequence(self, initial_aa: str, mutated_aa: str, position: int):
-        '''
+        ''' check the consequence of an aminoa cid change at a given position
+        
+        This is just for testing purposes, so we can validate the actual
+        check_consequence function
         '''
         if len(initial_aa) == 0:
             initial_aa = '0'
