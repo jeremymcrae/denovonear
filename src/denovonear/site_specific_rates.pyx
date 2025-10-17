@@ -181,6 +181,8 @@ cdef class SiteRates:
     def clear(self):
         self._choices = {}
         for cq in ["missense", "nonsense", "synonymous", "splice_lof",
+        ''' construct empty WeightedChoice objects for each consequence type
+        '''
                    "splice_region", "loss_of_function", "intronic"]:
             self._choices[cq] = WeightedChoice()
     
