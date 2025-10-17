@@ -242,15 +242,15 @@ class TestSiteRatesPy(unittest.TestCase):
         """
         
         # check some codon mutations, including a stop mutation
-        self.assertEqual(get_mutated_aa(self.transcript, "C", "AAA", 2), "N")
-        self.assertEqual(get_mutated_aa(self.transcript, "A", "TGG", 2), "*")
+        self.assertEqual(get_mutated_aa(self.transcript, 'AAA', "C", 2), "N")
+        self.assertEqual(get_mutated_aa(self.transcript, 'TGG', "A", 2), "*")
         
         # a codon mutated to itself gives the expected amino acid
-        self.assertEqual(get_mutated_aa(self.transcript, "A", "AAA", 2), "K")
+        self.assertEqual(get_mutated_aa(self.transcript, "AAA", "A", 2), "K")
         
         # non-DNA codons raise errors
         with self.assertRaises(ValueError):
-            get_mutated_aa(self.transcript, "C", "RRR", 2)
+            get_mutated_aa(self.transcript, "RRR", "C", 2)
     
     def test_splice_lof_check(self):
         """ check that splice_lof_check() works correctly
