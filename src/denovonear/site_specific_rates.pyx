@@ -239,7 +239,7 @@ cdef class SiteRates:
         seq: string = self.tx.get_centered_sequence(bp, self.kmer_length).encode()
         
         if self.tx.strand != '+':
-            seq = self.tx.reverse_complement(seq.decode()).encode()
+            seq = self.tx.reverse_complement(seq).encode()
     
         try:
             codon = self.tx.get_codon_info(bp)
