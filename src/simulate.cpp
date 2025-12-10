@@ -268,7 +268,7 @@ double _simulate_clustering(Chooser & choices, int iterations, int de_novo_count
     
     double minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
     double sim_prob = minimum_prob;
-    std::vector<double> dist;
+    std::vector<double> dist, temp;
 
     std::uint32_t n_smaller = 0;
     while (iterations < 100000000 && sim_prob == minimum_prob) {
@@ -277,7 +277,8 @@ double _simulate_clustering(Chooser & choices, int iterations, int de_novo_count
         minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
         
         // simulate mean distances between de novos
-        dist = _simulate_distances(choices, iters_to_run, de_novo_count);
+        temp = _simulate_distances(choices, iters_to_run, de_novo_count);
+        dist.insert(dist.end(), temp.begin(), temp.end());
         
         for (auto &x : dist) {
             n_smaller += (x <= observed_value);
@@ -285,12 +286,12 @@ double _simulate_clustering(Chooser & choices, int iterations, int de_novo_count
         
         // estimate the probability from the number of times a random distance
         // is equal to or smaller than the observed value
-        sim_prob = (1.0 + (double)n_smaller) / (1.0 + (double)iterations);
+        sim_prob = (1.0 + (double)n_smaller) / (1.0 + (double) dist.size());
         
         // halt permutations if the P value could never be significant
         double z = 10.0;
         double alpha = 0.1;
-        if (_halt_permutation(sim_prob, iterations, z, alpha)) { break; }
+        if (_halt_permutation(sim_prob, dist.size(), z, alpha)) { break; }
         
         iterations += 1000000;  // for if we need to run more iterations
     }
@@ -314,7 +315,7 @@ double _simulate_structure_clustering(Chooser & choices,
     
     double minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
     double sim_prob = minimum_prob;
-    std::vector<double> dist;
+    std::vector<double> dist, temp;
 
     std::uint32_t n_smaller = 0;
     while (iterations < 100000000 && sim_prob == minimum_prob) {
@@ -323,7 +324,8 @@ double _simulate_structure_clustering(Chooser & choices,
         minimum_prob = 1.0/(1.0 + static_cast<double>(iterations));
         
         // simulate mean distances between de novos
-        dist = _simulate_structure_distances(choices, coords, iters_to_run, de_novo_count);
+        temp = _simulate_structure_distances(choices, coords, iters_to_run, de_novo_count);
+        dist.insert(dist.end(), temp.begin(), temp.end());
         
         for (auto &x : dist) {
             n_smaller += (x <= observed_value);
@@ -331,12 +333,12 @@ double _simulate_structure_clustering(Chooser & choices,
         
         // estimate the probability from the number of times a random distance
         // is equal to or smaller than the observed value
-        sim_prob = (1.0 + (double)n_smaller) / (1.0 + (double)iterations);
+        sim_prob = (1.0 + (double)n_smaller) / (1.0 + (double) dist.size());
         
         // halt permutations if the P value could never be significant
         double z = 10.0;
         double alpha = 0.1;
-        if (_halt_permutation(sim_prob, iterations, z, alpha)) { break; }
+        if (_halt_permutation(sim_prob, dist.size(), z, alpha)) { break; }
         
         iterations += 1000000;  // for if we need to run more iterations
     }
