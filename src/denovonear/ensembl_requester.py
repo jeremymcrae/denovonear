@@ -2,8 +2,13 @@
 transcripts from Ensembl.
 """
 
-import json
 import asyncio
+import json
+import logging
+
+import aiohttp
+
+log = logging.getLogger(__name__)
 
 def get_base_url(build):
     assert build in ["grch37", "grch38"], f'unknown build: {build}'
@@ -142,27 +147,64 @@ async def get_cds_ranges_for_transcript(ensembl, transcript_id, build='grch37'):
     """
     return await get_ranges_for_tx(ensembl, transcript_id, 'cds', build)
 
-async def _get_uniprot_ids_for_transcript(ensembl, transcript_id, build='grch37'):
-    """ obtain the uniprot IDs for a transcript from ensembl
-    """
-    headers = {"content-type": "application/json"}
-    ext = f"lookup/id/{transcript_id.split('.')[0]}"
-    url = f'{get_base_url(build)}/{ext}?content-type=application/json'
-    resp = await ensembl.get(url, headers=headers)
-    
-    gene_id = json.loads(resp)['Parent']
-    
-    # can't get valid uniprot IDs from the grch37 server - set to grch38
-    build = 'grch38'
-    
-    headers = {"content-type": "application/json"}
-    ext = f"xrefs/id/{gene_id}"
-    url = f'{get_base_url(build)}/{ext}'
-    resp = await ensembl.get(url, headers)
-    
+async def _get_uniprot_ids_for_transcript(ensembl, transcript_id, build="grch37"):
+    """Obtain UniProt IDs for a transcript from Ensembl."""
+
+    transcript_stable_id = transcript_id.split(".")[0]
+
+    headers = {"Accept": "application/json"}
+    url = f"{get_base_url(build)}/lookup/id/{transcript_stable_id}"
+
+
+    try:
+        resp = await ensembl.get(url, headers=headers)
+    except aiohttp.ClientResponseError as err:
+        if err.status in {400, 404}:
+            log.warning(
+                "Could not look up Ensembl transcript %s on %s: HTTP %s",
+                transcript_stable_id,
+                build,
+                err.status,
+            )
+            return []
+        raise
+
+    try:
+        gene_id = json.loads(resp)["Parent"]
+    except (json.JSONDecodeError, KeyError, TypeError) as err:
+        log.warning(
+            "Could not extract parent gene for transcript %s: %s",
+            transcript_stable_id,
+            err,
+        )
+        return []
+
+    # Can't get valid UniProt IDs from the GRCh37 server; use GRCh38 for xrefs.
+    xref_build = "grch38"
+    url = f"{get_base_url(xref_build)}/xrefs/id/{gene_id}"
+
+    try:
+        resp = await ensembl.get(url, headers=headers)
+    except aiohttp.ClientResponseError as err:
+        if err.status in {400, 404}:
+            log.warning(
+                "Could not look up Ensembl xrefs for gene %s on %s: HTTP %s",
+                gene_id,
+                xref_build,
+                err.status,
+            )
+            return []
+        raise
+
+    try:
+        xrefs = json.loads(resp)
+    except json.JSONDecodeError:
+        log.warning("Invalid JSON from Ensembl xrefs for gene %s", gene_id)
+        return []
+
     ids = []
-    for id_type in json.loads(resp):
-        if id_type["dbname"] == "Uniprot_gn":
-            ids.append(id_type["primary_id"])
-    
+    for xref in xrefs:
+        if xref.get("dbname") == "Uniprot_gn" and xref.get("primary_id"):
+            ids.append(xref["primary_id"])
+
     return ids
