@@ -251,8 +251,8 @@ cdef class SiteRates:
         intra_codon: int= -1
         if codon['initial_aa'] is not None:
             initial_aa = codon['initial_aa'].encode()[0]
-            codon_seq: string = codon['codon_seq'].encode()
-            intra_codon: int = codon['intra_codon']
+            codon_seq = codon['codon_seq'].encode()
+            intra_codon = codon['intra_codon']
         
         codon_offset: int = codon['offset']
         cds_pos: int = codon['cds_pos']
