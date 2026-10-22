@@ -32,18 +32,29 @@ class EnsemblCache(object):
         path = cache_folder / "ensembl_cache.db"
         if not path.exists():
             try:
-                with sqlite3.connect(str(path)) as conn:
+                conn = sqlite3.connect(str(path))
+                try:
                     with conn as cursor:
                         cursor.execute('pragma journal_mode=wal')
                         cursor.execute("CREATE TABLE ensembl " \
                             "(key text PRIMARY KEY, genome_build text, " \
                             "cache_date text, api_version text, data blob)")
+                finally:
+                    conn.close()
             except sqlite3.OperationalError:
                 time.sleep(random.uniform(1, 5))
         
         self.conn = sqlite3.connect(str(path))
         self.conn.row_factory = sqlite3.Row
         self.cursor = self.conn.cursor()
+
+    def close(self):
+        if hasattr(self, 'conn') and self.conn is not None:
+            self.conn.close()
+            self.conn = None
+
+    def __del__(self):
+        self.close()
     
     def get_cached_data(self, url):
         """ get cached data for a url if stored in the cache and not outdated
