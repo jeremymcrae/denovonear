@@ -7,8 +7,9 @@ from pathlib import Path
 from setuptools import setup
 from distutils.core import Extension
 from Cython.Build import cythonize
+import gencodegenes
 
-EXTRA_COMPILE_ARGS = ['-std=c++11', '-I/usr/include']
+EXTRA_COMPILE_ARGS = ['-std=c++11']
 EXTRA_LINK_ARGS = []
 if sys.platform == "darwin":
     EXTRA_COMPILE_ARGS += [
@@ -38,7 +39,7 @@ extensions = [
             "src/denovonear/site_specific_rates.pyx",
             "src/weighted_choice.cpp",
             ],
-        include_dirs=["src/"],
+        include_dirs=["src/", os.path.dirname(gencodegenes.__file__)],
         language="c++"),
     ]
 
