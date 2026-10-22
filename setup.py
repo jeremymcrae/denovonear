@@ -9,19 +9,15 @@ from distutils.core import Extension
 from Cython.Build import cythonize
 import gencodegenes
 
-EXTRA_COMPILE_ARGS = ['-std=c++11']
+EXTRA_COMPILE_ARGS = []
 EXTRA_LINK_ARGS = []
-if sys.platform == "darwin":
-    EXTRA_COMPILE_ARGS += [
-        "-stdlib=libc++",
-        "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/v1",
-        "-I/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include",
-        ]
-    EXTRA_LINK_ARGS += [
-        "-L/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/lib",
-        ]
-elif sys.platform == "win32":
+if sys.platform == "win32":
     EXTRA_COMPILE_ARGS += ['/std:c++14']
+else:
+    EXTRA_COMPILE_ARGS += ['-std=c++11']
+    if sys.platform == "darwin":
+        EXTRA_COMPILE_ARGS += ["-stdlib=libc++"]
+        EXTRA_LINK_ARGS += ["-stdlib=libc++"]
 
 extensions = [
     Extension("denovonear.weights",
