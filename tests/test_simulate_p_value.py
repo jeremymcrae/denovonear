@@ -27,7 +27,7 @@ class TestGetPValuePy(unittest.TestCase):
         name = "TEST"
         strand = "+"
         start = 0
-        end = 70
+        end = 71
         exons = [(5, 58)]
         cds = [(5, 58)]
         transcript = Transcript(name, chrom, start, end, strand)

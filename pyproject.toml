@@ -15,7 +15,7 @@ authors = [
 dependencies = [
     'aiohttp >= 3.9.0b0',
     'scipy >= 0.9.0',
-    'gencodegenes >= 1.0.10',
+    'gencodegenes >= 1.2.1',
 ]
 
 classifiers = [

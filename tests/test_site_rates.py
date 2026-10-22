@@ -65,7 +65,7 @@ class TestSiteRatesPy(unittest.TestCase):
         
         cds = "ATGTCCATAACCAAAGCCTGA"
         genomic = "CCTCCAGATTCACGGGAAGCATGTCCATAAGTAGGGAGATATTTGGTGCTCTCATTTG" \
-            "TGGAGACTCTAGCCAAAGCCTGAGTCATGCGTACCATAGATAG"
+            "TGGAGACTCTAGCCAAAGCCTGAGTCATGCGTACCATAGATA"
         
         self.transcript.cds_sequence = cds
         self.transcript.genomic_offset = 10
